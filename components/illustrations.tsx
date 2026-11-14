@@ -1,9 +1,24 @@
-/* Original flat illustrations for Soil Time Machine (inline SVG, no external assets).
+/* Flat illustrations for Soil Time Machine (inline SVG, no external assets), SI-generated (Claude) and watermarked.
  * Palette follows the app tokens: forest, leaf, mint, water, sky, amber, earth. */
 
 type P = { className?: string };
 
 /** Step 1 — pin a field on the map. */
+/**
+ * Visible watermark: these illustrations were generated with an SI (AI) tool, and NASA Space Apps
+ * requires SI-generated images to carry a visible watermark.
+ */
+function SiMark({ w = 240, h = 132 }: { w?: number; h?: number }) {
+  return (
+    <g>
+      <rect x={w - 74} y={h - 17} width={70} height={13} rx={6.5} fill="#000000" opacity={0.45} />
+      <text x={w - 39} y={h - 7.6} textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="7.5" fontWeight="700" fill="#ffffff">
+        SI-generated
+      </text>
+    </g>
+  );
+}
+
 export function IlloLocate({ className }: P) {
   return (
     <svg viewBox="0 0 240 132" className={className} aria-hidden>
@@ -46,6 +61,7 @@ export function IlloLocate({ className }: P) {
       />
       <circle cx="150" cy="36" r="7.5" fill="#fff" />
       <circle cx="204" cy="22" r="9" fill="#FFD27A" />
+      <SiMark />
     </svg>
   );
 }
@@ -118,6 +134,7 @@ export function IlloSatellite({ className }: P) {
           %
         </text>
       </g>
+      <SiMark />
     </svg>
   );
 }
@@ -190,6 +207,7 @@ export function IlloGrow({ className }: P) {
         strokeLinejoin="round"
       />
       <circle cx="210" cy="24" r="10" fill="#FFD27A" />
+      <SiMark />
     </svg>
   );
 }
@@ -249,6 +267,7 @@ export function IlloBalance({ className }: P) {
         strokeWidth="1.6"
         fill="none"
       />
+      <SiMark />
     </svg>
   );
 }

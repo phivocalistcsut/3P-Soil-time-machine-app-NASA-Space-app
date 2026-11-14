@@ -32,8 +32,8 @@ import type { DailyExtremes } from "@/lib/types";
 export const ENGINE_VERSION = "0.5.0";
 
 /** Paddy percolation + seepage (mm/day) and land-preparation water (mm) by texture. */
-export const PERCOLATION_MM_DAY: Record<SoilTexture, number> = { clay: 1.5, silty_clay: 2, loam: 4, sandy_loam: 6, sand: 10 };
-export const LAND_PREP_MM: Record<SoilTexture, number> = { clay: 150, silty_clay: 150, loam: 175, sandy_loam: 200, sand: 250 };
+export const PERCOLATION_MM_DAY: Record<SoilTexture, number> = { clay: 1.5, silty_clay: 2, clay_loam: 2.5, loam: 4, sandy_loam: 6, sand: 10 };
+export const LAND_PREP_MM: Record<SoilTexture, number> = { clay: 150, silty_clay: 150, clay_loam: 160, loam: 175, sandy_loam: 200, sand: 250 };
 /** Assumed irrigation water that can be supplied per season (mm). */
 export const SUPPLY_MM: Record<FarmProfile["waterAvailability"], number> = { abundant: 1000, moderate: 550, limited: 300 };
 export const SOURCE_FACTOR: Record<FarmProfile["irrigationSource"], number> = { canal: 1, groundwater: 1, pond: 0.8, rainfed: 0 };

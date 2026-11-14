@@ -94,7 +94,7 @@ function usePointData<T extends { cached: boolean }>(
     lat: farm.latitude.toFixed(5), lon: farm.longitude.toFixed(5),
     start: String(period.start), end: String(period.end),
   }).toString() : null;
-  return useRemote<T>(query ? `stm-evidence-v3-${endpoint}?${query}` : null,
+  return useRemote<T>(query ? `stm-evidence-v4-${endpoint}?${query}` : null,
     query ? `/api/${endpoint}?${query}` : null, offline, timeout, farm?.isDemo ? "demo" : "farm");
 }
 
@@ -117,8 +117,12 @@ export function useDailyExtremes(farm: FarmProfile | null) {
 
 export function useNdvi(farm: FarmProfile | null) {
   const period = vegetationDates(new URLSearchParams())!;
-  return usePointData<NdviSeries>(farm, "ndvi", period,
-    () => farm ? farm.isDemo ? getDemoNdvi() : getOfflineNdvi(farm.latitude, farm.longitude) : null, 62000);
+  // The demo farm shows its saved real MODIS series at once: a live ORNL request can take
+  // 30–60 s, which must never leave the greenness chart empty during a demo.
+  const demo = useMemo(() => (farm?.isDemo ? getDemoNdvi() : null), [farm?.isDemo]);
+  const live = usePointData<NdviSeries>(demo ? null : farm, "ndvi", period,
+    () => farm ? getOfflineNdvi(farm.latitude, farm.longitude) : null, 62000);
+  return demo ? { data: demo, loading: false, fallbackReason: null } : live;
 }
 
 export function useImerg(farm: FarmProfile | null) {

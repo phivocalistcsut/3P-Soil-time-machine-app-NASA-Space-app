@@ -137,7 +137,7 @@ export function CropIcon({ cropId, size = 32, className }: { cropId: string | nu
 
 export function scenarioColor(s: Pick<RotationScenario, "kind" | "id"> | undefined, index = 0) {
   if (!s) return "#A3ADA8";
-  if (s.kind === "conventional") return "#B57B38";
+  if (s.kind === "conventional" || s.kind === "fit") return "#B57B38";
   if (s.kind === "water") return "#4A94C7";
   if (s.kind === "soil") return "#287043";
   return ["#7D5BA6", "#B5657A", "#3F7F8C"][index % 3];

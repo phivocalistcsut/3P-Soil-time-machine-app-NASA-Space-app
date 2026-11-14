@@ -210,6 +210,7 @@ export function buildEvidence(input: {
   const why: Localized[] = [];
   const kind = scenario.kind;
   if (kind === "conventional") why.push(Lx("Compare the crops and planting dates with your current practice.", "So sánh cây và lịch gieo của phương án này với cách đang trồng."));
+  if (kind === "fit") why.push(Lx("Built for climate fit: it keeps the main rice season and puts the best-fitting upland crop in the season with the highest irrigation need.", "Xây theo mức hợp khí hậu: giữ vụ lúa chính và đưa cây màu hợp nhất vào vụ cần tưới nhiều nhất."));
   if (kind === "water") why.push(Lx("Built to lower irrigation demand: the engine picked the upland crops that need the least water among those that fit this field.", "Tạo ra để giảm nước tưới: mô hình chọn cây màu cần ít nước nhất trong số cây hợp với ruộng này."));
   if (kind === "soil") why.push(Lx("Built to rest the soil: it adds legume seasons and a green-manure crop that suit this field's soil and seasons.", "Tạo ra để đất được nghỉ: thêm vụ cây họ đậu và cây phân xanh hợp với đất và mùa vụ của ruộng này."));
   if (kind === "custom") why.push(Lx("Your own rotation.", "Luân canh do anh/chị tự xây dựng."));

@@ -156,7 +156,7 @@ export function OutcomePanel({ result, reference }: { result: SimulationResult; 
         method={t(r.metricSources.soilImprovementPotential) + " " + t("asm.rothc")}
         explanation={t("rothc.limit")}
       >
-        <SoilCarbon result={r} details badge={false} />
+        <SoilCarbon result={r} reference={b} details badge={false} />
       </Outcome>
 
       <Outcome

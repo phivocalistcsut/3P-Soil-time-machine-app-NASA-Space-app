@@ -12,8 +12,8 @@ import { validCoordinates } from "../lib/data/evidence";
 
 const soilOnly = process.argv[2] === "--soil";
 const args = process.argv.slice(soilOnly ? 3 : 2);
-const lat = Number(args[0] ?? 10.0706);
-const lon = Number(args[1] ?? 105.5599);
+const lat = Number(args[0] ?? 10.0934);
+const lon = Number(args[1] ?? 105.5185);
 const end = new Date().getUTCFullYear() - 1;
 const start = end - 9;
 const today = new Date().toISOString().slice(0, 10);
@@ -21,7 +21,7 @@ const today = new Date().toISOString().slice(0, 10);
 async function main() {
 if (!validCoordinates(lat, lon)) throw new Error("Invalid coordinates");
 // Bundled files are tied to this point; do not silently replace them with another location.
-if (soilOnly && (lat !== 10.0706 || lon !== 105.5599)) throw new Error("Bundled Thới Lai soil snapshot requires 10.0706, 105.5599");
+if (soilOnly && (lat !== 10.0934 || lon !== 105.5185)) throw new Error("Bundled Thới Lai soil snapshot requires 10.0934, 105.5185");
 if (soilOnly) {
   const path = "data/soilgrids-thoi-lai.json";
   try {
@@ -53,7 +53,10 @@ const daily = aggregateDaily(await res.json(), { lat, lon, start, end, retrieved
 writeFileSync("data/power-daily-thoi-lai.json", JSON.stringify(daily));
 console.log(`daily extremes: ${daily.months.length} months`);
 
-const ndvi = await fetchNdviSeries(lat, lon);
+// three crop years so the demo chart shows the full rice rhythm
+const ndviEnd = new Date().toISOString().slice(0, 10);
+const ndviStart = `${new Date().getUTCFullYear() - 3}-11-01`;
+const ndvi = await fetchNdviSeries(lat, lon, { start: ndviStart, end: ndviEnd });
 writeFileSync("data/ndvi-thoi-lai.json", JSON.stringify({ ...ndvi, cached: true }));
 console.log(`ndvi: ${ndvi.points.length} composites, ${ndvi.points[0]?.date} → ${ndvi.points.at(-1)?.date}`);
 }
