@@ -16,7 +16,9 @@ export function HeroEarth() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const size = 420;
+    // A bounded raster budget stays sharp in the larger desktop globe without
+    // multiplying the animation cost by the screen's device-pixel ratio.
+    const size = 512;
     canvas.width = canvas.height = size;
     const texture = new window.Image();
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -96,22 +98,23 @@ export function HeroEarth() {
     };
   }, []);
 
-  return <figure className="relative mx-auto w-full max-w-[550px] py-8">
+  return <figure className="relative mx-auto w-full min-w-0 max-w-[550px] py-4 lg:max-w-[650px] lg:py-6">
     <div className="relative aspect-square" aria-hidden="true">
       <div className="absolute inset-[4%] rounded-full bg-sky-400/10 blur-3xl" />
       <svg viewBox="0 0 560 560" className="absolute inset-0 h-full w-full fill-none">
-        <circle cx="280" cy="280" r="263" stroke="white" strokeOpacity="0.1" strokeDasharray="2 10" />
+        <circle cx="280" cy="280" r="269" stroke="white" strokeOpacity="0.14" strokeDasharray="2 10" />
         <ellipse cx="280" cy="280" rx="277" ry="105" transform="rotate(-25 280 280)" stroke="#a8dc5c" strokeOpacity="0.35" />
+        <ellipse cx="280" cy="280" rx="269" ry="166" transform="rotate(32 280 280)" stroke="#8bd5ff" strokeOpacity="0.16" strokeDasharray="4 12" />
         <path d="M510 214h18m-9-9v18M57 370h14m-7-7v14" stroke="white" strokeOpacity="0.6" />
       </svg>
-      <div className="absolute inset-[12%] overflow-hidden rounded-full border border-sky-200/30 bg-[#10344a] shadow-[0_0_45px_5px_rgba(75,165,222,.22),0_25px_65px_rgba(0,0,0,.6)]">
+      <div className="absolute inset-[12%] overflow-hidden rounded-full border border-sky-200/30 bg-[#10344a] shadow-[0_0_45px_5px_rgba(75,165,222,.22),0_25px_65px_rgba(0,0,0,.6)] lg:inset-[8%]">
         <div className="absolute inset-0 bg-[url('/images/earth-blue-marble.jpg')] bg-cover bg-center" />
         <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${ready ? "opacity-100" : "opacity-0"}`} />
         <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_-16px_-6px_24px_rgba(0,8,20,.3),inset_2px_2px_12px_rgba(144,218,255,.25)]" />
       </div>
       <span className="absolute left-[4%] top-[17%] h-2 w-2 rounded-full bg-lime-bright shadow-[0_0_12px_#a8dc5c]" />
     </div>
-    <figcaption className="relative -mt-4 flex items-center justify-between gap-3 px-5">
+    <figcaption className="relative mt-1 flex items-center justify-between gap-3 px-5 lg:mt-2">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-lime-bright">{L("A global view. A local decision.", "Hiểu Trái Đất, chủ động mùa vụ.")}</p>
         <p className="mt-1 text-[10px] text-white/50">{L("Illustration · ", "Địa cầu minh họa · ")}<a href="/images/CREDITS.md" target="_blank" rel="noreferrer" className="underline decoration-white/25 underline-offset-2">NASA Blue Marble · CC BY-SA 3.0</a></p>
