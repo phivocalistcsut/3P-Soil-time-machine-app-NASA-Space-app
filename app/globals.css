@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #174d3a;
+  --color-forest-deep: #10382d;
+  --color-leaf: #66ad79;
+  --color-leaf-ink: #2f6e45;
+  --color-mint: #ddf0e2;
+  --color-earth: #c49b6c;
+  --color-earth-ink: #7a5428;
+  --color-sand: #f7f6f1;
+  --color-sand-2: #efede5;
+  --color-ink: #21312b;
+  --color-ink-2: #5d6d65;
+  --color-ink-3: #86938c;
+  --color-line: #e2e5de;
+  --color-water: #4a94c7;
+  --color-water-ink: #24628d;
+  --color-water-soft: #e3f0f8;
+  --color-amber: #e4a84c;
+  --color-amber-ink: #8a5a10;
+  --color-amber-soft: #fbf0dc;
+  --color-risk: #d97167;
+  --color-risk-ink: #a63f33;
+  --color-risk-soft: #f9e5e2;
+  --color-neutral: #a3ada8;
+
+  --color-scn-a: #b57b38;
+  --color-scn-b: #4a94c7;
+  --color-scn-c: #287043;
+  --color-scn-d: #7d5ba6;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(16, 56, 45, 0.05), 0 4px 16px -8px rgba(16, 56, 45, 0.12);
+  --shadow-float: 0 12px 40px -12px rgba(16, 56, 45, 0.28);
+
+  --animate-fade-in: fade-in 300ms ease-out both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* layered "farm map" background: topographic lines over soft sky, leaf and sand light */
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23174D3A'%20stroke-opacity%3D'0.07'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E"),
+    radial-gradient(1100px 560px at 96% -6%, #bfe3c9 0%, transparent 60%),
+    radial-gradient(1000px 520px at -6% 14%, #cbe5f6 0%, transparent 56%),
+    radial-gradient(900px 560px at 72% 112%, #f8ddb2 0%, transparent 58%),
+    radial-gradient(700px 420px at 8% 100%, #e6dcf3 0%, transparent 60%),
+    linear-gradient(180deg, #eaf5ec 0%, #f6f1e4 100%);
+  background-size: cover, auto, auto, auto, auto, auto;
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-water);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ecebe4 25%, #f6f5f0 50%, #ecebe4 75%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+.value-transition {
+  transition:
+    color 250ms ease,
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+/* MapLibre tweaks */
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}
+.maplibregl-ctrl-group button {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-break {
+    break-before: page;
+  }
+  .print-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+/* topographic contour lines for coloured landing bands */
+.bg-contours {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23174D3A'%20stroke-opacity%3D'0.08'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E");
+  background-size: cover;
+  background-position: center;
+}
+.bg-contours-light {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23FFFFFF'%20stroke-opacity%3D'0.09'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E");
+  background-size: cover;
+  background-position: center;
+}
