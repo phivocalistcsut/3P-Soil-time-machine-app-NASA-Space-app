@@ -153,18 +153,35 @@ export function RiskStrip({ calendar }: { calendar: VulnerabilityCalendar }) {
   const { month } = useI18n();
   const max = Math.max(...calendar.totals, 1);
   const lv = monthLevels(calendar);
+  const worst = new Set(calendar.worstMonths.slice(0, 3));
   return (
-    <div className="flex h-full items-end gap-[3px] px-3 pb-2 pt-4">
-      {CROP_YEAR_MONTHS.map((m, k) => (
-        <div key={k} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-          <div className="w-full rounded-md" style={{ height: `${Math.max(8, (calendar.totals[k] / max) * 78)}%`, background: DARK_LEVEL[lv[k]] }} />
-          <div
-            className={cn("h-1.5 w-full rounded-full", isBare(calendar, k) ? "bg-[repeating-linear-gradient(45deg,#c49b6c_0_2px,transparent_2px_4px)]" : "bg-lime/70")}
-            aria-hidden
-          />
-          <span className="text-[8px] leading-none text-white/45">{month(m).replace(/^Th(áng)?\s?/, "")}</span>
-        </div>
-      ))}
+    <div className="flex h-full flex-col p-3">
+      <div className="flex min-h-0 flex-1 items-end gap-1 rounded-xl border border-white/10 bg-space-950/55 px-2 pb-2 pt-3 backdrop-blur-sm">
+        {CROP_YEAR_MONTHS.map((m, k) => {
+          const bare = isBare(calendar, k);
+          return (
+            <div key={k} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <div
+                className="anim-grow-y w-full max-w-[16px] rounded-full"
+                style={{
+                  height: `${Math.max(10, (calendar.totals[k] / max) * 100)}%`,
+                  background: `linear-gradient(to top, ${DARK_LEVEL[lv[k]]}cc, ${DARK_LEVEL[lv[k]]})`,
+                  boxShadow: lv[k] >= 2 ? `0 0 12px ${DARK_LEVEL[lv[k]]}55` : undefined,
+                  animationDelay: `${150 + k * 55}ms`,
+                }}
+              />
+              <span
+                className={cn("h-1.5 w-1.5 rounded-full", bare ? "bg-[#c49b6c]" : "bg-lime/80")}
+                title={bare ? "bare" : undefined}
+                aria-hidden
+              />
+              <span className={cn("text-[9px] font-semibold leading-none", worst.has(m) ? "text-white" : "text-white/55")}>
+                {month(m).replace(/^Th(áng)?\s?/, "").replace(/^T/, "")}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

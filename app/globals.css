@@ -61,7 +61,7 @@
   --shadow-card: 0 1px 2px rgba(10, 18, 28, 0.04), 0 6px 20px -12px rgba(10, 18, 28, 0.18);
   --shadow-float: 0 18px 48px -16px rgba(5, 9, 15, 0.38);
 
-  --animate-fade-in: fade-in 300ms ease-out both;
+  --animate-fade-in: fade-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-twinkle: twinkle 6s ease-in-out infinite;
 
@@ -237,6 +237,91 @@ h3,
 }
 @media (forced-colors: active) {
   .landing-title-gradient { background: none; color: CanvasText; }
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion: soft, unhurried entrances. Stagger with style={{ animationDelay }}.
+ * All of it is switched off by the prefers-reduced-motion rule below.
+ * ------------------------------------------------------------------------- */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ken-burns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.anim-rise {
+  animation: rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-slide {
+  animation: slide-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-grow-x {
+  transform-origin: left center;
+  animation: grow-x 1000ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-grow-y {
+  transform-origin: bottom center;
+  animation: grow-y 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-draw {
+  stroke-dasharray: 1;
+  animation: draw 1400ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.anim-ken-burns {
+  animation: ken-burns 2400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* smoother hover lifts everywhere a card moves */
+.lift {
+  transition:
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms ease;
 }
 
 /* MapLibre tweaks */

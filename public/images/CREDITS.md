@@ -39,3 +39,13 @@ Provided by the project team for the "Field info" cards. **Licence still to be c
 | card-soil.webp | Furrowed soil in low sunlight | to confirm |
 | card-drought.webp | Rice field next to cracked, dried mud | to confirm (VietNamNet watermark visible) |
 | card-harvest.webp | Aerial view of green and ripe rice with a combine harvester | to confirm |
+
+## Simulator plan photos
+
+Provided by the project team on 14 November 2026 for the simulator plan cards, the result header and the "full information" button. **Licence still to be confirmed before public release.**
+
+| File | Used for | Description | Source / licence |
+| --- | --- | --- | --- |
+| plan-water.webp | Water-saving plan | Children riding water buffalo beside a pond between rice fields | to confirm |
+| plan-soil.webp | Soil-restoration plan, full-information button | Tractor spraying rows of young soybean | to confirm |
+| plan-fit.webp | Climate-fit plan | Golden terraced rice fields in the mountains | to confirm |
