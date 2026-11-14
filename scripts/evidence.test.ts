@@ -231,6 +231,8 @@ test("POWER checks reported units and never fills required inputs", () => {
 test("ORNL one-pixel sample joins and masks quality bands", async () => {
   assert.equal(normalizeNdvi("2024-01-01", -2000, 0, 0).ndvi, -0.2);
   assert.equal(normalizeNdvi("2024-01-01", 7000, 1, 0).quality, "marginal");
+  assert.equal(normalizeNdvi("2024-01-01", 7000, 1, 0).ndvi, 0.7);
+  assert.equal(normalizeNdvi("2024-01-01", 7000, 2, 0).ndvi, null);
   assert.equal(normalizeNdvi("2024-01-01", 7000, 0, 1 << 10).ndvi, null);
   assert.equal(normalizeNdvi("2024-01-01", -3000, 0, 0).ndvi, null);
   const date = { modis_date: "A2024001", calendar_date: "2024-01-01" };
@@ -244,6 +246,22 @@ test("ORNL one-pixel sample joins and masks quality bands", async () => {
   assert.equal(ndvi.points[0].ndvi, 0.75);
   assert.equal(ndvi.evidence?.productId, "MOD13Q1.061");
   await assert.rejects(fetchNdviSeries(10, 105, { start: "2025-01-01", end: "2025-01-31" }, mock), { message: "unavailable" });
+  // every composite cloudy: an empty series must not be returned (and cached) as an observation
+  const cloudy: typeof fetch = async (request) => {
+    const url = new URL(String(request));
+    if (url.pathname.endsWith("/dates")) return Response.json({ dates: [date] });
+    const band = url.searchParams.get("band");
+    return Response.json({ nrows: 1, ncols: 1, subset: [{ ...date, band, data: [band?.endsWith("_NDVI") ? 7500 : band?.endsWith("_reliability") ? 3 : 0] }] });
+  };
+  await assert.rejects(fetchNdviSeries(10, 105, { start: "2024-01-01", end: "2024-01-01" }, cloudy), { message: "unavailable" });
+  // a provider outage on most requests is thrown, not returned as gaps
+  const flaky: typeof fetch = async (request) => {
+    const url = new URL(String(request));
+    if (url.pathname.endsWith("/dates")) return Response.json({ dates: [date] });
+    if (!url.searchParams.get("band")?.endsWith("_NDVI")) return new Response("busy", { status: 400 });
+    return Response.json({ nrows: 1, ncols: 1, subset: [{ ...date, band: url.searchParams.get("band"), data: [7500] }] });
+  };
+  await assert.rejects(fetchNdviSeries(10, 105, { start: "2024-01-01", end: "2024-01-01" }, flaky));
 });
 
 test("IMERG requires named source and rejects monthly totals with missing days", () => {
