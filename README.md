@@ -6,6 +6,8 @@ A decision-support prototype (NASA Space Apps · climate-resilient crop rotation
 how different crop rotations could affect irrigation demand, soil-related outcomes and climate fit on the same
 piece of land over the next 3–5 years.
 
+**Live demo:** https://soil-time-machine-3p.vercel.app · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E)
+
 > **Tóm tắt (VI):** Ứng dụng web giúp nông dân so sánh nhiều "tương lai" luân canh cho cùng một thửa ruộng:
 > nhu cầu tưới, mức thiếu nước, đa dạng luân canh, carbon hữu cơ đất (RothC, t C/ha) và mức phù hợp khí hậu — dựa trên
 > dữ liệu NASA POWER thật, mô hình quy tắc minh bạch và nhãn dữ liệu rõ ràng (Quan trắc / Ước tính / Minh họa /
@@ -29,11 +31,11 @@ No provider API keys are needed. Offline mode uses previously saved data or the 
 
 ## Demo journey (≈3 minutes)
 
-1. Open `/` → **Try Interactive Demo** (loads the illustrative Thới Lai, Cần Thơ farm).
-2. **Overview**: 10 years of NASA POWER rainfall, temperature and soil wetness; toggle NASA GIBS layers (IMERG, SMAP, MODIS LST).
-3. **Explore Your Farm's Future** → **Time Machine**: pick A/B/C, drag the timeline 2026 → 2031, switch the climate assumption, edit crop cards (drag to swap seasons, click to change crop/month), read *Why did this change?*.
-4. **Compare Futures**: change the year and the priority weights; watch the ranking and the score breakdown update.
-5. **Build My Rotation Plan** → **Planner**: seasonal calendar, per-season requirements and risks, save / print / download.
+1. Open `/` → **Try Interactive Demo** (loads the illustrative Thới Lai, Cần Thơ farm on a real paddy location).
+2. **My Farm**: rain & temperature (NASA POWER, GPM IMERG), soil & moisture (SoilGrids, SMAP), extreme days, greenness from space (MODIS NDVI), risk calendar; map with NASA GIBS layers and a 2016 → now time slider.
+3. **5-Year Simulator**: pick plan A/B/C, drag the year 2026 → 2031, choose a climate assumption or your own rain/heat sliders, read *Why it changes*, the 12-month calendar and the evidence card, edit crops.
+4. **Compare Plans**: plans side by side against current practice; change the priority weights and watch the ranking and the score breakdown update.
+5. **Season Plan**: season-by-season plan for the selected year, whole-field water, print / PDF / text summary.
 
 ## Screens
 
@@ -41,10 +43,11 @@ No provider API keys are needed. Offline mode uses previously saved data or the 
 | --- | --- |
 | `/` | Landing page with a live mini-simulator |
 | `/setup` | 4-step farm setup (map pin, boundary drawing, manual coordinates, search, farm details, soil estimate, ranked priorities, review) |
-| `/overview` | Three-panel farm overview: profile · map with layers/legend · climate & land cards, plus charts |
-| `/simulator` | **Time Machine** — scenario control · map + timeline + climate + soil-future diagram + "why" panel · outcome cards; rotation builder, trends, monthly water, rotation timeline |
-| `/compare` | Three alternatives and the current-practice baseline, configurable weights, grouped bars, score-over-time lines, comparison table with strongest/weakest flags, "Why this scenario?" |
-| `/planner` | Seasonal plan, edit sequence, save locally, print / PDF, text summary download |
+| `/overview` | **My Farm** — field map with NASA layers and time slider, rain & temperature, soil & moisture, extreme days, greenness from space, data sources, risk calendar |
+| `/simulator` | **5-Year Simulator** — choose plan, year and weather (presets or rain/heat sliders); results, why it changes, 12-month calendar, evidence & questions, field map, charts, crop editor |
+| `/compare` | **Compare Plans** — three alternatives against current practice, priority weights, charts, detailed table with strongest/weakest flags, evidence, "Why the top plan?" |
+| `/planner` | **Season Plan** — selected-year plan, season calendar, each season, each year, notes, save / print / PDF / text summary |
+| `/learn` | **Guide & Glossary** — how to use the app, glossary, satellite vs field, crop roles, when to ask an expert |
 | `/methodology` | All data sources, formulas, thresholds, crop catalog, limitations |
 | `/settings` | Language, data mode, horizon, priorities, optional economic inputs, reset |
 
@@ -107,7 +110,11 @@ Pure, deterministic, JSON-serialisable functions (`runEngine(EngineInput) → En
 9. **Fertiliser N proxy** with legume credits; optional **gross margin** only from user-entered (or explicitly illustrative) economics.
 10. **Multi-criteria score** = Σ(weight × criterion) ÷ Σ weights, with per-criterion contributions; criteria without data are excluded.
 
-Default scenarios B and C are generated per farm from the engine's own suitability screen — not hard-coded.
+The three default plans are generated per farm from the engine's own suitability and irrigation screen — not hard-coded — along the real Mekong trade-off:
+**A · Climate fit** keeps the main Winter–Spring rice and puts the best-fitting upland crop in the thirstiest other season ("rice – upland – rice");
+**B · Water-Aware** replaces the season with the highest irrigation need (usually dry-season rice, also the most salinity-exposed) with the upland crop that needs the least water;
+**C · Soil Restoration** puts a legume in that dry season and, every other year, a green-manure crop instead of flood-season rice.
+B and C give up the main rice season, so their income trade-off must be checked locally.
 All parameters are listed on `/methodology`.
 
 ## Verification
@@ -127,9 +134,20 @@ Run `npm test` for adapter, geometry, monthly RothC reference and integration ch
 - Sentinel-2 cloudless 2023 by EOX IT Services GmbH — CC BY-NC-SA 4.0 (non-commercial use; replace for commercial deployments).
 - Basemap © OpenStreetMap contributors © CARTO. Geocoding © OpenStreetMap Nominatim (light use).
 - ISRIC SoilGrids — CC BY 4.0.
+- NASA photographs from the NASA Image and Video Library (images.nasa.gov) — see `public/images/CREDITS.md`; no NASA endorsement implied.
+- RothC reference implementation (Rothamsted Research, `RothC_Py`) — Apache 2.0, used only as a test reference (`data/rothc-reference`).
+
+## Use of SI (AI) tools
+
+Parts of the code, documentation and the landing-page illustrations were produced with the help of SI tools
+(Claude by Anthropic; OpenAI Codex). The prompts used for the RothC work are kept in `docs/prompts`, and commits made by
+SI agents carry their name. SI-generated illustrations carry a visible **"SI-generated"** watermark. NASA photographs and
+all data values come from the cited providers; none are SI-generated. Every SI-assisted change was reviewed and tested
+by the team (`npm test`, TypeScript, ESLint, production build).
 
 ## Limitations
 
 Regional pixels are not field measurements; there is no yield, pest, market or flood-depth model; the soil indicator is
-an estimated RothC SOC balance with low confidence. SoilGrids pixels and crop residues are estimates, paddy factors need local validation, and original RothC excludes permanently waterlogged soils. Validation with local field trials and extension officers is the necessary next step.
+an estimated RothC SOC balance with low confidence — compare plans with each other rather than reading absolute SOC.
+Optical NDVI (MODIS) has long cloud gaps in the Mekong wet season; radar (Sentinel-1) is the next step. SoilGrids pixels and crop residues are estimates, paddy factors need local validation, and original RothC excludes permanently waterlogged soils. Validation with local field trials and extension officers is the necessary next step.
 *This tool provides decision-support scenarios, not a substitute for local agronomic advice or field measurements.*
