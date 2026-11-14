@@ -23,12 +23,7 @@ import { createDemoFarm } from "@/lib/data/demo";
 import { LanguageSwitcher, Logo } from "@/components/common";
 import { buttonClass } from "@/components/ui/primitives";
 import { HeroEarth } from "./hero-earth";
-import {
-  IlloBalance,
-  IlloGrow,
-  IlloLocate,
-  IlloSatellite,
-} from "@/components/illustrations";
+import { StepPhoto } from "./step-photo";
 
 export function Landing() {
   const { L } = useI18n();
@@ -42,7 +37,9 @@ export function Landing() {
   const steps = [
     {
       icon: MapPin,
-      art: IlloLocate,
+      image: "/images/how-it-works/01-farm-location.png",
+      alt: L("Two people overlooking terraced rice fields", "Hai người đứng bên những thửa ruộng bậc thang"),
+      imageClass: "object-cover object-[0%_58%]",
       title: L("Locate your farm", "Chọn vị trí ruộng"),
       text: L(
         "Pin your field on the map, or start from the Mekong Delta demo farm.",
@@ -51,7 +48,9 @@ export function Landing() {
     },
     {
       icon: Layers,
-      art: IlloSatellite,
+      image: "/images/how-it-works/02-field-observation.png",
+      alt: L("An agricultural drone flying above a rice field", "Máy bay nông nghiệp bay phía trên ruộng lúa"),
+      imageClass: "object-cover object-[58%_38%]",
       title: L("Understand your soil and climate", "Tìm hiểu đất và khí hậu"),
       text: L(
         "See regional rainfall, temperature, and soil moisture history for your location.",
@@ -60,7 +59,9 @@ export function Landing() {
     },
     {
       icon: GitCompareArrows,
-      art: IlloGrow,
+      image: "/images/how-it-works/03-crop-rotation.png",
+      alt: L("Crop rotation diagram and examples of planted beds", "Sơ đồ luân canh và các luống cây minh họa"),
+      imageClass: "object-contain",
       title: L("Try new planting plans", "Thử cách trồng mới"),
       text: L(
         "Pick a plan and a year up to 5 years ahead, and see water, soil and risks change.",
@@ -69,7 +70,9 @@ export function Landing() {
     },
     {
       icon: Scale,
-      art: IlloBalance,
+      image: "/images/how-it-works/04-farm-decision.png",
+      alt: L("A grower harvesting leafy vegetables in a field", "Người làm vườn thu hoạch rau trên ruộng"),
+      imageClass: "object-cover object-[60%_48%]",
       title: L("Make a more informed decision", "Chọn phương án phù hợp"),
       text: L(
         "Compare plans against your own priorities and turn one into a season plan.",
@@ -189,7 +192,8 @@ export function Landing() {
           <div className="absolute inset-0 bg-gradient-to-b from-space-950/80 via-space-950/55 to-space-950/95" />
           <div className="absolute inset-0 bg-stars opacity-60 motion-safe:animate-[var(--animate-twinkle)]" />
         </div>
-        <header className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 px-4 py-5 md:px-6">
+        <div aria-hidden className="landing-hero-aura pointer-events-none absolute inset-0 -z-10" />
+        <header className="landing-shell relative flex items-center justify-between gap-3 py-5">
           <Logo light />
           <nav className="flex items-center gap-2">
             <Link href="/methodology" className="hidden rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-white/70 hover:text-white sm:block">
@@ -198,12 +202,12 @@ export function Landing() {
             <LanguageSwitcher dark />
           </nav>
         </header>
-        <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-4 pb-24 pt-10 md:px-6 lg:grid-cols-[1fr_1fr] lg:pb-32 lg:pt-16">
-          <div>
+        <div className="landing-shell relative grid items-center gap-8 pb-24 pt-10 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pb-28 lg:pt-12 xl:gap-16">
+          <div className="relative z-10 min-w-0">
             <p className="eyebrow text-lime-bright">
               {L("See the future of your soil. Shape it today.", "Hiểu đất hôm nay, chủ động mùa vụ ngày mai.")}
             </p>
-            <h1 className="title-caps mt-5 text-[36px] font-extrabold leading-[1.04] md:text-[54px] lg:text-[60px]">
+            <h1 className="landing-title-gradient title-caps mt-5 text-[clamp(2.25rem,4.5vw,4.25rem)] font-extrabold leading-[1.08] [text-wrap:balance]">
               {L("What if you could see the future of your farm?", "Chọn cách trồng hôm nay, chuẩn bị cho những mùa vụ tới.")}
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
@@ -233,7 +237,7 @@ export function Landing() {
       </section>
 
       {/* FACTS: overlaps the hero */}
-      <div className="relative z-10 mx-auto -mt-12 max-w-[1240px] px-4 md:px-6">
+      <div className="landing-shell relative z-10 -mt-12">
         <dl className="grid grid-cols-2 overflow-hidden rounded-3xl border border-line bg-white shadow-[var(--shadow-float)] md:grid-cols-4">
           {facts.map((f, i) => (
             <div key={f.label} className={`px-5 py-6 text-center md:py-8 ${i % 2 ? "border-l border-line" : ""} ${i > 1 ? "border-t border-line md:border-t-0" : ""} ${i === 2 ? "md:border-l" : ""}`}>
@@ -248,23 +252,24 @@ export function Landing() {
       </div>
 
       {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-[1240px] px-4 py-20 md:px-6 lg:py-24">
-        <div className="mx-auto max-w-2xl text-center">
+      <section id="how-it-works" className="landing-shell py-20 lg:py-24">
+        <div className="mx-auto max-w-3xl text-center">
           <p className="eyebrow justify-center text-lime-ink">{L("How it works", "Cách hoạt động")}</p>
-          <h2 className="title-caps mt-3 text-3xl font-extrabold md:text-4xl">
+          <h2 className="landing-title-gradient landing-title-gradient-on-light title-caps mt-3 text-3xl font-extrabold [text-wrap:balance] md:text-[42px] md:leading-[1.15]">
             {L("From one field to several possible futures", "So sánh cách trồng, chọn hướng phù hợp cho ruộng")}
           </h2>
         </div>
-        <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
           {steps.map((s, i) => (
-            <li key={s.title} className="group rounded-3xl border border-line bg-white p-3 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 hover:border-lime hover:shadow-[var(--shadow-float)]">
-              <s.art className="block h-auto w-full rounded-2xl" />
-              <div className="px-2 pb-3 pt-5">
-                <p className="font-display text-xs font-extrabold uppercase tracking-[0.2em] text-lime-ink">
+            <li key={s.title} className="group min-w-0 rounded-[28px] border border-line bg-white p-3 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 hover:border-lime hover:shadow-[var(--shadow-float)]">
+              <StepPhoto src={s.image} alt={s.alt} title={s.title} imageClass={s.imageClass} contain={i === 2} />
+              <div className="px-2 pb-4 pt-5 xl:px-3">
+                <p className="flex items-center gap-2 font-display text-xs font-extrabold uppercase tracking-[0.16em] text-lime-ink">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lime-soft"><s.icon className="h-3.5 w-3.5" aria-hidden /></span>
                   {L("Step", "Bước")} {String(i + 1).padStart(2, "0")}
                 </p>
-                <h3 className="mt-1.5 text-lg font-bold">{s.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{s.text}</p>
+                <h3 className="mt-3 text-xl font-bold leading-snug">{s.title}</h3>
+                <p className="mt-2 text-[15px] leading-[1.7] text-ink-2">{s.text}</p>
               </div>
             </li>
           ))}
@@ -277,10 +282,10 @@ export function Landing() {
           <Image src="/images/mekong-delta.webp" alt="" fill sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-space-950/90 via-space-950/55 to-space-950/10" />
         </div>
-        <div className="mx-auto max-w-[1240px] px-4 py-20 md:px-6 lg:py-28">
+        <div className="landing-shell py-20 lg:py-28">
           <div className="max-w-2xl">
             <p className="eyebrow text-lime-bright">{L("Why it matters", "Vì sao quan trọng")}</p>
-            <h2 className="title-caps mt-3 text-3xl font-extrabold md:text-[42px] md:leading-[1.1]">
+            <h2 className="landing-title-gradient title-caps mt-3 text-3xl font-extrabold [text-wrap:balance] md:text-[42px] md:leading-[1.15]">
               {L("Three pressures meet on every field", "Những thách thức cần cân nhắc trước mỗi mùa vụ")}
             </h2>
             <p className="mt-3 text-sm text-white/70">
@@ -305,11 +310,11 @@ export function Landing() {
       </section>
 
       {/* DATA */}
-      <section className="mx-auto max-w-[1240px] px-4 py-20 md:px-6 lg:py-24">
+      <section className="landing-shell py-20 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <p className="eyebrow text-lime-ink">{L("Powered by Earth observations", "Dựa trên quan sát Trái Đất")}</p>
-            <h2 className="title-caps mt-3 text-3xl font-extrabold md:text-4xl">{L("Real data, honest limits", "Dữ liệu thật, giới hạn minh bạch")}</h2>
+            <h2 className="landing-title-gradient landing-title-gradient-on-light title-caps mt-3 text-3xl font-extrabold [text-wrap:balance] md:text-4xl">{L("Real data, honest limits", "Dữ liệu thật, giới hạn minh bạch")}</h2>
             <p className="mt-4 text-sm leading-relaxed text-ink-2">
               {L(
                 "NASA missions describe the climate and land conditions around your farm. They do not measure or predict the soil health of an individual field. Soil Time Machine combines these regional observations with transparent agronomic rules to explore scenarios — and labels every number as observed, estimated, illustrative or unavailable.",
@@ -349,7 +354,7 @@ export function Landing() {
           <div className="absolute inset-0 bg-stars opacity-50" />
         </div>
         <div className="mx-auto max-w-3xl px-4 py-24 md:py-32">
-          <h2 className="title-caps text-3xl font-extrabold md:text-5xl">
+          <h2 className="landing-title-gradient title-caps text-3xl font-extrabold [text-wrap:balance] md:text-5xl">
             {L("Your next harvest starts with today's decisions.", "Vụ mùa tới bắt đầu từ quyết định hôm nay.")}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm text-white/75">
@@ -371,7 +376,7 @@ export function Landing() {
       </section>
 
       <footer className="bg-space-950 text-white/60">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 py-10 text-xs md:flex-row md:items-start md:justify-between md:px-6">
+        <div className="landing-shell flex flex-col gap-6 py-10 text-xs md:flex-row md:items-start md:justify-between">
           <div className="max-w-xs">
             <Logo light />
             <p className="mt-3">
@@ -385,7 +390,7 @@ export function Landing() {
                 "Sản phẩm độc lập, không do NASA bảo trợ. Dữ liệu: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
               )}
             </p>
-            <p>{L("Photographs: NASA / International Space Station crew.", "Ảnh: NASA / phi hành đoàn Trạm Vũ trụ Quốc tế.")}</p>
+            <p>{L("Background photos: NASA / ISS crew. ", "Ảnh nền: NASA / phi hành đoàn ISS. ")}<a href="/images/CREDITS.md" target="_blank" rel="noreferrer" className="underline underline-offset-2">{L("All image credits", "Thông tin bản quyền ảnh")}</a></p>
           </div>
         </div>
       </footer>
