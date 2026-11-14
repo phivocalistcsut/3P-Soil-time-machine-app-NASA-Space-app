@@ -15,7 +15,7 @@ import { SEASON_ORDER } from "@/lib/data/crops";
 import type { CriterionId, RotationScenario, SimulationResult } from "@/lib/types";
 import { SoilCarbon } from "@/components/sim/soil-carbon";
 import { AXIS, ChartFrame, ChartTooltip, GRID } from "@/components/charts";
-import { ClimateNotice, ModelRainSource, CropIcon, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
+import { ClimateNotice, DataChips, CropIcon, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { InfoTip, Slider } from "@/components/ui/overlays";
 
@@ -180,14 +180,14 @@ export function Compare() {
   return (
     <div className="space-y-5">
       <PageHeader
-        tone="amber"
+        image="earth-limb"
         icon={Scale}
         eyebrow={L("Compare plans", "So sánh cách trồng")}
         title={L("Same field, different plans", "Cùng thửa ruộng, nhiều cách trồng")}
         desc={L(`Up to three plans for ${farm.name}, with the same weather and assumptions.`, `Tối đa ba cách trồng cho ${farm.name}, cùng thời tiết và giả định.`)}
         actions={
           <button
-            className={buttonClass("primary", "lg", "bg-white text-[#8A5A10] hover:bg-amber-soft")}
+            className={buttonClass("primary", "lg")}
             onClick={() => selected && openPlan(selected.id)}
             disabled={!selected}
           >
@@ -195,10 +195,9 @@ export function Compare() {
             <ArrowRight className="h-4 w-4" aria-hidden />
           </button>
         }
+        meta={<DataChips climate={climate} usesImerg={usesImerg} />}
       />
-      <FarmDemoNotice />
       <ClimateNotice climate={climate} />
-      <ModelRainSource usesImerg={usesImerg} />
 
       {/* controls */}
       <Card className="p-4">
@@ -211,7 +210,7 @@ export function Compare() {
                 role="radio"
                 aria-checked={y === year}
                 onClick={() => setYear(y)}
-                className={cn("h-9 rounded-lg border px-3 text-sm font-semibold tabular", y === year ? "border-forest bg-forest text-white" : "border-line bg-white hover:border-leaf")}
+                className={cn("h-9 rounded-full border px-3.5 text-sm font-semibold tabular", y === year ? "border-space-900 bg-space-900 text-white" : "border-line bg-white hover:border-lime")}
               >
                 {y}
                 {i === 0 && <span className="ml-1 text-[10px] font-medium opacity-80">{L("today", "nay")}</span>}
@@ -223,7 +222,7 @@ export function Compare() {
             {scenarios.map((s, i) => {
               const on = chosen.some((c) => c.id === s.id);
               return (
-                <button key={s.id} aria-pressed={on} onClick={() => toggleScenario(s.id)} className={cn("flex h-9 items-center gap-2 rounded-full border px-3 text-sm", on ? "border-forest bg-mint/60 font-semibold" : "border-line bg-white text-ink-2")}>
+                <button key={s.id} aria-pressed={on} onClick={() => toggleScenario(s.id)} className={cn("flex h-9 items-center gap-2 rounded-full border px-3 text-sm", on ? "border-lime-ink bg-lime-soft font-semibold" : "border-line bg-white text-ink-2")}>
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: scenarioColor(s, i) }} aria-hidden />
                   {s.name}
                 </button>
@@ -233,8 +232,8 @@ export function Compare() {
           <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-ink-2">{L("Metrics shown in charts", "Chỉ số hiển thị trên biểu đồ")}</p>
           <div className="flex flex-wrap gap-1.5">
             {CRITERIA.map((k) => (
-              <label key={k} className={cn("flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs", shown.includes(k) ? "border-forest bg-white font-semibold" : "border-line text-ink-3")}>
-                <input type="checkbox" className="h-3.5 w-3.5 accent-forest" checked={shown.includes(k)} onChange={() => setShown((x) => (x.includes(k) ? x.filter((y) => y !== k) : CRITERIA.filter((c) => [...x, k].includes(c))))} />
+              <label key={k} className={cn("flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs", shown.includes(k) ? "border-lime-ink bg-white font-semibold" : "border-line text-ink-3")}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-lime-ink" checked={shown.includes(k)} onChange={() => setShown((x) => (x.includes(k) ? x.filter((y) => y !== k) : CRITERIA.filter((c) => [...x, k].includes(c))))} />
                 {t(`crit.${k}.short`)}
               </label>
             ))}
@@ -246,23 +245,37 @@ export function Compare() {
 
       <SectionPanel id="cards" active={section === "cards"}>
       {/* scenario cards */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Card className="p-4">
-          <h2 className="text-base font-bold">{L("Current practice", "Cách đang trồng")}</h2>
-          <p className="mt-1 text-sm text-ink-2">{output.reference.years[ti].seasons.map((s) => crop(s.cropId)).join(" · ")}</p>
-          <p className="mt-2 text-sm">{num(output.reference.years[ti].waterDemand.median)} mm · {num(output.reference.years[ti].overallScore)} / 100</p>
-          <div className="mt-3 border-t border-line pt-3">
-            <p className="mb-1 text-xs font-semibold">{t("rothc.title")}</p>
-            <SoilCarbon result={output.reference.years[ti]} compact />
+      {/* current practice: the baseline every plan is measured against */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-dashed border-ink-3/50 bg-white px-5 py-4">
+        <div className="min-w-0">
+          <p className="eyebrow text-ink-2">{L("Current practice", "Cách đang trồng")}</p>
+          <p className="mt-1 text-sm font-semibold">{output.reference.years[ti].seasons.map((s) => crop(s.cropId)).join(" · ")}</p>
+        </div>
+        <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <div>
+            <dt className="text-xs text-ink-2">{L("Irrigation", "Tưới")}</dt>
+            <dd className="font-display font-bold tabular">{num(output.reference.years[ti].waterDemand.median)} mm</dd>
           </div>
-        </Card>
+          <div>
+            <dt className="text-xs text-ink-2">{L("Score", "Điểm")}</dt>
+            <dd className="font-display font-bold tabular">{num(output.reference.years[ti].overallScore)} / 100</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-ink-2">{t("rothc.title")}</dt>
+            <dd className="font-display font-bold tabular">
+              {output.reference.years[ti].soilImprovementPotential ? `${num(output.reference.years[ti].soilImprovementPotential!.socTCHa, 2)} t C/ha` : t("status.unavailable")}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {chosen.map((s) => {
           const r = res(s);
           if (!r) return null;
           const color = scenarioColor(s, idx(s));
           const isTop = s.id === top?.id && chosen.length > 1;
           return (
-            <Card key={s.id} className={cn("flex flex-col overflow-hidden", isTop && "ring-2 ring-forest")}>
+            <Card key={s.id} className={cn("flex flex-col overflow-hidden", isTop && "border-lime ring-2 ring-lime")}>
               <div className="h-1.5" style={{ background: color }} aria-hidden />
               <div className="flex items-start justify-between gap-2 px-5 pt-4">
                 <div>
@@ -301,17 +314,11 @@ export function Compare() {
                   </div>
                 ))}
               </div>
-              <dl className="mx-5 mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-lg bg-water-soft/70 p-2">
+              <dl className="mx-5 mt-3 grid grid-cols-3 gap-2 text-xs">
+                <div className="rounded-lg bg-water-soft p-2">
                   <dt className="text-water-ink">{L("Irrigation", "Tưới")}</dt>
                   <dd className="font-display text-lg font-bold tabular">
                     {num(r.waterDemand.median)} <span className="text-[10px] font-medium">mm</span>
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-mint/60 p-2">
-                  <dt className="mb-1 text-leaf-ink">{t("rothc.title")}</dt>
-                  <dd>
-                    <SoilCarbon result={r} compact />
                   </dd>
                 </div>
                 <div className="rounded-lg bg-sand p-2">
@@ -324,6 +331,12 @@ export function Compare() {
                   <dt className="mb-1 text-ink-2">{L("Water stress", "Thiếu nước")}</dt>
                   <dd>
                     <StressBadge level={r.waterRisk.level} />
+                  </dd>
+                </div>
+                <div className="col-span-3 rounded-lg bg-lime-soft p-2">
+                  <dt className="mb-1 text-lime-ink">{t("rothc.title")}</dt>
+                  <dd>
+                    <SoilCarbon result={r} compact notes={false} />
                   </dd>
                 </div>
               </dl>
@@ -403,6 +416,9 @@ export function Compare() {
           );
         })}
       </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-2">
+        {t("rothc.title")}: {t("rothc.depthSource")}. {t("rothc.compactLimit")}
+      </p>
       </SectionPanel>
 
       <SectionPanel id="weights" active={section === "weights"}>

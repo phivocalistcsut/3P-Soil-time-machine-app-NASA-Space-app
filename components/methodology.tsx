@@ -125,7 +125,7 @@ export function Methodology() {
   return (
     <div className="space-y-5">
       <PageHeader
-        tone="teal"
+        image="earth-limb"
         icon={BookOpen}
         eyebrow={L("Data sources & methods", "Nguồn dữ liệu & phương pháp")}
         title={L("Where every number comes from", "Mỗi con số đến từ đâu")}

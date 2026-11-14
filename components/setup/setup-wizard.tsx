@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -262,12 +263,12 @@ export function SetupWizard() {
 
   return (
     <div className="min-h-screen bg-sand">
-      <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[1240px] items-center justify-between gap-3 px-4 md:px-6">
-          <Logo />
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-space-950/95 text-white backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-3 px-4 md:px-6">
+          <Logo light />
           <div className="flex items-center gap-2">
             <button
-              className={buttonClass("ghost", "sm", "hidden sm:inline-flex")}
+              className={buttonClass("glass", "sm", "hidden sm:inline-flex")}
               onClick={() => {
                 setFarm(createDemoFarm());
                 router.push("/overview");
@@ -276,36 +277,42 @@ export function SetupWizard() {
               <FlaskConical className="h-4 w-4" aria-hidden />
               {L("Use demo farm instead", "Dùng trang trại mẫu")}
             </button>
-            <LanguageSwitcher />
+            <LanguageSwitcher dark />
           </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-[1240px] px-4 py-6 md:px-6">
-        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-leaf-ink">{L("Farm setup", "Thiết lập trang trại")}</p>
-            <h1 className="text-2xl font-bold md:text-3xl">{[L("Where is your farm?", "Trang trại của bạn ở đâu?"), L("Tell us about your farm", "Giới thiệu trang trại"), L("What matters most to you?", "Điều gì quan trọng nhất với bạn?"), L("Review your farm profile", "Xem lại hồ sơ trang trại")][step]}</h1>
+        <div className="relative isolate mb-5 overflow-hidden rounded-3xl bg-space-900 px-5 py-6 text-white shadow-[var(--shadow-float)] md:px-8">
+          <div aria-hidden className="absolute inset-0 -z-10">
+            <Image src="/images/mekong-delta.webp" alt="" fill sizes="(min-width: 1240px) 1200px, 100vw" className="object-cover opacity-80" priority />
+            <div className="absolute inset-0 bg-gradient-to-r from-space-950/95 via-space-950/75 to-space-950/30" />
           </div>
-          <ol className="flex items-center gap-1.5" aria-label={L("Progress", "Tiến độ")}>
-            {steps.map((s, i) => (
-              <li key={s} className="flex items-center gap-1.5">
-                <button
-                  onClick={() => i < step && setStep(i)}
-                  disabled={i > step}
-                  aria-current={i === step ? "step" : undefined}
-                  className={cn(
-                    "flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold",
-                    i === step ? "bg-forest text-white" : i < step ? "bg-mint text-forest" : "bg-white text-ink-3 border border-line",
-                  )}
-                >
-                  {i < step ? <Check className="h-3.5 w-3.5" aria-hidden /> : <span className="tabular">{i + 1}</span>}
-                  <span className="hidden sm:inline">{s}</span>
-                </button>
-                {i < steps.length - 1 && <span className="h-px w-3 bg-line md:w-5" aria-hidden />}
-              </li>
-            ))}
-          </ol>
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="eyebrow text-lime-bright">{L("Farm setup", "Thiết lập trang trại")}</p>
+              <h1 className="title-caps mt-1.5 text-2xl font-extrabold md:text-[32px]">{[L("Where is your farm?", "Trang trại của bạn ở đâu?"), L("Tell us about your farm", "Giới thiệu trang trại"), L("What matters most to you?", "Điều gì quan trọng nhất với bạn?"), L("Review your farm profile", "Xem lại hồ sơ trang trại")][step]}</h1>
+            </div>
+            <ol className="flex items-center gap-1.5" aria-label={L("Progress", "Tiến độ")}>
+              {steps.map((s, i) => (
+                <li key={s} className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => i < step && setStep(i)}
+                    disabled={i > step}
+                    aria-current={i === step ? "step" : undefined}
+                    className={cn(
+                      "flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold",
+                      i === step ? "bg-lime text-space-900" : i < step ? "bg-white/15 text-white" : "border border-white/20 text-white/60",
+                    )}
+                  >
+                    {i < step ? <Check className="h-3.5 w-3.5" aria-hidden /> : <span className="tabular">{i + 1}</span>}
+                    <span className="hidden sm:inline">{s}</span>
+                  </button>
+                  {i < steps.length - 1 && <span className="h-px w-3 bg-white/25 md:w-5" aria-hidden />}
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
 
         {!hydrated ? (

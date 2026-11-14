@@ -84,7 +84,7 @@ export function Learn() {
   return (
     <div className="space-y-5">
       <PageHeader
-        tone="violet"
+        image="night-coast"
         icon={GraduationCap}
         eyebrow={L("Guide & glossary", "Hướng dẫn & Thuật ngữ")}
         title={L("Understand the words, trust the numbers", "Hiểu từ ngữ, tin con số")}
@@ -97,8 +97,8 @@ export function Learn() {
         <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {steps.map((s, i) => (
             <li key={s.href}>
-              <Link href={s.href} className="flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-line transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
-                <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl text-white", TONES[s.tone].solid)}>
+              <Link href={s.href} className="flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-line transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)] hover:ring-lime">
+                <span className={cn("flex h-10 w-10 items-center justify-center rounded-full", TONES[s.tone].soft, TONES[s.tone].ink)}>
                   <s.icon className="h-5 w-5" aria-hidden />
                 </span>
                 <span className="mt-3 text-[11px] font-bold uppercase tracking-wide text-ink-3">{L(`Step ${i + 1}`, `Bước ${i + 1}`)}</span>
@@ -129,7 +129,7 @@ export function Learn() {
                 onClick={() => setGroup(g)}
                 className={cn(
                   "h-9 rounded-full px-3 text-xs font-semibold",
-                  group === g ? (g === "all" ? "bg-ink text-white" : cn(TONES[GROUP_TONE[g]].solid, "text-white")) : "bg-sand-2 text-ink-2 hover:text-ink",
+                  group === g ? "bg-space-900 text-white" : "bg-sand-2 text-ink-2 hover:text-ink",
                 )}
               >
                 {g === "all" ? L("All", "Tất cả") : GLOSSARY_GROUPS[g][lang]}
@@ -210,7 +210,7 @@ export function Learn() {
         <div className="grid gap-3 md:grid-cols-2">
           {roles.map((r) => (
             <Card key={r.id} className="overflow-hidden">
-              <div className={cn("flex items-center gap-2 px-4 py-3 text-white", TONES[r.tone].solid)}>
+              <div className={cn("flex items-center gap-2 px-4 py-3", TONES[r.tone].soft, TONES[r.tone].ink)}>
                 <Sprout className="h-4 w-4" aria-hidden />
                 <h3 className="text-sm font-bold">{r.t}</h3>
               </div>
@@ -243,7 +243,7 @@ export function Learn() {
           </ul>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#EFE7F6] px-4 py-3">
             <p className="text-sm">{L("Each plan comes with a ready list of questions for your extension officer.", "Mỗi cách trồng có sẵn danh sách câu hỏi cho cán bộ khuyến nông.")}</p>
-            <Link href="/simulator#evidence" className={buttonClass("primary", "md", "bg-[#6A4C93] hover:bg-[#5B3F86]")}>
+            <Link href="/simulator#evidence" className={buttonClass("primary", "md")}>
               {L("See the questions", "Xem câu hỏi")}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>

@@ -1,43 +1,69 @@
 @import "tailwindcss";
 
+/*
+ * Design language: "Earth from orbit".
+ * Outside (landing, page headers, navigation) is dark space with NASA photography;
+ * inside (data, charts, forms) is bright and calm so numbers stay easy to read.
+ * One accent — fresh rice-shoot lime — ties nature and space together.
+ */
 @theme {
-  --color-forest: #174d3a;
-  --color-forest-deep: #10382d;
-  --color-leaf: #66ad79;
-  --color-leaf-ink: #2f6e45;
-  --color-mint: #ddf0e2;
+  /* space (dark surfaces) */
+  --color-space-950: #05090f;
+  --color-space-900: #0a121c;
+  --color-space-800: #111d2a;
+  --color-space-700: #1a2a3a;
+  --color-space-600: #2a3d50;
+
+  /* accent: young rice / chlorophyll lime */
+  --color-lime: #8dc63f;
+  --color-lime-bright: #a8dc5c;
+  --color-lime-soft: #eef7e1;
+  --color-lime-ink: #3d6814;
+
+  /* brand greens (kept names so existing components inherit the new look) */
+  --color-forest: #163a2c;
+  --color-forest-deep: #0c241b;
+  --color-leaf: #8dc63f;
+  --color-leaf-ink: #3d6814;
+  --color-mint: #eef7e1;
   --color-earth: #c49b6c;
   --color-earth-ink: #7a5428;
-  --color-sand: #f7f6f1;
-  --color-sand-2: #efede5;
-  --color-ink: #21312b;
-  --color-ink-2: #5d6d65;
-  --color-ink-3: #86938c;
-  --color-line: #e2e5de;
+
+  /* neutrals */
+  --color-sand: #f5f6f2;
+  --color-sand-2: #eceee8;
+  --color-ink: #17221d;
+  --color-ink-2: #56645d;
+  --color-ink-3: #85918b;
+  --color-line: #e1e5de;
+
+  /* semantic */
   --color-water: #4a94c7;
   --color-water-ink: #24628d;
-  --color-water-soft: #e3f0f8;
+  --color-water-soft: #e6f1f8;
   --color-amber: #e4a84c;
   --color-amber-ink: #8a5a10;
-  --color-amber-soft: #fbf0dc;
+  --color-amber-soft: #fbf1df;
   --color-risk: #d97167;
   --color-risk-ink: #a63f33;
-  --color-risk-soft: #f9e5e2;
+  --color-risk-soft: #f9e6e3;
   --color-neutral: #a3ada8;
 
+  /* scenario colours: validated for colour-vision deficiency, do not change */
   --color-scn-a: #b57b38;
   --color-scn-b: #4a94c7;
   --color-scn-c: #287043;
   --color-scn-d: #7d5ba6;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-display: var(--font-exo), var(--font-inter), ui-sans-serif, sans-serif;
 
-  --shadow-card: 0 1px 2px rgba(16, 56, 45, 0.05), 0 4px 16px -8px rgba(16, 56, 45, 0.12);
-  --shadow-float: 0 12px 40px -12px rgba(16, 56, 45, 0.28);
+  --shadow-card: 0 1px 2px rgba(10, 18, 28, 0.04), 0 6px 20px -12px rgba(10, 18, 28, 0.18);
+  --shadow-float: 0 18px 48px -16px rgba(5, 9, 15, 0.38);
 
   --animate-fade-in: fade-in 300ms ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-twinkle: twinkle 6s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -57,6 +83,15 @@
       background-position: 200% 0;
     }
   }
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
 
 :root {
@@ -68,16 +103,7 @@ html {
 }
 
 body {
-  /* layered "farm map" background: topographic lines over soft sky, leaf and sand light */
-  background:
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23174D3A'%20stroke-opacity%3D'0.07'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E"),
-    radial-gradient(1100px 560px at 96% -6%, #bfe3c9 0%, transparent 60%),
-    radial-gradient(1000px 520px at -6% 14%, #cbe5f6 0%, transparent 56%),
-    radial-gradient(900px 560px at 72% 112%, #f8ddb2 0%, transparent 58%),
-    radial-gradient(700px 420px at 8% 100%, #e6dcf3 0%, transparent 60%),
-    linear-gradient(180deg, #eaf5ec 0%, #f6f1e4 100%);
-  background-size: cover, auto, auto, auto, auto, auto;
-  background-attachment: fixed;
+  background: var(--color-sand);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01";
@@ -88,7 +114,32 @@ h2,
 h3,
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
+}
+
+/* uppercase display titles in the photo bands */
+.title-caps {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* small uppercase label above a title, with an "orbit" dash */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-lime);
 }
 
 :focus-visible {
@@ -102,7 +153,7 @@ h3,
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #ecebe4 25%, #f6f5f0 50%, #ecebe4 75%);
+  background: linear-gradient(90deg, #eceee8 25%, #f7f8f5 50%, #eceee8 75%);
   background-size: 200% 100%;
   animation: var(--animate-shimmer);
 }
@@ -112,6 +163,33 @@ h3,
     color 250ms ease,
     opacity 250ms ease,
     transform 250ms ease;
+}
+
+/* starfield for dark surfaces (pure CSS, no image) */
+.bg-stars {
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 72%, rgba(255, 255, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 44% 30%, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 61% 84%, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 73% 12%, rgba(255, 255, 255, 0.75) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 86% 58%, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 93% 26%, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 64%, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 52%, rgba(255, 255, 255, 0.35) 50%, transparent 51%);
+  background-size: 420px 420px;
+}
+
+/* thin orbit rings, used as decoration on dark bands */
+.orbit-rings {
+  background:
+    radial-gradient(closest-side, transparent 97%, rgba(168, 220, 92, 0.22) 98%, transparent 100%),
+    radial-gradient(closest-side, transparent 97%, rgba(255, 255, 255, 0.08) 98%, transparent 100%);
+  background-size:
+    100% 100%,
+    70% 70%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* MapLibre tweaks */
@@ -148,16 +226,4 @@ h3,
     box-shadow: none !important;
     border: 1px solid #ccc !important;
   }
-}
-
-/* topographic contour lines for coloured landing bands */
-.bg-contours {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23174D3A'%20stroke-opacity%3D'0.08'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E");
-  background-size: cover;
-  background-position: center;
-}
-.bg-contours-light {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201440%20900'%20preserveAspectRatio%3D'xMidYMid%20slice'%20fill%3D'none'%20stroke%3D'%23FFFFFF'%20stroke-opacity%3D'0.09'%20stroke-width%3D'1.3'%3E%3Cpath%20d%3D'M-40%2070%20C%20240%2030%2C%20420%20110%2C%20720%2062%20S%201200%2030%2C%201480%2080'%2F%3E%3Cpath%20d%3D'M-40%20165%20C%20240%20107%2C%20420%20223%2C%20720%20157%20S%201200%20107%2C%201480%20175'%2F%3E%3Cpath%20d%3D'M-40%20260%20C%20240%20184%2C%20420%20336%2C%20720%20252%20S%201200%20184%2C%201480%20270'%2F%3E%3Cpath%20d%3D'M-40%20355%20C%20240%20315%2C%20420%20395%2C%20720%20347%20S%201200%20315%2C%201480%20365'%2F%3E%3Cpath%20d%3D'M-40%20450%20C%20240%20392%2C%20420%20508%2C%20720%20442%20S%201200%20392%2C%201480%20460'%2F%3E%3Cpath%20d%3D'M-40%20545%20C%20240%20469%2C%20420%20621%2C%20720%20537%20S%201200%20469%2C%201480%20555'%2F%3E%3Cpath%20d%3D'M-40%20640%20C%20240%20600%2C%20420%20680%2C%20720%20632%20S%201200%20600%2C%201480%20650'%2F%3E%3Cpath%20d%3D'M-40%20735%20C%20240%20677%2C%20420%20793%2C%20720%20727%20S%201200%20677%2C%201480%20745'%2F%3E%3Cpath%20d%3D'M-40%20830%20C%20240%20754%2C%20420%20906%2C%20720%20822%20S%201200%20754%2C%201480%20840'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'150'%20ry%3D'70'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'108'%20ry%3D'50'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'69'%20ry%3D'32'%2F%3E%3Cellipse%20cx%3D'1110'%20cy%3D'250'%20rx%3D'33'%20ry%3D'15'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'170'%20ry%3D'80'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'122'%20ry%3D'58'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'78'%20ry%3D'37'%2F%3E%3Cellipse%20cx%3D'300'%20cy%3D'640'%20rx%3D'37'%20ry%3D'18'%2F%3E%3C%2Fsvg%3E");
-  background-size: cover;
-  background-position: center;
 }

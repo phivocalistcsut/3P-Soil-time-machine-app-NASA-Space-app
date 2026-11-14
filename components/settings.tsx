@@ -83,7 +83,7 @@ export function Settings() {
 
   return (
     <div className="space-y-5">
-      <PageHeader tone="earth" icon={SettingsIcon} eyebrow={L("Settings", "Cài đặt")} title={L("Preferences", "Tùy chọn")} desc={L("Everything is stored only in this browser.", "Mọi thứ chỉ được lưu trong trình duyệt này.")} />
+      <PageHeader image="orbital-sunrise" icon={SettingsIcon} eyebrow={L("Settings", "Cài đặt")} title={L("Preferences", "Tùy chọn")} desc={L("Everything is stored only in this browser.", "Mọi thứ chỉ được lưu trong trình duyệt này.")} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="flex items-center gap-2 text-base font-semibold">

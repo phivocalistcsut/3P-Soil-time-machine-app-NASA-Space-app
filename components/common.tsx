@@ -153,18 +153,20 @@ export function Logo({ className, light }: { className?: string; light?: boolean
   const { L } = useI18n();
   return (
     <Link href="/" className={cn("flex items-center gap-2.5", className)} aria-label="Soil Time Machine">
-      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden>
-        <circle cx="16" cy="16" r="15" fill={light ? "#DDF0E2" : "#174D3A"} />
-        <path d="M5 18.5h22" stroke={light ? "#174D3A" : "#66AD79"} strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M6.5 22.5h19" stroke={light ? "#174D3A" : "#C49B6C"} strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
-        <path d="M9 26h14" stroke={light ? "#174D3A" : "#C49B6C"} strokeWidth="1.6" strokeLinecap="round" opacity=".6" />
-        <path d="M16 18V9.5" stroke={light ? "#174D3A" : "#fff"} strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M16 12c0-3 2.4-4.8 5.5-4.6.2 3.1-2.2 5.4-5.5 4.6Z" fill={light ? "#174D3A" : "#66AD79"} />
-        <path d="M16 14.5c0-2.4-1.9-3.9-4.4-3.7-.1 2.5 1.8 4.3 4.4 3.7Z" fill={light ? "#174D3A" : "#DDF0E2"} />
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden>
+        {/* planet + soil layers, a sprout, and an orbit */}
+        <circle cx="17" cy="17" r="11" fill={light ? "#0A121C" : "#163A2C"} stroke={light ? "#A8DC5C" : "#163A2C"} strokeWidth="1.2" />
+        <path d="M7.6 20h18.8" stroke="#C49B6C" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M9.6 23.6h14.8" stroke="#C49B6C" strokeWidth="1.4" strokeLinecap="round" opacity=".6" />
+        <path d="M17 20v-7.4" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M17 14.6c0-2.7 2.1-4.3 4.9-4.1.2 2.8-2 4.8-4.9 4.1Z" fill="#8DC63F" />
+        <path d="M17 16.6c0-2.1-1.7-3.4-3.9-3.2-.1 2.2 1.6 3.8 3.9 3.2Z" fill="#A8DC5C" />
+        <ellipse cx="17" cy="17" rx="16" ry="5.2" transform="rotate(-22 17 17)" fill="none" stroke="#8DC63F" strokeWidth="1.1" strokeDasharray="0 0" opacity=".9" />
+        <circle cx="31.2" cy="11.2" r="1.6" fill="#A8DC5C" />
       </svg>
-      <span className={cn("font-display text-[15px] font-bold leading-none", light ? "text-white" : "text-forest")}>
+      <span className={cn("font-display text-[15px] font-extrabold uppercase leading-none tracking-wide", light ? "text-white" : "text-ink")}>
         Soil Time Machine
-        <span className={cn("block text-[10px] font-medium tracking-wide", light ? "text-mint/80" : "text-ink-3")}>
+        <span className={cn("mt-1 block text-[10px] font-medium normal-case tracking-[0.08em]", light ? "text-lime-bright/80" : "text-ink-3")}>
           {L("Crop rotation futures", "Tương lai luân canh")}
         </span>
       </span>
@@ -181,9 +183,9 @@ export function LanguageSwitcher({ className, dark }: { className?: string; dark
     <div
       role="group"
       aria-label="Language / Ngôn ngữ"
-      className={cn("inline-flex items-center rounded-full border p-0.5 text-xs font-semibold", dark ? "border-white/20 bg-white/10" : "border-line bg-white", className)}
+      className={cn("inline-flex items-center rounded-full border p-0.5 text-xs font-semibold", dark ? "border-white/20 bg-white/5" : "border-line bg-white", className)}
     >
-      <Languages className={cn("mx-1.5 h-3.5 w-3.5", dark ? "text-mint" : "text-ink-3")} aria-hidden />
+      <Languages className={cn("mx-1.5 h-3.5 w-3.5", dark ? "text-lime-bright" : "text-ink-3")} aria-hidden />
       {(["en", "vi"] as const).map((l) => (
         <button
           key={l}
@@ -191,7 +193,7 @@ export function LanguageSwitcher({ className, dark }: { className?: string; dark
           aria-pressed={lang === l}
           className={cn(
             "h-7 min-w-9 rounded-full px-2.5 transition-colors",
-            lang === l ? (dark ? "bg-white text-forest" : "bg-forest text-white") : dark ? "text-white/80 hover:text-white" : "text-ink-2 hover:text-ink",
+            lang === l ? (dark ? "bg-lime text-space-900" : "bg-space-900 text-white") : dark ? "text-white/80 hover:text-white" : "text-ink-2 hover:text-ink",
           )}
         >
           {l === "en" ? "EN" : "VI"}
@@ -233,29 +235,44 @@ export function ClimateNotice({ climate, className }: { climate: ClimateState; c
       </div>
     );
   }
-  if (d.cached) {
-    return (
-      <div role="note" className={cn("flex items-start gap-2.5 rounded-xl border border-line bg-white px-3.5 py-2.5 text-xs text-ink-2", className)}>
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-water-ink" aria-hidden />
-        <p>
-          {L(
-            `Using cached NASA POWER climate history retrieved ${d.retrievedAt.slice(0, 10)}.`,
-            `Đang dùng lịch sử khí hậu NASA POWER đã lưu ngày ${d.retrievedAt.slice(0, 10)}.`,
-          )}
-        </p>
-      </div>
-    );
-  }
   return null;
 }
 
-export function ModelRainSource({ usesImerg }: { usesImerg: boolean }) {
+const chip = "inline-flex h-7 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 text-[11.5px] font-medium text-white/85 backdrop-blur";
+
+/** Compact data-provenance chips for the dark page header: demo flag, climate cache date, rain source. */
+export function DataChips({ climate, usesImerg }: { climate?: ClimateState; usesImerg?: boolean }) {
   const { L } = useI18n();
-  return <p className="text-xs text-ink-2">{usesImerg
-    ? L("Rain input: GPM IMERG. Other climate inputs: NASA POWER.", "Đầu vào mưa: GPM IMERG. Các biến khí hậu khác: NASA POWER.")
-    : L("Rain and climate inputs: NASA POWER.", "Đầu vào mưa và khí hậu: NASA POWER.")}{" "}
-    <Link href="/overview#sources" className="font-semibold text-forest underline">{L("View data sources", "Xem nguồn dữ liệu")}</Link>
-  </p>;
+  const farm = useApp((s) => s.farm);
+  const d = climate?.data;
+  return (
+    <>
+      {farm?.isDemo && (
+        <span className={cn(chip, "border-amber/50 text-amber")}>
+          <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+          {L("Demo farm", "Trang trại mẫu")}
+          <InfoTip label={L("About the demo farm", "Về trang trại mẫu")} className="-mr-1 text-amber hover:bg-white/10 hover:text-white">
+            {L(
+              "Farm details are illustrative. Soil values carry their own source labels. Climate comes from real NASA POWER data for this location.",
+              "Thông tin ruộng là minh họa. Giá trị đất có nhãn nguồn riêng. Khí hậu lấy từ dữ liệu NASA POWER thật tại vị trí này.",
+            )}
+          </InfoTip>
+        </span>
+      )}
+      {d?.cached && d.status !== "illustrative" && (
+        <span className={chip}>
+          <Info className="h-3.5 w-3.5 text-water" aria-hidden />
+          {L(`NASA POWER · saved ${d.retrievedAt.slice(0, 10)}`, `NASA POWER · lưu ngày ${d.retrievedAt.slice(0, 10)}`)}
+        </span>
+      )}
+      {usesImerg !== undefined && (
+        <Link href="/overview#sources" className={cn(chip, "hover:border-lime hover:text-white")}>
+          <Satellite className="h-3.5 w-3.5 text-lime-bright" aria-hidden />
+          {usesImerg ? L("Rain: GPM IMERG · climate: NASA POWER", "Mưa: GPM IMERG · khí hậu: NASA POWER") : L("Rain & climate: NASA POWER", "Mưa & khí hậu: NASA POWER")}
+        </Link>
+      )}
+    </>
+  );
 }
 
 export function FarmDemoNotice({ className }: { className?: string }) {
@@ -293,7 +310,7 @@ export function NoFarmState() {
   const setFarm = useApp((s) => s.setFarm);
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center rounded-3xl border border-dashed border-line bg-white px-6 py-12 text-center">
-      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-mint text-forest">
+      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-lime-soft text-lime-ink">
         <Sprout className="h-7 w-7" aria-hidden />
       </span>
       <h2 className="text-xl font-bold">{L("No farm profile yet", "Chưa có hồ sơ trang trại")}</h2>
@@ -326,7 +343,7 @@ export function Term({ id, children, className }: { id: string; children?: React
   return (
     <PopoverRoot>
       <PopoverTrigger
-        className={cn("cursor-help rounded-sm underline decoration-dotted decoration-[1.5px] underline-offset-[3px] hover:decoration-forest", className)}
+        className={cn("cursor-help rounded-sm underline decoration-dotted decoration-[1.5px] underline-offset-[3px] hover:decoration-lime-ink", className)}
         onClick={(e) => e.stopPropagation()}
       >
         {children ?? g.term[lang]}
@@ -334,7 +351,7 @@ export function Term({ id, children, className }: { id: string; children?: React
       <PopoverContent className="w-[290px] text-xs leading-relaxed" align="start">
         <p className="text-sm font-semibold text-ink">{g.term[lang]}</p>
         <p className="mt-1 text-ink-2">{g.short[lang]}</p>
-        <Link href="/learn#glossary" className="mt-2 inline-block font-semibold text-[#5B3F86] hover:underline">
+        <Link href="/learn#glossary" className="mt-2 inline-block font-semibold text-lime-ink hover:underline">
           {L("More in the Guide →", "Xem thêm trong Hướng dẫn →")}
         </Link>
       </PopoverContent>

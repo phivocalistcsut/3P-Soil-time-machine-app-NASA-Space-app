@@ -24,7 +24,6 @@ import { useHydrated } from "@/lib/hooks";
 import { LanguageSwitcher, Logo } from "@/components/common";
 import { Sheet } from "@/components/ui/overlays";
 import { Skeleton, cn } from "@/components/ui/primitives";
-import { TONES, type Tone } from "@/components/ui/sections";
 
 interface NavItem {
   href: string;
@@ -33,33 +32,35 @@ interface NavItem {
   vi: string;
   shortEn: string;
   shortVi: string;
-  tone: Tone;
 }
 
-export const NAV: NavItem[] = [
-  { href: "/overview", icon: Sprout, en: "My Farm", vi: "Ruộng của tôi", shortEn: "My Farm", shortVi: "Ruộng", tone: "green" },
-  { href: "/simulator", icon: TrendingUp, en: "5-Year Simulator", vi: "Mô phỏng 5 năm", shortEn: "Simulate", shortVi: "Mô phỏng", tone: "blue" },
-  { href: "/compare", icon: Scale, en: "Compare Plans", vi: "So sánh cách trồng", shortEn: "Compare", shortVi: "So sánh", tone: "amber" },
-  { href: "/planner", icon: CalendarRange, en: "Season Plan", vi: "Kế hoạch mùa vụ", shortEn: "Plan", shortVi: "Kế hoạch", tone: "leaf" },
-  { href: "/learn", icon: GraduationCap, en: "Guide & Glossary", vi: "Hướng dẫn & Thuật ngữ", shortEn: "Guide", shortVi: "Hướng dẫn", tone: "violet" },
-  { href: "/methodology", icon: BookOpen, en: "Data sources", vi: "Nguồn dữ liệu", shortEn: "Data", shortVi: "Dữ liệu", tone: "teal" },
-  { href: "/settings", icon: Settings, en: "Settings", vi: "Cài đặt", shortEn: "Settings", shortVi: "Cài đặt", tone: "earth" },
+const NAV: NavItem[] = [
+  { href: "/overview", icon: Sprout, en: "My Farm", vi: "Ruộng của tôi", shortEn: "My Farm", shortVi: "Ruộng" },
+  { href: "/simulator", icon: TrendingUp, en: "5-Year Simulator", vi: "Mô phỏng 5 năm", shortEn: "Simulate", shortVi: "Mô phỏng" },
+  { href: "/compare", icon: Scale, en: "Compare Plans", vi: "So sánh cách trồng", shortEn: "Compare", shortVi: "So sánh" },
+  { href: "/planner", icon: CalendarRange, en: "Season Plan", vi: "Kế hoạch mùa vụ", shortEn: "Plan", shortVi: "Kế hoạch" },
+  { href: "/learn", icon: GraduationCap, en: "Guide & Glossary", vi: "Hướng dẫn & Thuật ngữ", shortEn: "Guide", shortVi: "Hướng dẫn" },
+  { href: "/methodology", icon: BookOpen, en: "Data sources", vi: "Nguồn dữ liệu", shortEn: "Data", shortVi: "Dữ liệu" },
+  { href: "/settings", icon: Settings, en: "Settings", vi: "Cài đặt", shortEn: "Settings", shortVi: "Cài đặt" },
 ];
+const PRIMARY = 4;
 
-function DataModePill({ dark }: { dark?: boolean }) {
+function DataModePill({ iconOnly }: { iconOnly?: boolean }) {
   const { L } = useI18n();
   const mode = useApp((s) => s.dataMode);
+  const label = mode === "live" ? L("Live NASA data", "Dữ liệu NASA trực tuyến") : L("Offline mode", "Ngoại tuyến");
   return (
     <Link
       href="/settings"
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium",
-        dark ? "bg-white/10 text-mint hover:bg-white/15" : mode === "live" ? "bg-water-soft text-water-ink" : "bg-sand-2 text-ink-2",
+        "inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium",
+        mode === "live" ? "border-lime/40 text-lime-bright hover:bg-white/5" : "border-white/20 text-white/70 hover:bg-white/5",
       )}
       title={L("Data mode — change in Settings", "Chế độ dữ liệu — đổi trong Cài đặt")}
+      aria-label={iconOnly ? label : undefined}
     >
       {mode === "live" ? <Wifi className="h-3.5 w-3.5" aria-hidden /> : <WifiOff className="h-3.5 w-3.5" aria-hidden />}
-      {mode === "live" ? L("Live NASA data", "Dữ liệu NASA trực tuyến") : L("Offline mode", "Ngoại tuyến")}
+      {!iconOnly && label}
     </Link>
   );
 }
@@ -70,103 +71,108 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const farm = useApp((s) => s.farm);
   const hydrated = useHydrated();
   const [more, setMore] = useState(false);
+  const isActive = (href: string) => !!pathname?.startsWith(href);
 
   return (
-    <div className="min-h-screen lg:pl-[264px] print:min-h-0 print:pl-0">
+    <div className="flex min-h-screen flex-col print:min-h-0">
       <a href="#main" className="sr-only z-[100] rounded bg-white px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
         {L("Skip to content", "Bỏ qua tới nội dung")}
       </a>
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[264px] flex-col bg-gradient-to-b from-forest-deep via-[#123f32] to-[#0d2f25] text-white lg:flex no-print">
-        <div className="px-5 pb-4 pt-5">
-          <Logo light />
-        </div>
-        {hydrated && farm && (
-          <Link href="/overview" className="mx-3 mb-4 rounded-2xl bg-white/10 px-3.5 py-3 ring-1 ring-white/10 hover:bg-white/15">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-mint/70">{L("Your field", "Ruộng đang xem")}</p>
-            <p className="truncate text-sm font-semibold">{farm.name}</p>
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-mint/75">
-              <MapPin className="h-3 w-3" aria-hidden />
-              {num(farm.latitude, 3)}°, {num(farm.longitude, 3)}° · {num(farm.areaHa, 1)} ha
-            </p>
-          </Link>
-        )}
-        <nav aria-label={L("Main", "Chính")} className="flex flex-1 flex-col gap-1 px-3">
-          {NAV.map((n, i) => {
-            const active = pathname?.startsWith(n.href);
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group flex h-12 items-center gap-3 rounded-xl px-2.5 text-[14px] font-medium transition-colors",
-                  active ? "bg-white text-forest-deep shadow-sm" : "text-mint/90 hover:bg-white/10 hover:text-white",
-                  i === 4 && "mt-3",
-                )}
-              >
-                <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", TONES[n.tone].solid)}>
-                  <n.icon className="h-[17px] w-[17px]" aria-hidden />
-                </span>
-                {L(n.en, n.vi)}
-              </Link>
-            );
-          })}
-          <Link href="/setup" className="mt-3 flex h-11 items-center gap-2 rounded-xl border border-dashed border-white/25 px-3 text-sm text-mint/85 hover:border-white/50 hover:text-white">
-            <Plus className="h-4 w-4" aria-hidden />
-            {L("New farm profile", "Tạo hồ sơ trang trại")}
-          </Link>
-        </nav>
-        <div className="space-y-3 border-t border-white/10 px-4 py-4">
-          <DataModePill dark />
-          <LanguageSwitcher dark />
-          <p className="text-[10px] leading-snug text-mint/60">
-            {L("NASA Space Apps · Climate-resilient crop rotation prototype", "NASA Space Apps · Nguyên mẫu luân canh thích ứng khí hậu")}
-          </p>
-        </div>
-      </aside>
 
-      {/* Top bar (mobile + tablet) */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 bg-forest-deep px-4 text-white lg:hidden no-print">
-        <Logo light />
-        <LanguageSwitcher dark />
+      {/* Top bar: full navigation on wide screens, logo + language on small ones */}
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-space-950/95 text-white backdrop-blur no-print">
+        <div className="mx-auto flex h-16 max-w-[1360px] items-center gap-4 px-4 md:px-6 lg:px-8">
+          <Logo light className="shrink-0" />
+          <nav aria-label={L("Main", "Chính")} className="ml-4 hidden flex-1 items-center gap-0.5 xl:flex">
+            {NAV.map((n, i) => {
+              const active = isActive(n.href);
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative flex h-16 items-center gap-2 px-3 text-[12.5px] font-semibold uppercase tracking-[0.08em] transition-colors",
+                    active ? "text-white" : "text-white/60 hover:text-white",
+                    i === PRIMARY && "ml-3 border-l border-white/10 pl-5",
+                  )}
+                >
+                  <n.icon className={cn("h-4 w-4", active ? "text-lime-bright" : "")} aria-hidden />
+                  {L(n.shortEn, n.shortVi)}
+                  {active && <span aria-hidden className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-lime" />}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            {hydrated && farm && (
+              <Link
+                href="/overview"
+                className="hidden max-w-[220px] items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 text-xs hover:border-lime 2xl:flex"
+                title={`${num(farm.latitude, 3)}°, ${num(farm.longitude, 3)}° · ${num(farm.areaHa, 1)} ha`}
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-lime-bright" aria-hidden />
+                <span className="truncate font-semibold">{farm.name}</span>
+              </Link>
+            )}
+            <span className="hidden xl:inline-flex">
+              <DataModePill iconOnly />
+            </span>
+            <LanguageSwitcher dark />
+            <Link
+              href="/setup"
+              className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 hover:border-lime hover:text-white xl:flex"
+              title={L("New farm profile", "Tạo hồ sơ trang trại")}
+              aria-label={L("New farm profile", "Tạo hồ sơ trang trại")}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <main id="main" className="mx-auto max-w-[1440px] px-4 pb-28 pt-5 md:px-6 lg:px-8 lg:pb-12 lg:pt-7 print:p-0">
+      <main id="main" className="mx-auto w-full max-w-[1360px] flex-1 px-4 pb-28 pt-5 md:px-6 lg:px-8 xl:pb-12 xl:pt-7 print:p-0">
         {hydrated ? (
           children
         ) : (
           <div className="space-y-4" aria-busy="true">
-            <Skeleton className="h-28 rounded-3xl" />
-            <Skeleton className="h-20" />
+            <Skeleton className="h-40 rounded-3xl" />
+            <Skeleton className="h-12 rounded-full" />
             <Skeleton className="h-72" />
           </div>
         )}
       </main>
 
-      {/* Mobile bottom navigation */}
+      <footer className="hidden border-t border-line px-4 py-5 text-center text-[11px] text-ink-3 xl:block no-print">
+        {L(
+          "NASA Space Apps · climate-resilient crop rotation prototype · Photographs: NASA / International Space Station",
+          "NASA Space Apps · nguyên mẫu luân canh thích ứng khí hậu · Ảnh: NASA / Trạm Vũ trụ Quốc tế",
+        )}
+      </footer>
+
+      {/* Mobile + tablet bottom navigation */}
       <nav
         aria-label={L("Main", "Chính")}
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden no-print"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/10 bg-space-950 pb-[env(safe-area-inset-bottom)] text-white xl:hidden no-print"
       >
-        {NAV.slice(0, 4).map((n) => {
-          const active = pathname?.startsWith(n.href);
+        {NAV.slice(0, PRIMARY).map((n) => {
+          const active = isActive(n.href);
           return (
             <Link
               key={n.href}
               href={n.href}
               aria-current={active ? "page" : undefined}
-              className={cn("flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10.5px] font-semibold", active ? TONES[n.tone].ink : "text-ink-2")}
+              className={cn("flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10.5px] font-semibold", active ? "text-white" : "text-white/60")}
             >
-              <span className={cn("flex h-8 w-8 items-center justify-center rounded-xl", active ? cn(TONES[n.tone].solid, "text-white") : "")}>
+              <span className={cn("flex h-8 w-12 items-center justify-center rounded-full", active && "bg-lime text-space-900")}>
                 <n.icon className="h-5 w-5" aria-hidden />
               </span>
               <span className="max-w-[72px] truncate">{L(n.shortEn, n.shortVi)}</span>
             </Link>
           );
         })}
-        <button onClick={() => setMore(true)} className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10.5px] font-semibold text-ink-2">
-          <span className="flex h-8 w-8 items-center justify-center">
+        <button onClick={() => setMore(true)} className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10.5px] font-semibold text-white/60">
+          <span className="flex h-8 w-12 items-center justify-center">
             <MoreHorizontal className="h-5 w-5" aria-hidden />
           </span>
           {L("More", "Thêm")}
@@ -174,15 +180,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </nav>
       <Sheet open={more} onOpenChange={setMore} title={L("More", "Thêm")}>
         <div className="grid gap-2 pb-4">
-          {[...NAV.slice(4), { href: "/setup", icon: Plus, en: "New farm profile", vi: "Tạo hồ sơ trang trại", shortEn: "", shortVi: "", tone: "green" as Tone }].map((n) => (
-            <Link key={n.href} href={n.href} onClick={() => setMore(false)} className="flex h-14 items-center gap-3 rounded-2xl border border-line px-4 text-sm font-semibold">
-              <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl text-white", TONES[n.tone].solid)}>
-                <n.icon className="h-5 w-5" aria-hidden />
+          {[...NAV.slice(PRIMARY), { href: "/setup", icon: Plus, en: "New farm profile", vi: "Tạo hồ sơ trang trại", shortEn: "", shortVi: "" }].map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              onClick={() => setMore(false)}
+              aria-current={isActive(n.href) ? "page" : undefined}
+              className="flex h-14 items-center gap-3 rounded-2xl border border-line px-4 text-sm font-semibold hover:border-lime"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-space-900 text-lime-bright">
+                <n.icon className="h-[18px] w-[18px]" aria-hidden />
               </span>
               {L(n.en, n.vi)}
             </Link>
           ))}
-          <div className="pt-2">
+          {hydrated && farm && (
+            <p className="flex items-center gap-1.5 px-1 pt-2 text-xs text-ink-2">
+              <MapPin className="h-3.5 w-3.5" aria-hidden />
+              {farm.name} · {num(farm.latitude, 3)}°, {num(farm.longitude, 3)}° · {num(farm.areaHa, 1)} ha
+            </p>
+          )}
+          <div className="rounded-2xl bg-space-900 p-2">
             <DataModePill />
           </div>
         </div>

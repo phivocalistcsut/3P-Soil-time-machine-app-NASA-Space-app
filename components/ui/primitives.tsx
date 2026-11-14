@@ -10,23 +10,25 @@ export function cn(...inputs: ClassValue[]) {
 
 /* ---------------------------------- Button --------------------------------- */
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "subtle" | "danger";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "subtle" | "danger" | "dark" | "glass";
 type Size = "sm" | "md" | "lg" | "icon";
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors duration-150 select-none",
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors duration-150 select-none",
     "disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-water",
-    size === "sm" && "h-9 px-3 text-sm",
-    size === "md" && "h-11 px-4 text-sm",
-    size === "lg" && "h-12 px-6 text-base",
+    size === "sm" && "h-9 px-3.5 text-sm",
+    size === "md" && "h-11 px-5 text-sm",
+    size === "lg" && "h-12 px-7 text-[15px]",
     size === "icon" && "h-10 w-10",
-    variant === "primary" && "bg-forest text-white hover:bg-forest-deep shadow-sm",
-    variant === "secondary" && "bg-mint text-forest hover:bg-[#cde8d5]",
-    variant === "outline" && "border border-line bg-white text-ink hover:border-leaf hover:bg-mint/40",
+    variant === "primary" && "bg-lime text-space-900 hover:bg-lime-bright shadow-sm",
+    variant === "secondary" && "bg-lime-soft text-lime-ink hover:bg-[#e2f0cf]",
+    variant === "outline" && "border border-line bg-white text-ink hover:border-lime hover:bg-lime-soft/60",
     variant === "ghost" && "text-ink-2 hover:bg-sand-2 hover:text-ink",
-    variant === "subtle" && "bg-sand-2 text-ink hover:bg-[#e6e3d9]",
+    variant === "subtle" && "bg-sand-2 text-ink hover:bg-[#e3e6de]",
     variant === "danger" && "bg-risk-soft text-risk-ink hover:bg-[#f3d3ce]",
+    variant === "dark" && "bg-space-900 text-white hover:bg-space-700",
+    variant === "glass" && "border border-white/45 bg-white/5 text-white backdrop-blur hover:border-lime hover:bg-white/10",
     className,
   );
 }
@@ -60,7 +62,7 @@ export function CardHeader({
   return (
     <div className={cn("flex items-start justify-between gap-3 px-5 pt-4", className)}>
       <div className="flex min-w-0 items-start gap-2.5">
-        {icon && <div className="mt-0.5 shrink-0 text-forest">{icon}</div>}
+        {icon && <div className="mt-0.5 shrink-0 text-lime-ink">{icon}</div>}
         <div className="min-w-0">
           <h3 className="text-[15px] font-semibold leading-tight text-ink">{title}</h3>
           {subtitle && <p className="mt-0.5 text-xs text-ink-2">{subtitle}</p>}
@@ -85,11 +87,11 @@ export function Badge({
       className={cn(
         "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold leading-5",
         tone === "neutral" && "bg-sand-2 text-ink-2",
-        tone === "green" && "bg-mint text-leaf-ink",
+        tone === "green" && "bg-lime-soft text-lime-ink",
         tone === "blue" && "bg-water-soft text-water-ink",
         tone === "amber" && "bg-amber-soft text-amber-ink",
         tone === "red" && "bg-risk-soft text-risk-ink",
-        tone === "dark" && "bg-forest text-white",
+        tone === "dark" && "bg-space-900 text-white",
         tone === "outline" && "border border-line bg-white text-ink-2",
         className,
       )}
@@ -105,7 +107,7 @@ export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
 }
 
 export const inputClass =
-  "h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink placeholder:text-ink-3 transition-colors hover:border-[#cfd5cc] focus:border-water focus:outline-none focus:ring-2 focus:ring-water/20 disabled:bg-sand-2";
+  "h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink placeholder:text-ink-3 transition-colors hover:border-[#cfd5cc] focus:border-lime-ink focus:outline-none focus:ring-2 focus:ring-lime/30 disabled:bg-sand-2";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },
@@ -142,7 +144,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function SectionTitle({ eyebrow, title, desc, className }: { eyebrow?: string; title: React.ReactNode; desc?: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      {eyebrow && <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-leaf-ink">{eyebrow}</p>}
+      {eyebrow && <p className="eyebrow mb-1.5 text-lime-ink">{eyebrow}</p>}
       <h1 className="text-2xl font-bold text-ink md:text-[28px]">{title}</h1>
       {desc && <p className="mt-1.5 max-w-3xl text-sm text-ink-2 md:text-[15px]">{desc}</p>}
     </div>

@@ -12,7 +12,7 @@ import { getCrop, SEASONS } from "@/lib/data/crops";
 import { newId } from "@/lib/data/demo";
 import { screenCrops } from "@/lib/engine/simulate";
 import type { SeasonResult } from "@/lib/types";
-import { ClimateNotice, ModelRainSource, CropIcon, Disclaimer, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
+import { ClimateNotice, DataChips, CropIcon, Disclaimer, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Select, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/overlays";
 import { RotationGantt } from "@/components/sim/timeline";
@@ -139,31 +139,30 @@ export function Planner() {
     <div className="space-y-5">
       <div className="space-y-5 no-print">
       <PageHeader
-        tone="leaf"
+        image="orbital-sunrise"
         icon={CalendarRange}
         eyebrow={L("Season plan", "Kế hoạch mùa vụ")}
         title={L("Your season-by-season plan", "Kế hoạch từng vụ của bạn")}
         desc={<>{farm.name} · {num(farm.areaHa, 2)} ha · {years[0]?.year}–{years[years.length - 1]?.year} · {t(`clim.${settings.climateAssumption}`)}</>}
         actions={
           <>
-            <Link href="/simulator" className={buttonClass("outline", "md", "border-white/40 bg-transparent text-white hover:bg-white/10")}>
+            <Link href="/simulator" className={buttonClass("glass", "md")}>
               <ArrowLeft className="h-4 w-4" aria-hidden />
               {L("Back to simulator", "Về mô phỏng")}
             </Link>
-            <Button variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10" onClick={() => window.print()}>
+            <Button variant="glass" onClick={() => window.print()}>
               <Printer className="h-4 w-4" aria-hidden />
               {L("Print year / PDF", "In năm đã chọn / PDF")}
             </Button>
-            <Button className="bg-white text-[#2F6E45] hover:bg-mint" onClick={save}>
+            <Button onClick={save}>
               <Save className="h-4 w-4" aria-hidden />
               {L("Save plan", "Lưu kế hoạch")}
             </Button>
           </>
         }
+        meta={<DataChips climate={climate} usesImerg={usesImerg} />}
       />
-      <FarmDemoNotice className="no-print" />
       <ClimateNotice climate={climate} className="no-print" />
-      <ModelRainSource usesImerg={usesImerg} />
 
       <Card className="p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
