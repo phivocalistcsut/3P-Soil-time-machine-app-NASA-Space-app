@@ -3,18 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MLMap, Marker as MLMarker, StyleSpecification, GeoJSONSource } from "maplibre-gl";
 import { MapPinOff } from "lucide-react";
-import { BASEMAPS, OVERLAYS, overlayDateFor, overlayTiles, type OverlayId } from "@/lib/data/layers";
+import { BASEMAPS, DEFAULT_OVERLAY_OPACITY, OVERLAYS, overlayDateFor, overlayTiles, type OverlayId, type OverlayOpacity } from "@/lib/data/layers";
 import { useLayerTime } from "@/lib/layer-time";
 import { cn } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n";
 
 export type Basemap = "map" | "satellite";
+export type OverlayLoadStatus = "loading" | "ready" | "error";
 
 export interface FarmMapProps {
   center: [number, number]; // [lng, lat]
   zoom?: number;
   basemap?: Basemap;
   overlays?: OverlayId[];
+  overlayOpacity?: OverlayOpacity;
+  hideOverlays?: boolean;
+  onOverlayStatus?: (id: OverlayId, status: OverlayLoadStatus) => void;
+  viewKey?: number;
+  selection?: [number, number] | null;
   boundary?: [number, number][] | null;
   showBoundary?: boolean;
   marker?: [number, number] | null;
@@ -55,6 +61,11 @@ export function FarmMap({
   zoom = 14,
   basemap = "satellite",
   overlays = [],
+  overlayOpacity = DEFAULT_OVERLAY_OPACITY,
+  hideOverlays = false,
+  onOverlayStatus,
+  viewKey = 0,
+  selection,
   boundary,
   showBoundary = true,
   marker,
@@ -79,6 +90,7 @@ export function FarmMap({
   const clickRef = useRef(onMapClick);
   const dblRef = useRef(onDoubleClick);
   const viewRef = useRef(onViewChange);
+  const statusRef = useRef(onOverlayStatus);
   const [ready, setReady] = useState(false);
   const layerMonth = useLayerTime((s) => s.month);
   // U13: swap NASA tiles when the farmer picks another month on the time bar
@@ -91,10 +103,12 @@ export function FarmMap({
     }
   }, [layerMonth, ready]);
   const [failed, setFailed] = useState(false);
+  const [tileError, setTileError] = useState(false);
   useEffect(() => {
     clickRef.current = onMapClick;
     dblRef.current = onDoubleClick;
     viewRef.current = onViewChange;
+    statusRef.current = onOverlayStatus;
   });
 
   // create map once
@@ -119,6 +133,7 @@ export function FarmMap({
             },
             field: { type: "geojson", data: polygon([]) },
             draft: { type: "geojson", data: draftFc([]) },
+            inspection: { type: "geojson", data: draftFc([]) },
           },
           layers: [
             { id: "basemap", type: "raster", source: "basemap", layout: { visibility: basemap === "map" ? "visible" : "none" } },
@@ -139,8 +154,13 @@ export function FarmMap({
         });
         mapRef.current = map;
         if (process.env.NODE_ENV !== "production") ((window as unknown as { __stmMaps?: MLMap[] }).__stmMaps ??= []).push(map);
-        if (interactive) map.addControl(new lib.NavigationControl({ showCompass: false }), "top-right");
-        map.addControl(new lib.AttributionControl({ compact: true }), attributionPosition);
+        if (interactive) {
+          map.addControl(new lib.NavigationControl({ showCompass: true }), "top-right");
+          map.addControl(new lib.FullscreenControl(), "top-right");
+        }
+        map.addControl(new lib.ScaleControl({ maxWidth: 100, unit: "metric" }), "bottom-left");
+        // OSM attribution must remain visible, rather than hidden behind an icon.
+        map.addControl(new lib.AttributionControl({ compact: false }), attributionPosition);
         map.on("load", () => {
           if (cancelled) return;
           for (const o of OVERLAYS) {
@@ -150,7 +170,8 @@ export function FarmMap({
               tiles: [overlayTiles(o, date)],
               tileSize: 256,
               maxzoom: o.maxZoom,
-              attribution: `NASA GIBS · ${o.product} · ${date}`,
+              // Dates change with setTiles; keep mutable dates in the React controls.
+              attribution: `NASA GIBS · ${o.id === "lst" ? "MODIS" : o.id === "imerg" ? "GPM IMERG" : "SMAP L4"}`,
             });
             map.addLayer({
               id: `ov-${o.id}`,
@@ -176,8 +197,7 @@ export function FarmMap({
             filter: ["==", ["geometry-type"], "Point"],
             paint: { "circle-radius": 5, "circle-color": "#fff", "circle-stroke-color": "#E4A84C", "circle-stroke-width": 2.5 },
           });
-          // start with the attribution collapsed (still one tap away) so it does not cover map legends
-          container.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
+          map.addLayer({ id: "inspection-point", type: "circle", source: "inspection", paint: { "circle-radius": 7, "circle-color": "#fff", "circle-stroke-color": "#177DA6", "circle-stroke-width": 3 } });
           setReady(true);
         });
         map.on("click", (e) => clickRef.current?.([e.lngLat.lng, e.lngLat.lat]));
@@ -191,10 +211,27 @@ export function FarmMap({
           const c = map.getCenter();
           viewRef.current?.([c.lng, c.lat], map.getZoom());
         });
+        map.on("dataloading", (e) => {
+          const id = (e as { sourceId?: string }).sourceId?.replace(/^ov-/, "") as OverlayId;
+          if (OVERLAYS.some(o => o.id === id)) statusRef.current?.(id, "loading");
+        });
+        map.on("sourcedata", (e) => {
+          if (!e.isSourceLoaded) return;
+          const id = e.sourceId?.replace(/^ov-/, "") as OverlayId;
+          if (OVERLAYS.some(o => o.id === id)) statusRef.current?.(id, "ready");
+          if (e.sourceId === "basemap" || e.sourceId === "satellite") setTileError(false);
+        });
         map.on("error", (e) => {
           // tile errors are expected for missing NASA dates — don't fail the whole map
           if ((e as { error?: { message?: string } }).error?.message?.includes("WebGL")) setFailed(true);
+          const source = (e as { sourceId?: string }).sourceId;
+          if (source === "basemap" || source === "satellite") setTileError(true);
+          const id = source?.replace(/^ov-/, "") as OverlayId;
+          if (OVERLAYS.some(o => o.id === id)) statusRef.current?.(id, "error");
         });
+        const resize = new ResizeObserver(() => map.resize());
+        resize.observe(container.current);
+        map.once("remove", () => resize.disconnect());
       } catch (err) {
         console.error(err);
         if (!cancelled) setFailed(true);
@@ -215,8 +252,11 @@ export function FarmMap({
     if (!map || !ready) return;
     map.setLayoutProperty("basemap", "visibility", basemap === "map" ? "visible" : "none");
     map.setLayoutProperty("satellite", "visibility", basemap === "satellite" ? "visible" : "none");
-    for (const o of OVERLAYS) map.setLayoutProperty(`ov-${o.id}`, "visibility", overlays.includes(o.id) ? "visible" : "none");
-  }, [basemap, overlays, ready]);
+    for (const o of OVERLAYS) {
+      map.setLayoutProperty(`ov-${o.id}`, "visibility", overlays.includes(o.id) && !hideOverlays ? "visible" : "none");
+      map.setPaintProperty(`ov-${o.id}`, "raster-opacity", Math.max(0, Math.min(1, overlayOpacity[o.id])));
+    }
+  }, [basemap, overlays, overlayOpacity, hideOverlays, ready]);
 
   // field polygon
   useEffect(() => {
@@ -237,6 +277,11 @@ export function FarmMap({
     if (!map || !ready) return;
     (map.getSource("draft") as GeoJSONSource | undefined)?.setData(draftFc(draftRing ?? []));
   }, [draftRing, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    (mapRef.current?.getSource("inspection") as GeoJSONSource | undefined)?.setData(draftFc(selection ? [selection] : []));
+  }, [selection, ready]);
 
   // marker
   useEffect(() => {
@@ -262,7 +307,7 @@ export function FarmMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const key = `${center[0].toFixed(5)},${center[1].toFixed(5)},${zoom}`;
+    const key = `${center[0].toFixed(5)},${center[1].toFixed(5)},${zoom},${viewKey}`;
     if (key === lastCenter.current) return;
     const first = lastCenter.current === "";
     lastCenter.current = key;
@@ -271,7 +316,7 @@ export function FarmMap({
       boundary.forEach((p) => b.extend(p));
       map.fitBounds(b, { padding: 60, duration: first ? 0 : 600, maxZoom: 17 });
     } else if (!first) map.flyTo({ center, zoom, duration: 700, essential: true });
-  }, [center, zoom, ready, fitToBoundary, boundary]);
+  }, [center, zoom, ready, fitToBoundary, boundary, viewKey]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -283,6 +328,7 @@ export function FarmMap({
     <div className={cn("relative overflow-hidden bg-[#dfe6dc]", className)}>
       <div ref={container} style={{ position: "absolute", inset: 0 }} role="region" aria-label={ariaLabel ?? L("Farm map", "Bản đồ trang trại")} />
       {!ready && !failed && <div className="skeleton absolute inset-0" aria-hidden />}
+      {tileError && !failed && <p role="status" className="absolute left-3 right-12 top-28 rounded-xl bg-white/95 p-2 text-xs text-ink-2">{L("Some map tiles could not load. Check your connection or switch the basemap.", "Một số ô bản đồ chưa tải được. Kiểm tra kết nối hoặc đổi bản đồ nền.")}</p>}
       {failed && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-sand-2 p-6 text-center text-sm text-ink-2">
           <MapPinOff className="h-6 w-6" aria-hidden />

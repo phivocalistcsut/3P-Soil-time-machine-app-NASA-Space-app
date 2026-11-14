@@ -290,7 +290,7 @@ export function buildEvidence(input: {
   if (farm.soilSources.soilPH.status !== "observed") gaps.push(Lx("No soil test for pH: crop fit on acidic soil is uncertain.", "Chưa có xét nghiệm pH đất: mức hợp của cây trên đất chua chưa chắc chắn."));
   if (farm.soilSources.soilType.status !== "observed") gaps.push(Lx("Soil texture is an estimate, not a field description.", "Loại đất là ước tính, chưa phải mô tả thực tế của ruộng."));
   if (!usableNdvi) gaps.push(Lx("No satellite greenness record for this field yet.", "Chưa có chuỗi độ xanh vệ tinh cho ruộng này."));
-  if (!extremes) gaps.push(Lx("Daily extremes (heavy rain, heat) could not be loaded.", "Chưa tải được số liệu cực đoan theo ngày (mưa lớn, nắng nóng)."));
+  if (!extremes) gaps.push(Lx("Daily extremes (heavy rain, heat) could not be loaded.", "Chưa tải được số liệu thời tiết khắc nghiệt theo ngày (mưa lớn, nắng nóng)."));
   if (!input.hasEconomics) gaps.push(Lx("No local yields, prices or costs: income is not compared.", "Chưa có năng suất, giá, chi phí địa phương: chưa so được thu nhập."));
   gaps.push(Lx("Water supply per season is an assumption, not canal or pump data.", "Lượng nước cấp mỗi vụ là giả định, chưa phải số liệu kênh hay trạm bơm."));
   gaps.push(Lx("Field slope is unknown (no elevation data yet); erosion uses rain on bare soil only.", "Chưa biết độ dốc ruộng (chưa có dữ liệu độ cao); xói mòn chỉ tính theo mưa trên đất trống."));

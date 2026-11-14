@@ -16,13 +16,14 @@ import {
   monthRange,
   overlayDateFor,
   type OverlayId,
+  type OverlayOpacity,
 } from "@/lib/data/layers";
 import { useLayerTime } from "@/lib/layer-time";
 import { useI18n } from "@/lib/i18n";
 import { Badge } from "@/components/ui/primitives";
 import { InfoTip } from "@/components/ui/overlays";
 import { cn } from "@/components/ui/primitives";
-import type { Basemap } from "./farm-map";
+import type { Basemap, OverlayLoadStatus } from "./farm-map";
 
 export function BasemapToggle({
   value,
@@ -73,6 +74,10 @@ export function LayerPanel({
   onToggleBoundary,
   hasBoundary,
   compact,
+  opacity,
+  onOpacity,
+  onSolo,
+  status,
 }: {
   overlays: OverlayId[];
   onToggle: (id: OverlayId) => void;
@@ -80,11 +85,15 @@ export function LayerPanel({
   onToggleBoundary: () => void;
   hasBoundary: boolean;
   compact?: boolean;
+  opacity?: OverlayOpacity;
+  onOpacity?: (id: OverlayId, value: number) => void;
+  onSolo?: (id: OverlayId) => void;
+  status?: Partial<Record<OverlayId, OverlayLoadStatus>>;
 }) {
   const { L, lang } = useI18n();
   const month = useLayerTime((s) => s.month);
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-2">
         <Layers className="h-3.5 w-3.5" aria-hidden />
         {L("Data layers", "Lớp dữ liệu")}
@@ -105,17 +114,17 @@ export function LayerPanel({
           </span>
         </label>
       )}
-      {OVERLAYS.map((o) => {
+      <div className="grid gap-3 md:grid-cols-3">{OVERLAYS.map((o) => {
         const on = overlays.includes(o.id);
         return (
           <div
             key={o.id}
             className={cn(
-              "rounded-xl border bg-white px-3 py-2",
-              on ? "border-water/50" : "border-line",
+              "min-w-0 rounded-xl border bg-white px-3 py-3 transition-colors",
+              on ? "border-water/60 bg-[#f1faf8]" : "border-line",
             )}
           >
-            <label className="flex min-h-8 cursor-pointer items-center gap-2.5 text-sm">
+            <div className="flex items-center gap-1"><label className="flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 text-xs">
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-forest"
@@ -123,15 +132,15 @@ export function LayerPanel({
                 onChange={() => onToggle(o.id)}
               />
               <span className="flex-1 font-medium">{o.name[lang]}</span>
-              <InfoTip label={o.name[lang]}>
+            </label><InfoTip label={o.name[lang]}>
                 <p className="font-semibold">{o.product}</p>
                 <p className="mt-1">{o.desc[lang]}</p>
                 <p className="mt-1 text-ink-2">
                   {L("Resolution", "Độ phân giải")}: {o.resolution[lang]} ·{" "}
                   {L("Source", "Nguồn")}: NASA GIBS
                 </p>
-              </InfoTip>
-            </label>
+            </InfoTip></div>
+            {onSolo && <button onClick={() => onSolo(o.id)} className="mb-1 ml-6 text-[11px] font-semibold text-water underline underline-offset-2" aria-label={L(`Show only ${o.name.en}`, `Chỉ xem ${o.name.vi}`)}>{L("Show only this layer", "Chỉ xem lớp này")}</button>}
             {(on || !compact) && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-6 text-[11px] text-ink-2">
                 <Badge tone="outline">{L("Imagery", "Ảnh vệ tinh")}</Badge>
@@ -142,9 +151,21 @@ export function LayerPanel({
                 <span>· {o.resolution[lang]}</span>
               </div>
             )}
+            {on && opacity && onOpacity && <label className="mt-3 block text-[11px] text-ink-2">
+              <span className="flex justify-between">{L("Opacity", "Độ đậm lớp phủ")}<strong>{Math.round(opacity[o.id] * 100)}%</strong></span>
+              <input type="range" min="0" max="100" step="5" value={Math.round(opacity[o.id] * 100)} onChange={e => onOpacity(o.id, Number(e.target.value) / 100)} aria-label={L(`${o.name.en} opacity`, `Độ đậm ${o.name.vi}`)} className="mt-1 w-full accent-[#23786F]" />
+            </label>}
+            {on && status?.[o.id] && <p role="status" className="mt-1 text-[10px] text-ink-2">{status[o.id] === "loading" ? L("Loading imagery…", "Đang tải ảnh…") : status[o.id] === "error" ? L("Some tiles are unavailable for this date. Try another month.", "Có ô ảnh chưa tải được cho ngày này. Hãy thử tháng khác.") : L("Imagery loaded · gaps may be no-data", "Đã tải ảnh · vùng trống có thể thiếu dữ liệu")}</p>}
+            {on && <details className="mt-2 text-[11px] text-ink-2">
+              <summary className="cursor-pointer font-semibold">{L("Color scale & meaning", "Thang màu & ý nghĩa")}</summary>
+              <p className="mt-2 leading-relaxed">{o.desc[lang]}</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={o.legendUrl} alt={`${o.name[lang]} (${o.unit})`} loading="lazy" className="mt-2 h-auto w-full" />
+              <p className="mt-1">NASA GIBS · {o.unit}</p>
+            </details>}
           </div>
         );
-      })}
+      })}</div>
     </div>
   );
 }
@@ -215,10 +236,16 @@ export function LayerTimeBar({
   const months = useMemo(() => monthRange(), []);
   const last = months.length - 1;
   const idx = month ? Math.max(0, months.indexOf(month)) : last;
-  const go = (i: number) => setMonth(i >= last ? null : months[Math.max(0, i)]);
+  const go = (i: number) => { setPlaying(false); setMonth(i >= last ? null : months[Math.max(0, i)]); };
+  const chooseMonth = (value: string) => {
+    const i = months.indexOf(value);
+    if (i >= 0) { setPlaying(false); setMonth(i >= last ? null : months[i]); }
+  };
 
   useEffect(() => {
     if (!playing) return;
+    const stopWhenHidden = () => { if (document.hidden) useLayerTime.getState().setPlaying(false); };
+    document.addEventListener("visibilitychange", stopWhenHidden);
     const id = window.setInterval(() => {
       const st = useLayerTime.getState();
       const i = st.month ? months.indexOf(st.month) : last;
@@ -229,7 +256,7 @@ export function LayerTimeBar({
       }
       st.setMonth(months[i + 1]);
     }, 1400);
-    return () => window.clearInterval(id);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", stopWhenHidden); };
   }, [playing, months, last]);
   useEffect(() => () => useLayerTime.getState().setPlaying(false), []);
 
@@ -353,6 +380,10 @@ export function LayerTimeBar({
         )}
         aria-valuetext={label(months[idx])}
       />
+      <label className="my-2 flex flex-wrap items-center gap-2 text-xs text-ink-2">
+        {L("Jump to month", "Chọn tháng")}
+        <input type="month" min={months[0]} max={months[last]} value={months[idx]} onInput={e => chooseMonth(e.currentTarget.value)} onChange={e => chooseMonth(e.target.value)} className="rounded-lg border border-line bg-white px-2 py-1 text-xs" />
+      </label>
       <div className="mt-1 flex flex-wrap gap-1">
         {picks.map((p) => {
           const on =
@@ -377,7 +408,7 @@ export function LayerTimeBar({
         })}
       </div>
       <p className="mt-1.5 text-[10px] leading-snug text-ink-3">
-        {L("Tip: zoom the map out to see the whole region — one NASA pixel covers many farms.", "Mẹo: thu nhỏ bản đồ để thấy cả vùng — một điểm ảnh NASA phủ nhiều trang trại.")}
+        {L("Daily layers show the 15th of the selected month; MODIS shows a monthly composite. Latest dates differ by product. These are dated observations, not a live video feed.", "Lớp theo ngày hiển thị ngày 15 của tháng đã chọn; MODIS là ảnh tổng hợp tháng. Mốc mới nhất tùy sản phẩm. Đây là dữ liệu có ngày chụp, không phải hình ảnh trực tiếp.")}
       </p>
     </div>
   );

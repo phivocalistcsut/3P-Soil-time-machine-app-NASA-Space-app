@@ -31,7 +31,7 @@ npm test            # provider and engine regression checks
 npm run engine:smoke # prints results for the demo farm
 ```
 
-NASA/SoilGrids data need no provider key. Online address lookup optionally uses a server-side MAPTILER_API_KEY (see .env.example); without it, use the local place list or coordinates. Offline mode uses previously saved data or the bundled demo snapshots.
+NASA/SoilGrids data need no provider key. The online road map now uses OpenStreetMap tiles and address search uses Photon/OSM without requiring an API key. Submit an address, choose a result, then click the map to refine the farm pin. Optional MAPTILER_API_KEY or a private PHOTON_GEOCODING_URL can support higher-volume address lookup (see .env.example). Offline analysis uses previously saved data or bundled demo snapshots; map tiles are not downloaded for offline use.
 
 ## Demo journey (≈3 minutes)
 
@@ -65,7 +65,7 @@ app/
   (app)/{overview,simulator,compare,planner,methodology,settings}/page.tsx
   api/climate/route.ts     NASA POWER proxy (normalised ClimateDataset)
   api/soil/route.ts        ISRIC SoilGrids proxy (regional estimate)
-  api/geocode/route.ts     optional MapTiler geocoding (server-only key, offline place fallback)
+  api/geocode/route.ts     keyless Photon/OSM search, optional MapTiler, local place fallback
   api/simulate/route.ts    same engine as the browser, JSON in/out (FastAPI-ready contract)
 components/
   ui/                      design-system primitives (button, card, badge, fields, slider, popover, sheet, toast)
@@ -136,7 +136,7 @@ Run `npm test` for adapter, geometry, monthly RothC reference and integration ch
 
 - NASA POWER and NASA GIBS imagery: NASA open data policy (no endorsement implied).
 - Sentinel-2 cloudless 2023 by EOX IT Services GmbH — CC BY-NC-SA 4.0 (non-commercial use; replace for commercial deployments).
-- Basemap © OpenStreetMap contributors © CARTO. Address lookup © MapTiler / OpenStreetMap (optional configured key).
+- Road basemap © OpenStreetMap contributors. Address lookup Photon / OpenStreetMap, or MapTiler when configured.
 - ISRIC SoilGrids — CC BY 4.0.
 - NASA photographs from the NASA Image and Video Library (images.nasa.gov) — see `public/images/CREDITS.md`; no NASA endorsement implied.
 - RothC reference implementation (Rothamsted Research, `RothC_Py`) — Apache 2.0, used only as a test reference (`data/rothc-reference`).

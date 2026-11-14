@@ -15,3 +15,14 @@ Images were resized and converted to WebP.
 ## Globe texture
 
 `earth-blue-marble.jpg`: *The Blue Marble: land surface, ocean color and sea ice* (8 February 2002), NASA Goddard Space Flight Center. Image by Reto Stöckli; enhancements by Robert Simmon; MODIS teams, USGS and DMSP data support. Source: [Wikimedia Commons file and attribution](https://commons.wikimedia.org/wiki/File:Land_ocean_ice_2048.jpg), originating from NASA Visible Earth G57730. This downloaded file is licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); see the source page for full credits. The JPEG is unmodified; the app projects it onto a decorative rotating globe with lighting. The rendered image adaptation is offered under the same license. It is a historical composite, not a live satellite feed. No NASA endorsement is implied.
+
+## Field-info card photos
+
+Provided by the project team for the "Field info" cards. **Licence still to be confirmed before public release**: some of these carry a visible stock or news watermark.
+
+| File | Description | Source / licence |
+| --- | --- | --- |
+| card-rain.webp | Storm clouds over a green field | to confirm (faint stock watermark visible) |
+| card-soil.webp | Furrowed soil in low sunlight | to confirm |
+| card-drought.webp | Rice field next to cracked, dried mud | to confirm (VietNamNet watermark visible) |
+| card-harvest.webp | Aerial view of green and ripe rice with a combine harvester | to confirm |

@@ -79,10 +79,10 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
 
   // soil / farm enums
   "tex.clay": { en: "Clay", vi: "Đất sét" },
-  "tex.silty_clay": { en: "Silty clay", vi: "Sét pha thịt" },
-  "tex.clay_loam": { en: "Clay loam", vi: "Thịt pha sét" },
-  "tex.loam": { en: "Loam", vi: "Đất thịt" },
-  "tex.sandy_loam": { en: "Sandy loam", vi: "Thịt pha cát" },
+  "tex.silty_clay": { en: "Silty clay", vi: "Đất sét mịn" },
+  "tex.clay_loam": { en: "Clay loam", vi: "Đất thịt nặng" },
+  "tex.loam": { en: "Loam", vi: "Đất thịt trung bình" },
+  "tex.sandy_loam": { en: "Sandy loam", vi: "Đất thịt nhẹ" },
   "tex.sand": { en: "Sand", vi: "Đất cát" },
   "drain.good": { en: "good", vi: "tốt" },
   "drain.moderate": { en: "moderate", vi: "trung bình" },
