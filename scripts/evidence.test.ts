@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { writeArrayBuffer } from "geotiff";
+import { CROPS } from "../lib/data/crops";
+import { resolveSoilInput, withRothCSoil } from "../lib/data/farm-soil";
+import soilSnapshot from "../data/soilgrids-thoi-lai.json";
+import { fetchSoilGrids } from "../lib/services/soilgrids";
 import { historyYears, monthPeriod, pointFromQuery, vegetationDates, type EnvironmentalSeries } from "../lib/data/evidence";
 import { getDemoSnapshot, getOfflineClimate } from "../lib/data/climate-datasets";
 import { fieldBoundary } from "../lib/data/geometry";
@@ -16,6 +21,99 @@ import type { FarmProfile, SimulationSettings } from "../lib/types";
 const farm = createDemoFarm();
 const settings: SimulationSettings = { startYear: 2026, horizon: 3, climateAssumption: "baseline",
   weights: weightsFromPriorities(farm.farmerPriorities), economics: {} };
+
+// Tiny georeferenced GeoTIFFs exercise the WCS request, decoder, pixel lookup AND unit conversion.
+const SOIL_RAW: Record<string, number> = {
+  "phh2o_0-5cm_mean": 60, "sand_0-5cm_mean": 300,
+  "soc_0-5cm_mean": 200, "soc_5-15cm_mean": 100, "soc_15-30cm_mean": 50,
+  "clay_0-5cm_mean": 200, "clay_5-15cm_mean": 300, "clay_15-30cm_mean": 400,
+  "bdod_0-5cm_mean": 100, "bdod_5-15cm_mean": 120, "bdod_15-30cm_mean": 140,
+};
+
+function soilFetcher(overrides: Record<string, number | null> = {}, ids: string[] = []): typeof fetch {
+  return async (request) => {
+    const q = new URL(String(request)).searchParams;
+    const id = q.get("COVERAGEID")!;
+    ids.push(id);
+    assert.equal(q.get("VERSION"), "2.0.1");
+    assert.equal(q.getAll("SUBSET").length, 2);
+    assert.ok(id in SOIL_RAW, `Unexpected coverage ${id}`);
+    if (id in overrides && overrides[id] === null) return new Response(null, { status: 404 });
+    const value = overrides[id] ?? SOIL_RAW[id];
+    const bytes = writeArrayBuffer(new Float32Array([value]), {
+      width: 1, height: 1, ModelPixelScale: [0.02, 0.02, 0], ModelTiepoint: [0, 0, 0, 104.99, 10.01, 0],
+      GeographicTypeGeoKey: 4326, GTModelTypeGeoKey: 2, GTRasterTypeGeoKey: 1, GDAL_NODATA: "-9999",
+    });
+    return new Response(bytes, { headers: { "content-type": "image/tiff" } });
+  };
+}
+
+test("SoilGrids reads eleven WCS layers, preserving topsoil fields and computing 0–30 cm stock", async () => {
+  const ids: string[] = [];
+  const soil = await fetchSoilGrids(10, 105, soilFetcher({}, ids));
+  assert.equal(new Set(ids).size, 11);
+  assert.equal(soil.ph, 6);
+  assert.equal(soil.socPercent, 2); // 200 dg/kg = 20 g/kg = 2%
+  assert.equal(soil.clayPercent, 20);
+  assert.equal(soil.sandPercent, 30);
+  assert.equal(soil.texture, "loam");
+  assert.equal(soil.socStockTCHa, 32.5); // 20*1*5*.1 + 10*1.2*10*.1 + 5*1.4*15*.1
+  assert.equal(soil.clayPercent0to30, 1000 / 30); // (20*5 + 30*10 + 40*15)/30
+  assert.equal(soil.layers[2].bulkDensityGCm3, 1.4);
+});
+
+test("SoilGrids does not interpolate missing SOC, density or clay depths", async () => {
+  for (const id of ["soc_5-15cm_mean", "bdod_15-30cm_mean", "clay_0-5cm_mean"]) {
+    const soil = await fetchSoilGrids(10, 105, soilFetcher({ [id]: null }));
+    assert.equal(soil.socStockTCHa, id.startsWith("clay") ? 32.5 : null);
+    assert.equal(soil.clayPercent0to30, id.startsWith("clay") ? null : 1000 / 30);
+    assert.equal(soil.ph, 6);
+  }
+  const nodata = await fetchSoilGrids(10, 105, soilFetcher({ "bdod_5-15cm_mean": -9999 }));
+  assert.equal(nodata.socStockTCHa, null);
+  const zeroDensity = await fetchSoilGrids(10, 105, soilFetcher({ "bdod_5-15cm_mean": 0 }));
+  assert.equal(zeroDensity.socStockTCHa, null);
+  const zeroCarbon = await fetchSoilGrids(10, 105, soilFetcher({ "soc_0-5cm_mean": 0 }));
+  assert.equal(zeroCarbon.socPercent, 0);
+  assert.equal(zeroCarbon.socStockTCHa, 22.5);
+  await assert.rejects(fetchSoilGrids(10, 105, soilFetcher(Object.fromEntries(Object.keys(SOIL_RAW).map((id) => [id, null])))), { message: "unavailable" });
+});
+
+test("farmer 0–30 cm measurements take priority, retain zero and never invent missing soil inputs", () => {
+  assert.deepEqual(resolveSoilInput("38,5", 30, "SoilGrids", 100), { value: 38.5, tag: { status: "observed", source: "Farmer soil test · 0–30 cm" } });
+  assert.equal(resolveSoilInput("0", 30, "SoilGrids").value, 0);
+  assert.equal(resolveSoilInput("", 30, "SoilGrids").tag.status, "estimated");
+  assert.equal(resolveSoilInput("NaN", null, undefined).tag.status, "unavailable");
+  assert.equal(resolveSoilInput("101", null, undefined, 100).value, null);
+  const legacy = JSON.parse(JSON.stringify(farm));
+  delete legacy.clayPercent;
+  delete legacy.socStockTCHa;
+  delete legacy.soilSources.clayPercent;
+  delete legacy.soilSources.socStockTCHa;
+  const upgraded = withRothCSoil(legacy);
+  assert.equal(upgraded.clayPercent, null);
+  assert.equal(upgraded.socStockTCHa, null);
+  assert.equal(upgraded.soilSources.clayPercent.status, "unavailable");
+  assert.equal(upgraded.soilOrganicCarbon, farm.soilOrganicCarbon);
+  assert.equal(farm.clayPercent, soilSnapshot.clayPercent0to30);
+  assert.equal(farm.socStockTCHa, soilSnapshot.socStockTCHa);
+  assert.equal(farm.soilSources.socStockTCHa.status, farm.socStockTCHa === null ? "unavailable" : "estimated");
+});
+
+test("all catalog crops have sourced, non-negative estimated RothC residue inputs", () => {
+  for (const crop of CROPS) {
+    assert.ok(Number.isFinite(crop.rothc.residueCTHa) && crop.rothc.residueCTHa >= 0, crop.id);
+    assert.equal(crop.rothc.status, "estimated");
+    assert.ok(crop.rothc.dpmRpm > 0);
+    assert.ok(crop.rothc.source.includes("https://"));
+  }
+  assert.equal(CROPS.find((c) => c.id === "fallow")!.rothc.residueCTHa, 0);
+  const rice = CROPS.find((c) => c.id === "rice")!.rothc;
+  assert.match(rice.source, /Only roots \+ stubble/);
+  assert.ok(Math.abs(rice.residueCTHa - 1.074058592549) < 0.000001);
+  // Non-tuber roots are based on vine biomass; harvested sweet-potato tubers cannot be credited as roots.
+  assert.ok(Math.abs(CROPS.find((c) => c.id === "sweetpotato")!.rothc.residueCTHa - 0.55743036096) < 0.000001);
+});
 
 test("point coordinates and historical dates reject invalid values", () => {
   const now = new Date("2026-11-14T00:00:00Z");

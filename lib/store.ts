@@ -14,6 +14,7 @@ import type {
   SavedPlan,
 } from "@/lib/types";
 import { DEFAULT_SCENARIO_NAMES, weightsFromPriorities } from "@/lib/data/demo";
+import { withRothCSoil } from "@/lib/data/farm-soil";
 
 export type MapMetric = "stress" | "suitability" | "soil";
 
@@ -180,6 +181,10 @@ export const useApp = create<AppState>()(
       name: "soil-time-machine-v1",
       storage: createJSONStorage(() => localStorage),
       version: 1,
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<AppState>;
+        return { ...current, ...saved, farm: saved.farm ? withRothCSoil(saved.farm) : null };
+      },
       partialize: (state) => ({ ...state, scenarioDrafts: undefined }),
     },
   ),
