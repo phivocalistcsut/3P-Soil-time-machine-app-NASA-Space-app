@@ -143,11 +143,13 @@ Run `npm test` for adapter, geometry, monthly RothC reference and integration ch
 
 ## Use of SI (AI) tools
 
-Parts of the code, documentation and the landing-page illustrations were produced with the help of SI tools
+Parts of the code, documentation and the original interface illustrations were produced with the help of SI tools
 (Claude by Anthropic; OpenAI Codex). The prompts used for the RothC work are kept in `docs/prompts`, and commits made by
 SI agents carry their name. SI-generated illustrations carry a visible **"SI-generated"** watermark. NASA photographs and
 all data values come from the cited providers; none are SI-generated. Every SI-assisted change was reviewed and tested
 by the team (`npm test`, TypeScript, ESLint, production build).
+
+The landing page's four step images are now the project owner's supplied photographs/diagram, in the requested order. They are separate from the original SI illustrations. See `public/images/CREDITS.md` for supplied attribution. Step images can be opened at a larger size; the portrait rotation diagram is shown uncropped. Landing headlines use gradients and the desktop layout expands to a bounded 1520 px shell. Existing slogans are unchanged pending the owner's approval of new copy.
 
 ## Limitations
 

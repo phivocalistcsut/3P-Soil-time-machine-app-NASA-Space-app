@@ -192,6 +192,53 @@ h3,
   background-repeat: no-repeat;
 }
 
+/* Landing composition: wider on laptops, bounded on large monitors. */
+.landing-shell {
+  width: 100%;
+  max-width: 1520px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 48px);
+}
+
+.landing-hero-aura {
+  background:
+    radial-gradient(ellipse at 85% 42%, rgba(74, 148, 199, .16), transparent 48%),
+    radial-gradient(ellipse at 58% 78%, rgba(168, 220, 92, .07), transparent 43%);
+}
+.landing-hero-aura::after {
+  content: "";
+  position: absolute;
+  width: min(1100px, 95vw);
+  aspect-ratio: 1.7;
+  right: -12%;
+  top: 10%;
+  border: 1px solid rgba(139, 213, 255, .08);
+  border-radius: 50%;
+  transform: rotate(-28deg);
+  box-shadow: 0 0 0 60px rgba(139, 213, 255, .025), 0 0 0 120px rgba(139, 213, 255, .015);
+}
+
+/* Separate palettes keep the gradient legible on space and paper surfaces. */
+.landing-title-gradient {
+  --landing-heading-colors: linear-gradient(110deg, #d0f79b 0%, #91ead0 24%, #91d9ff 48%, #ccbbff 73%, #ffdda6 100%);
+  color: #b9e9de;
+}
+.landing-title-gradient-on-light {
+  --landing-heading-colors: linear-gradient(110deg, #265a33 0%, #175f62 27%, #215b89 51%, #654b89 76%, #88541d 100%);
+  color: #175f62;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .landing-title-gradient {
+    background-image: var(--landing-heading-colors);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+}
+@media (forced-colors: active) {
+  .landing-title-gradient { background: none; color: CanvasText; }
+}
+
 /* MapLibre tweaks */
 .maplibregl-ctrl-attrib {
   font-size: 10px;
@@ -213,6 +260,7 @@ h3,
 }
 
 @media print {
+  .landing-title-gradient { background: none; color: #17221d; }
   body {
     background: #fff;
   }
