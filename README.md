@@ -6,7 +6,7 @@ A decision-support prototype (NASA Space Apps · climate-resilient crop rotation
 how different crop rotations could affect irrigation demand, soil-related outcomes and climate fit on the same
 piece of land over the next 3–5 years.
 
-**Hosted demo:** [soil-time-machine-3p.vercel.app](https://soil-time-machine-3p.vercel.app/) · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E).
+**Hosted demo:** [soil-time-machine-3p.vercel.app]([3-p-soil-time-machine-app-nasa-spac.vercel.app](https://3-p-soil-time-machine-app-nasa-spac.vercel.app)) · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E).
 
 **Latest source:** [3P Soil Time Machine · main](https://github.com/phivocalistcsut/3P-Soil-time-machine-app-NASA-Space-app/tree/main). The hosted demo reflects the last successful Vercel deployment. Use the quick start below to run the current code from GitHub.
 
