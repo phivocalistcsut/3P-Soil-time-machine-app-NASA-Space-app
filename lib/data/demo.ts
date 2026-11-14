@@ -16,14 +16,17 @@ export function createDemoFarm(): FarmProfile {
   return {
     id: DEMO_FARM_ID,
     name: "Thới Lai Demo Farm",
-    latitude: 10.0706,
-    longitude: 105.5599,
+    // Centre of a rice-paddy block west of Thới Lai town (checked on Sentinel-2 imagery): the whole
+    // 250 m MODIS pixel and the 2.5 ha boundary fall on paddy strips, away from canal-side houses.
+    latitude: 10.0934,
+    longitude: 105.5185,
     areaHa: 2.5,
+    // 230 m × 110 m, rotated to follow the local paddy strips (≈ 27° north of east).
     boundary: [
-      [105.55875, 10.0711],
-      [105.5610, 10.07125],
-      [105.56108, 10.07025],
-      [105.55882, 10.07008],
+      [105.519207, 10.094315],
+      [105.519662, 10.093429],
+      [105.517793, 10.092485],
+      [105.517338, 10.093371],
     ],
     soilType: (soilSnapshot.texture as SoilTexture | null) ?? "clay",
     soilPH: soilSnapshot.ph,
@@ -137,9 +140,56 @@ export function buildDefaultScenarios(farm: FarmProfile, climate: ClimateDataset
     }
     return { ...tp };
   };
-  const fit = alternative("fit");
-  const water = alternative("water");
-  const soil = alternative("soil");
+  /*
+   * Three genuinely different strategies along the real Mekong trade-off (crops still chosen by the
+   * engine's own suitability and irrigation screen for this farm):
+   *   A · fit   — "rice – upland – rice": keep the main Winter–Spring rice and put the best-fitting upland
+   *               crop in the thirstiest other season (usually Summer–Autumn).
+   *   B · water — replace the season with the highest irrigation need (usually dry-season Winter–Spring rice,
+   *               also the most salinity-exposed) with the upland crop that needs the least water.
+   *   C · soil  — a legume in that same dry season (upland in dry soil decomposes carbon slowly) and, every
+   *               other year, a green-manure crop instead of flood-season rice.
+   * B and C give up the main rice season, so their income trade-off must be checked locally.
+   */
+  const activeSeasons = SEASON_ORDER.filter((s) => getCrop(tp[s]) && tp[s] !== "fallow");
+  const current = (s: SeasonId) => screen[s].find((row) => row.cropId === tp[s]);
+  const byNeed = [...activeSeasons].sort((a, b) => (current(b)?.irrigation ?? 0) - (current(a)?.irrigation ?? 0));
+  const mainSeason = activeSeasons.includes("S1") ? "S1" : null;
+  const fitSeason = byNeed.find((s) => s !== mainSeason);
+  const dryValueSeason = byNeed[0];
+  const restSeason = activeSeasons.find((s) => s !== dryValueSeason && s !== fitSeason) ??
+    activeSeasons.find((s) => s !== dryValueSeason);
+  const usable = (season: SeasonId, minSuit = 60) => screen[season].filter((row) => {
+    const crop = getCrop(row.cropId);
+    return crop && row.suitability >= minSuit && crop.id !== tp[season] && crop.category !== "green_manure" &&
+      crop.category !== "fallow" && canPlant(tp, season, crop.id);
+  });
+  const pick = (rows: { cropId: string }[], avoid: (string | null)[]) =>
+    (rows.find((r) => !avoid.includes(r.cropId)) ?? rows[0])?.cropId ?? null;
+  const designed = (() => {
+    if (!fitSeason || !dryValueSeason) return null;
+    const fitCrop = pick([...usable(fitSeason)].sort((a, b) => b.suitability - a.suitability), []);
+    const dryRows = usable(dryValueSeason);
+    const waterCrop = pick([...dryRows].sort((a, b) => a.irrigation - b.irrigation || b.suitability - a.suitability), []);
+    const legume = pick([...dryRows].filter((r) => getCrop(r.cropId)?.agronomicProperties.nFixing)
+      .sort((a, b) => b.suitability - a.suitability), [waterCrop]);
+    if (!fitCrop || !waterCrop) return null;
+    const greenManure = restSeason ? screen[restSeason].filter((r) => getCrop(r.cropId)?.category === "green_manure" &&
+      r.suitability >= 55 && canPlant(tp, restSeason, r.cropId)).sort((a, b) => b.suitability - a.suitability)[0]?.cropId ?? null : null;
+    const soil = { ...tp, [dryValueSeason]: legume ?? waterCrop };
+    return {
+      fit: { ...tp, [fitSeason]: fitCrop },
+      water: { ...tp, [dryValueSeason]: waterCrop },
+      soil,
+      soilRest: restSeason ? { ...soil, [restSeason]: greenManure } : soil,
+    };
+  })();
+  const fallbackFit = designed ? null : alternative("fit");
+  const fit = designed?.fit ?? fallbackFit!;
+  const water = designed?.water ?? alternative("water");
+  const soil = designed?.soil ?? alternative("soil");
+  const waterYear2 = designed ? water : fit;
+  const soilYear2 = designed?.soilRest ?? water;
   const slots = (pattern: typeof tp, year: number) => SEASON_ORDER.map((season) =>
     slot(year, season, pattern[season], farm.cropHistory.plantingMonths?.[season]));
   const base = {
@@ -154,7 +204,7 @@ export function buildDefaultScenarios(farm: FarmProfile, climate: ClimateDataset
       ...base,
       id: "scenario-a",
       name: DEFAULT_SCENARIO_NAMES["scenario-a"][lang],
-      kind: "conventional",
+      kind: "fit",
       cycleYears: 1,
       seasonalCropSequence: slots(fit, 0),
     },
@@ -163,8 +213,8 @@ export function buildDefaultScenarios(farm: FarmProfile, climate: ClimateDataset
       id: "scenario-b",
       name: DEFAULT_SCENARIO_NAMES["scenario-b"][lang],
       kind: "water",
-      cycleYears: 2,
-      seasonalCropSequence: [...slots(water, 0), ...slots(fit, 1)],
+      cycleYears: designed ? 1 : 2,
+      seasonalCropSequence: designed ? slots(water, 0) : [...slots(water, 0), ...slots(waterYear2, 1)],
     },
     {
       ...base,
@@ -172,7 +222,7 @@ export function buildDefaultScenarios(farm: FarmProfile, climate: ClimateDataset
       name: DEFAULT_SCENARIO_NAMES["scenario-c"][lang],
       kind: "soil",
       cycleYears: 2,
-      seasonalCropSequence: [...slots(soil, 0), ...slots(water, 1)],
+      seasonalCropSequence: [...slots(soil, 0), ...slots(soilYear2, 1)],
     },
   ];
 }

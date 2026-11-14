@@ -325,13 +325,17 @@ export function Simulator() {
       "Keep planting the way you do now. Every other plan is compared with this one.",
       "Giữ nguyên cách đang trồng. Mọi cách trồng khác đều so với cách này.",
     ),
+    fit: L(
+      "Keeps your main rice season and swaps the thirstiest other season for the upland crop that fits this field best.",
+      "Giữ vụ lúa chính, đổi vụ tốn nước nhất còn lại sang cây màu hợp với ruộng này nhất.",
+    ),
     water: L(
-      "Swap some flooded-rice seasons for upland crops that suit this field and need less water.",
-      "Thay một số vụ lúa ngập bằng cây màu hợp với ruộng này và cần ít nước hơn.",
+      "Grows the upland crop that needs the least water, and rests the field in the flood season every other year.",
+      "Trồng cây màu cần ít nước nhất, và cứ hai năm cho ruộng nghỉ vụ mùa lũ một lần.",
     ),
     soil: L(
-      "Add bean crops and a green-manure crop to rest the soil and break continuous flooding.",
-      "Thêm vụ cây họ đậu và cây phân xanh để đất được nghỉ, không ngập liên tục.",
+      "Adds a bean crop every year and a green-manure crop in the flood season every other year to rebuild the soil.",
+      "Thêm cây họ đậu mỗi năm và cây phân xanh vào mùa lũ hai năm một lần để bồi lại đất.",
     ),
     custom: L(
       "Your own plan. Change the crops in the “Change the crops” section.",
@@ -693,7 +697,9 @@ export function Simulator() {
             </dd>
             <dd className="text-[11px] text-white/60">
               {soilNow
-                ? `${signed(soilNow.deltaTCHa, 2)} t C/ha · ${t("status.estimated")} (RothC)`
+                ? refResult.soilImprovementPotential
+                  ? `${t("rothc.vsCurrent", { delta: signed(soilNow.socTCHa - refResult.soilImprovementPotential.socTCHa, 2) })} · RothC`
+                  : `${t("status.estimated")} (RothC)`
                 : t("status.unavailable")}
             </dd>
           </div>

@@ -27,6 +27,8 @@ export function soilTexture(clay: number | null, sand: number | null): SoilTextu
   if (clay === null || sand === null || clay + sand > 102) return null;
   if (clay >= 40) return "clay";
   if (clay >= 27 && sand < 20) return "silty_clay";
+  // USDA clay loam: 27–40 % clay with 20–45 % sand (typical of Mekong alluvial paddies)
+  if (clay >= 27 && sand <= 45) return "clay_loam";
   if (sand >= 70) return "sand";
   if (sand >= 50) return "sandy_loam";
   return "loam";

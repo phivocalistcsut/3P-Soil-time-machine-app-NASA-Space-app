@@ -4,13 +4,13 @@
  *
  *   node scripts/fetch-power-snapshot.mjs [lat] [lon] [startYear] [endYear] [outFile]
  *
- * Defaults to the Thới Lai demo farm (10.07, 105.56) and the last 10 complete years.
+ * Defaults to the Thới Lai demo farm (10.0934, 105.5185) and the last 10 complete years.
  * The output keeps real retrieved values only — nothing is synthesised.
  */
 import { writeFileSync } from "node:fs";
 
-const lat = Number(process.argv[2] ?? 10.07);
-const lon = Number(process.argv[3] ?? 105.56);
+const lat = Number(process.argv[2] ?? 10.0934);
+const lon = Number(process.argv[3] ?? 105.5185);
 const end = Number(process.argv[5] ? process.argv[5] : new Date().getUTCFullYear() - 1);
 const start = Number(process.argv[4] ?? end - 9);
 const out = process.argv[6] ?? "data/power-snapshot-thoi-lai.json";

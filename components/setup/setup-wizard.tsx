@@ -63,8 +63,8 @@ interface Draft {
 
 const INITIAL: Draft = {
   name: "",
-  lat: 10.0706,
-  lon: 105.5599,
+  lat: 10.0934,
+  lon: 105.5185,
   pinned: false,
   boundary: [],
   boundaryClosed: false,
@@ -566,7 +566,7 @@ export function SetupWizard() {
                       <Label htmlFor="soil">{L("Soil type (if known)", "Loại đất (nếu biết)")}</Label>
                       <Select id="soil" value={d.soilType} onChange={(e) => up({ soilType: e.target.value as Draft["soilType"] })}>
                         <option value="unknown">{L("I don't know — use regional estimate", "Không rõ — dùng ước tính theo vùng")}</option>
-                        {(["clay", "silty_clay", "loam", "sandy_loam", "sand"] as SoilTexture[]).map((x) => (
+                        {(["clay", "silty_clay", "clay_loam", "loam", "sandy_loam", "sand"] as SoilTexture[]).map((x) => (
                           <option key={x} value={x}>
                             {t(`tex.${x}`)}
                           </option>

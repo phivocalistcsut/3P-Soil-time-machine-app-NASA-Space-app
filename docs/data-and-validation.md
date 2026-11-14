@@ -96,7 +96,7 @@ The [ISRIC property table](https://docs.isric.org/globaldata/soilgrids/SoilGrids
 `clayPercent0to30 = Σ clay(%) × thickness(cm) / 30`.
 Thicknesses are 5, 10 and 15 cm. Any missing SOC/density layer makes stock null; any missing clay layer makes depth-weighted clay null, independently. No interpolation or reduced-depth reweighting. Zero SOC/clay/sand is valid; zero density is not. The calculation does **not** subtract coarse fragments (`cfvo`) and is not the separately modeled SoilGrids `ocs` product.
 
-The real Thới Lai lookup (10.0706°N, 105.5599°E), saved in `data/soilgrids-thoi-lai.json` at `2026-11-14T04:08:15.822Z` (11:08:15, Asia/Saigon), returned:
+The original Thới Lai lookup (10.0706°N, 105.5599°E; on 14 Nov the demo farm moved to a paddy at 10.0934°N, 105.5185°E because the first point lay in the town centre), saved in `data/soilgrids-thoi-lai.json` at `2026-11-14T04:08:15.822Z` (11:08:15, Asia/Saigon), returned:
 
 | Depth | SOC, g/kg | Bulk density, g/cm³ | Clay, % | Layer stock, t C/ha |
 | --- | ---: | ---: | ---: | ---: |

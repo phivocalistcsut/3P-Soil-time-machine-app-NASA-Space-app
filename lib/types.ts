@@ -15,7 +15,7 @@ export type DataStatus = "observed" | "estimated" | "illustrative" | "unavailabl
 export type Confidence = "high" | "medium" | "low";
 
 export type SeasonId = "S1" | "S2" | "S3";
-export type SoilTexture = "clay" | "silty_clay" | "loam" | "sandy_loam" | "sand";
+export type SoilTexture = "clay" | "silty_clay" | "clay_loam" | "loam" | "sandy_loam" | "sand";
 export type WaterAvailability = "abundant" | "moderate" | "limited";
 export type IrrigationSource = "canal" | "groundwater" | "pond" | "rainfed";
 export type Drainage = "good" | "moderate" | "poor";
@@ -133,7 +133,7 @@ export interface SeasonalCropSlot {
   plantingMonth: number; // 1-12
 }
 
-export type ScenarioKind = "conventional" | "water" | "soil" | "custom";
+export type ScenarioKind = "conventional" | "fit" | "water" | "soil" | "custom";
 
 export interface RotationScenario {
   id: string;

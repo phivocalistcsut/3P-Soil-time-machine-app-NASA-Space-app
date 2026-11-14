@@ -7,7 +7,7 @@ import type { ClimateDataset, DailyExtremes, NdviSeries, SimulationSettings } fr
 
 const base = process.env.STM_VERIFY_URL ?? "http://127.0.0.1:3000";
 const locations = [
-  ["Thới Lai, Mekong Delta", 10.0706, 105.5599],
+  ["Thới Lai, Mekong Delta", 10.0934, 105.5185],
   ["Hương Trà, Central Vietnam", 16.4852, 107.493],
   ["Thai Binh, Northern Vietnam", 20.444, 106.312],
   ["Chiang Mai, Thailand", 18.788, 98.963],

@@ -93,7 +93,7 @@ export function Compare() {
   const rows: Row[] = [
     { id: "water", label: L("Irrigation demand (mm/yr)", "Nhu cầu tưới (mm/năm)"), better: "lower", value: (r) => r.waterDemand.median, fmt: (v, r) => `${num(v)} (${num(r.waterDemand.p10)}–${num(r.waterDemand.p90)})` },
     { id: "stress", label: L("Water stress exposure", "Mức thiếu nước"), better: "lower", value: (r) => r.waterRisk.level, fmt: (_v, r) => <StressBadge level={r.waterRisk.level} /> },
-    { id: "soil", label: `${t("rothc.title")} (t C/ha)`, better: "higher", value: (r) => r.soilImprovementPotential?.socTCHa ?? null, fmt: (_v, r) => <SoilCarbon result={r} compact /> },
+    { id: "soil", label: `${t("rothc.title")} (t C/ha)`, better: "higher", value: (r) => r.soilImprovementPotential?.socTCHa ?? null, fmt: (_v, r) => <SoilCarbon result={r} reference={output.reference.years[ti]} compact /> },
     { id: "div", label: L("Rotation diversity (H′)", "Đa dạng luân canh (H′)"), better: "higher", value: (r) => r.rotationDiversity.shannon, fmt: (v) => num(v, 2) },
     { id: "suit", label: L("Climate suitability (0–100)", "Phù hợp khí hậu (0–100)"), better: "higher", value: (r) => r.cropSuitability.score, fmt: (v, r) => (
       <span className="inline-flex items-center gap-1.5">
@@ -336,7 +336,7 @@ export function Compare() {
                 <div className="col-span-3 rounded-lg bg-lime-soft p-2">
                   <dt className="mb-1 text-lime-ink">{t("rothc.title")}</dt>
                   <dd>
-                    <SoilCarbon result={r} compact notes={false} />
+                    <SoilCarbon result={r} reference={output.reference.years[ti]} compact notes={false} />
                   </dd>
                 </div>
               </dl>

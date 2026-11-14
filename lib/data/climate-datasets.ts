@@ -58,7 +58,7 @@ export function getDemoSnapshot(): ClimateDataset {
   };
 }
 
-export const DEMO_LOCATION = { lat: 10.07, lon: 105.56 };
+export const DEMO_LOCATION = { lat: 10.0934, lon: 105.5185 };
 
 /** Seeded pseudo-random generator so illustrative data is stable between reloads. */
 function mulberry32(seed: number) {
