@@ -28,3 +28,14 @@ Four original PNG files supplied by the project owner on 14 November 2026, in th
 | how-it-works/04-farm-decision.png | A grower harvesting vegetables; photographer/source not supplied. |
 
 Rights remain with the respective creators; this record does not assign a new license to supplied images.
+
+## Field-info card photos
+
+Provided by the project team for the "Field info" cards. **Licence still to be confirmed before public release**: some of these carry a visible stock or news watermark.
+
+| File | Description | Source / licence |
+| --- | --- | --- |
+| card-rain.webp | Storm clouds over a green field | to confirm (faint stock watermark visible) |
+| card-soil.webp | Furrowed soil in low sunlight | to confirm |
+| card-drought.webp | Rice field next to cracked, dried mud | to confirm (VietNamNet watermark visible) |
+| card-harvest.webp | Aerial view of green and ripe rice with a combine harvester | to confirm |

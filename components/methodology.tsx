@@ -34,7 +34,7 @@ export function Methodology() {
       provider: "NASA Langley Research Center",
       vars: L("Daily rainfall, maximum and minimum temperature → counts of heavy-rain, hot and frost days", "Mưa, nhiệt độ cao nhất và thấp nhất theo ngày → đếm số ngày mưa lớn, nắng nóng, sương giá"),
       res: "≈0.5° × 0.625°",
-      use: L("Extreme-days charts, 12-month risk calendar, bare-soil index (/api/climate-daily)", "Biểu đồ ngày cực đoan, lịch rủi ro 12 tháng, chỉ số đất trống (/api/climate-daily)"),
+      use: L("Extreme-days charts, 12-month risk calendar, bare-soil index (/api/climate-daily)", "Biểu đồ thời tiết khắc nghiệt, lịch rủi ro 12 tháng, chỉ số đất trống (/api/climate-daily)"),
       limit: L("Reanalysis can run warmer than local stations and smooths local downpours", "Số liệu tái phân tích có thể nóng hơn trạm đo và làm mượt các trận mưa cục bộ"),
       status: "estimated",
       link: "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
@@ -368,7 +368,7 @@ export function Methodology() {
             {L("each day of each season is placed on the calendar; a month is bare when living crops cover less than half of it (fallow counts as bare).", "mỗi ngày của từng vụ được đặt lên lịch; tháng đất trống là khi cây sống phủ ít hơn nửa tháng (để đất nghỉ tính là trống).")}
           </li>
           <li>
-            <strong className="text-ink">{L("Daily extremes:", "Ngày cực đoan:")}</strong>{" "}
+            <strong className="text-ink">{L("Daily extremes:", "Thời tiết khắc nghiệt theo ngày:")}</strong>{" "}
             {L(`heavy rain ≥ ${DAILY_THRESHOLDS.heavyRainMm} mm/day, very heavy ≥ ${DAILY_THRESHOLDS.veryHeavyRainMm} mm, hot ≥ ${DAILY_THRESHOLDS.hotC} °C, frost ≤ ${DAILY_THRESHOLDS.frostC} °C; averaged per calendar month over 10 years.`, `mưa lớn ≥ ${DAILY_THRESHOLDS.heavyRainMm} mm/ngày, rất lớn ≥ ${DAILY_THRESHOLDS.veryHeavyRainMm} mm, nóng ≥ ${DAILY_THRESHOLDS.hotC} °C, sương giá ≤ ${DAILY_THRESHOLDS.frostC} °C; lấy trung bình theo tháng trong 10 năm.`)}
           </li>
           <li>

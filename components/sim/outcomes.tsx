@@ -241,7 +241,7 @@ export function OutcomePanel({ result, reference }: { result: SimulationResult; 
       >
         <div className="flex items-center gap-2">
           <p className="font-display text-2xl font-bold tabular">
-            {r.bareSoil.months} <span className="text-sm font-medium text-ink-2">{L("bare months", "tháng trống")}</span>
+            {r.bareSoil.months} <span className="text-sm font-medium text-ink-2">{L("bare months", "tháng ruộng trống")}</span>
           </p>
           <Badge tone={r.bareSoil.cls === "low" ? "green" : r.bareSoil.cls === "moderate" ? "amber" : "red"}>
             {r.bareSoil.cls === "low" ? L("Low exposure", "Ít rủi ro") : r.bareSoil.cls === "moderate" ? L("Moderate", "Vừa") : L("High exposure", "Rủi ro cao")}

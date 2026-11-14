@@ -174,6 +174,64 @@ export function SectionTabs({
   );
 }
 
+/** Large tabs for pages with only two or three topics: big icon, title and one line each. */
+export function HeroTabs({
+  tabs,
+  value,
+  onChange,
+  label,
+}: {
+  tabs: (SectionTab & { image?: BandImage })[];
+  value: string;
+  onChange: (id: string) => void;
+  label: string;
+}) {
+  return (
+    <div role="tablist" aria-label={label} className={cn("no-print grid gap-3", tabs.length === 3 ? "sm:grid-cols-3" : "grid-cols-2")}>
+      {tabs.map((t) => {
+        const on = t.id === value;
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            id={`tab-${t.id}`}
+            aria-selected={on}
+            aria-controls={`panel-${t.id}`}
+            onClick={() => onChange(t.id)}
+            className={cn(
+              "group relative isolate flex items-center gap-3 overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all duration-300 md:gap-4 md:px-6 md:py-5",
+              on
+                ? "border-space-900 bg-space-900 text-white shadow-[var(--shadow-float)]"
+                : "border-line bg-white text-ink shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:border-lime",
+            )}
+          >
+            {on && (
+              <div aria-hidden className="absolute inset-0 -z-10">
+                {t.image && <Image src={`/images/${t.image}.webp`} alt="" fill sizes="50vw" className="object-cover opacity-60" />}
+                <div className="absolute inset-0 bg-gradient-to-r from-space-950/95 via-space-950/75 to-space-950/40" />
+                <div className="absolute inset-0 bg-stars opacity-40" />
+              </div>
+            )}
+            <span
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full md:h-12 md:w-12",
+                on ? "border border-lime/50 bg-space-950/40 text-lime-bright" : cn(TONES[t.tone].soft, TONES[t.tone].ink),
+              )}
+            >
+              <t.icon className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="title-caps block text-[15px] font-extrabold leading-tight md:text-xl">{t.label}</span>
+              {t.hint && <span className={cn("mt-0.5 hidden text-xs sm:block md:text-[13px]", on ? "text-white/70" : "text-ink-2")}>{t.hint}</span>}
+            </span>
+            <span aria-hidden className={cn("absolute inset-x-6 bottom-0 h-[3px] rounded-full transition-opacity", on ? "bg-lime opacity-100" : "opacity-0")} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SectionPanel({ id, active, children, keepMounted, className }: { id: string; active: boolean; children: React.ReactNode; keepMounted?: boolean; className?: string }) {
   if (!active && !keepMounted) return null;
   return (
