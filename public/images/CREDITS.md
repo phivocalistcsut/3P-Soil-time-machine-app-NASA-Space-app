@@ -1,6 +1,6 @@
 # Image credits
 
-All photographs are NASA imagery from the NASA Image and Video Library (images.nasa.gov).
+Background photographs are NASA imagery from the NASA Image and Video Library (images.nasa.gov).
 NASA material is generally not subject to copyright in the United States; no NASA endorsement is implied.
 Images were resized and converted to WebP.
 
@@ -11,3 +11,7 @@ Images were resized and converted to WebP.
 | earth-limb.webp | iss040e080833 | Sunrise over Earth's limb, ISS Expedition 40, 26 Jul 2014 |
 | orbital-sunrise.webp | iss028e007274 | Sun over Earth's limb, ISS Expedition 28, 11 Jun 2011 |
 | night-coast.webp | iss064e037842 | Night lights of Bangkok and the Gulf of Thailand, seen over southern Vietnam, ISS Expedition 64, 26 Feb 2021 |
+
+## Globe texture
+
+`earth-blue-marble.jpg`: *The Blue Marble: land surface, ocean color and sea ice* (8 February 2002), NASA Goddard Space Flight Center. Image by Reto Stöckli; enhancements by Robert Simmon; MODIS teams, USGS and DMSP data support. Source: [Wikimedia Commons file and attribution](https://commons.wikimedia.org/wiki/File:Land_ocean_ice_2048.jpg), originating from NASA Visible Earth G57730. This downloaded file is licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); see the source page for full credits. The JPEG is unmodified; the app projects it onto a decorative rotating globe with lighting. The rendered image adaptation is offered under the same license. It is a historical composite, not a live satellite feed. No NASA endorsement is implied.

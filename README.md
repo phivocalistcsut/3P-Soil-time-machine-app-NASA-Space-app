@@ -27,7 +27,7 @@ npm test            # provider and engine regression checks
 npm run engine:smoke # prints results for the demo farm
 ```
 
-No provider API keys are needed. Offline mode uses previously saved data or the bundled demo snapshot.
+NASA/SoilGrids data need no provider key. Online address lookup optionally uses a server-side MAPTILER_API_KEY (see .env.example); without it, use the local place list or coordinates. Offline mode uses previously saved data or the bundled demo snapshots.
 
 ## Demo journey (≈3 minutes)
 
@@ -61,7 +61,7 @@ app/
   (app)/{overview,simulator,compare,planner,methodology,settings}/page.tsx
   api/climate/route.ts     NASA POWER proxy (normalised ClimateDataset)
   api/soil/route.ts        ISRIC SoilGrids proxy (regional estimate)
-  api/geocode/route.ts     Nominatim search (client falls back to an offline gazetteer)
+  api/geocode/route.ts     optional MapTiler geocoding (server-only key, offline place fallback)
   api/simulate/route.ts    same engine as the browser, JSON in/out (FastAPI-ready contract)
 components/
   ui/                      design-system primitives (button, card, badge, fields, slider, popover, sheet, toast)
@@ -132,7 +132,7 @@ Run `npm test` for adapter, geometry, monthly RothC reference and integration ch
 
 - NASA POWER and NASA GIBS imagery: NASA open data policy (no endorsement implied).
 - Sentinel-2 cloudless 2023 by EOX IT Services GmbH — CC BY-NC-SA 4.0 (non-commercial use; replace for commercial deployments).
-- Basemap © OpenStreetMap contributors © CARTO. Geocoding © OpenStreetMap Nominatim (light use).
+- Basemap © OpenStreetMap contributors © CARTO. Address lookup © MapTiler / OpenStreetMap (optional configured key).
 - ISRIC SoilGrids — CC BY 4.0.
 - NASA photographs from the NASA Image and Video Library (images.nasa.gov) — see `public/images/CREDITS.md`; no NASA endorsement implied.
 - RothC reference implementation (Rothamsted Research, `RothC_Py`) — Apache 2.0, used only as a test reference (`data/rothc-reference`).
@@ -151,3 +151,11 @@ Regional pixels are not field measurements; there is no yield, pest, market or f
 an estimated RothC SOC balance with low confidence — compare plans with each other rather than reading absolute SOC.
 Optical NDVI (MODIS) has long cloud gaps in the Mekong wet season; radar (Sentinel-1) is the next step. SoilGrids pixels and crop residues are estimates, paddy factors need local validation, and original RothC excludes permanently waterlogged soils. Validation with local field trials and extension officers is the necessary next step.
 *This tool provides decision-support scenarios, not a substitute for local agronomic advice or field measurements.*
+
+## Landing and P1 review
+
+The landing hero uses a decorative NASA Blue Marble globe with pause/reduced-motion support. Open the full farm demo to use simulation controls. The professional comparison label replaces the old scenario-count shorthand.
+
+Overview now separates the 1984–last-complete-year Sen/Mann–Kendall temperature trend from the up-to-ten-year rotation climate window, which is configured in Settings. The NDVI section compares an explicit peak-screening rule with the declared crop calendar. The demo includes a real POWER/ERA5 hot-day cross-check and clearly labeled illustrative economics with source/assumption records. Run `node --import tsx scripts/validate-weather.ts --save` to refresh the independent weather comparison. ECOSTRESS ET validation and full SRTM/HLS adapters remain outstanding.
+
+See [the implementation, MapTiler setup, measured comparison results and remaining P1 gaps](docs/landing-and-p1-review.md). Globe texture attribution/license: [image credits](public/images/CREDITS.md).

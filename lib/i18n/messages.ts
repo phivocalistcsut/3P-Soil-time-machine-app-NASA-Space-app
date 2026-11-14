@@ -3,6 +3,12 @@
  * UI copy that appears once lives next to its component via L(en, vi).
  */
 export const MESSAGES: Record<string, { en: string; vi: string }> = {
+  "geo.searching": { en: "Looking up the address…", vi: "Đang tìm vị trí…" },
+  "geo.choose": { en: "Several places match. Choose the correct one to move the map.", vi: "Có nhiều địa điểm phù hợp. Chọn đúng địa điểm để bản đồ di chuyển tới." },
+  "geo.located": { en: "Map moved to {name}. Check the pin and click the exact field location.", vi: "Đã đưa bản đồ tới {name}. Kiểm tra rồi bấm đúng vị trí thửa ruộng." },
+  "geo.notConfigured": { en: "Online address search is not set up. Use a suggested place or enter coordinates.", vi: "Tìm địa chỉ trực tuyến chưa sẵn sàng. Bạn có thể chọn địa danh gợi ý hoặc nhập tọa độ." },
+  "geo.unavailable": { en: "Address search is temporarily unavailable. Suggestions below are approximate local reference points.", vi: "Hiện chưa kết nối được dịch vụ tìm địa chỉ. Các gợi ý bên dưới là vị trí tham khảo trong danh mục có sẵn." },
+  "geo.hint": { en: "Press Enter to search. A unique match moves the map automatically; otherwise choose a result. Rural fields may need a manual pin or boundary.", vi: "Nhấn Enter để tìm. Nếu chỉ có một kết quả, bản đồ tự di chuyển tới; nếu có nhiều kết quả, hãy chọn địa điểm. Với ruộng không có địa chỉ, bạn có thể ghim điểm hoặc vẽ ranh giới." },
   // data status
   "status.observed": { en: "Observed", vi: "Quan trắc" },
   "status.estimated": { en: "Estimated", vi: "Ước tính" },
@@ -147,8 +153,8 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
     vi: "Nhu cầu đạm điển hình của cây trừ phần đạm cây họ đậu vụ trước để lại (giá trị minh họa theo vùng).",
   },
   "src.economics": {
-    en: "Gross margin = yield × price − cost from your inputs, reduced 15% for fair and 40% for poor climate fit.",
-    vi: "Lãi gộp = năng suất × giá − chi phí theo số liệu bạn nhập, giảm 15% nếu khí hậu tương đối phù hợp và 40% nếu kém phù hợp.",
+    en: "Gross margin = yield × price − cost from supplied inputs; demo inputs remain illustrative. Revenue is reduced 15% for fair and 40% for poor climate fit.",
+    vi: "Lãi gộp = năng suất × giá − chi phí theo đầu vào được cung cấp; số liệu demo là minh họa. Doanh thu giảm 15% nếu khí hậu tương đối phù hợp và 40% nếu kém phù hợp.",
   },
 
   // assumptions

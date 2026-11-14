@@ -664,7 +664,7 @@ export function Compare() {
               </ul>
             </div>
             <div>
-              <p className="text-sm font-semibold text-ink">{L("Data uncertainty", "Độ bất định dữ liệu")}</p>
+              <p className="text-sm font-semibold text-ink">{L("Data uncertainty", "Giới hạn và độ tin cậy dữ liệu")}</p>
               <ul className="mt-1.5 space-y-1 text-xs text-ink-2">
                 <li>• {L(`Climate: ${climate.data?.source ?? ""}, ${climate.data?.resolution ?? ""}.`, `Khí hậu: ${climate.data?.source ?? ""}, ${climate.data?.resolution ?? ""}.`)}</li>
                 <li>• {L(`Soil inputs: ${farm.soilSources.soilType.source}.`, `Đầu vào đất: ${farm.soilSources.soilType.source}.`)}</li>

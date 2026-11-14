@@ -8,10 +8,18 @@ import { fetchSoilGrids } from "../lib/services/soilgrids";
 import { historyYears, monthPeriod, pointFromQuery, vegetationDates, type EnvironmentalSeries } from "../lib/data/evidence";
 import { getDemoSnapshot, getOfflineClimate } from "../lib/data/climate-datasets";
 import { fieldBoundary } from "../lib/data/geometry";
-import { buildDefaultScenarios, createDemoFarm, weightsFromPriorities } from "../lib/data/demo";
+import { buildDefaultScenarios, createDemoFarm, weightsFromPriorities, ILLUSTRATIVE_ECONOMICS } from "../lib/data/demo";
 import { climateWithImerg, smapWetMonths } from "../lib/engine/environment";
 import { runEngine } from "../lib/engine/simulate";
-import { prepareClimate } from "../lib/engine/climate";
+import { prepareClimate, penmanMonteithET0 } from "../lib/engine/climate";
+import { temperatureTrend } from "../lib/engine/statistics";
+import { annualTemperatures } from "../lib/services/climate-trend";
+import { era5HotYears, type Era5Daily } from "../lib/services/weather-crosscheck";
+import { ndviSeasonPeaks } from "../lib/engine/ndvi-seasons";
+import { parseGeocoding, geocode } from "../lib/services/geocoding";
+import { buildCalendar } from "../lib/engine/insights";
+import ndviSnapshot from "../data/ndvi-thoi-lai.json";
+import type { NdviSeries } from "../lib/types";
 import { rothCMonths, soilCarbonRating } from "../lib/engine/soil-carbon";
 import { ProviderError, upstreamJson } from "../lib/services/http";
 import { aggregateImerg } from "../lib/services/imerg";
@@ -23,6 +31,87 @@ import type { FarmProfile, SimulationSettings } from "../lib/types";
 const farm = createDemoFarm();
 const settings: SimulationSettings = { startYear: 2026, horizon: 3, climateAssumption: "baseline",
   weights: weightsFromPriorities(farm.farmerPriorities), economics: {} };
+
+test("FAO-56 Example 17 Bangkok monthly ET0 matches 5.72 mm/day", () => {
+  // FAO Irrigation & Drainage Paper 56, Ch.4 Example 17 (April):
+  // https://www.fao.org/4/x0490e/x0490e08.htm — actual vapour pressure=2.85 kPa.
+  // Convert the given vapour pressure to equivalent mean RH for this app's input contract.
+  const es = (0.6108 * Math.exp(17.27 * 34.8 / (34.8 + 237.3)) + 0.6108 * Math.exp(17.27 * 25.6 / (25.6 + 237.3))) / 2;
+  const et0 = penmanMonteithET0({t:30.2,range:9.2,rh:100*2.85/es,u2:2,rs:22.65,lat:13+44/60,doy:105,elevation:2,tPrev:29.2});
+  assert.ok(Math.abs(et0 - 5.72) < 0.05, `ET0=${et0}`); // Printed table values are rounded.
+});
+
+test("Mann–Kendall corrects ties and Sen uses elapsed years", () => {
+  const up = temperatureTrend(Array.from({length:10},(_,i)=>({year:2000+i*2,temperature:i})))!;
+  assert.equal(up.s,45); assert.equal(up.variance,125); assert.equal(up.slopePerYear,0.5);
+  assert.ok(Math.abs(up.p-0.00008303)<0.0000002);
+  const flat = temperatureTrend(Array.from({length:10},(_,i)=>({year:2000+i,temperature:2})))!;
+  assert.equal(flat.variance,0); assert.equal(flat.slopePerYear,0); assert.ok(flat.p>0.999999);
+  const tied = temperatureTrend(Array.from({length:8},(_,i)=>({year:2000+i,temperature:Math.floor(i/2)})))!;
+  assert.ok(Math.abs(tied.variance-61.3333333333)<1e-8);
+  assert.equal(temperatureTrend([{year:2000,temperature:1}]),null);
+});
+
+test("annual temperature means weight leap days and reject partial years", () => {
+  const values=Object.fromEntries(Array.from({length:24},(_,i)=>[`${2000+Math.floor(i/12)}${String(i%12+1).padStart(2,"0")}`,i===1?1:0]));
+  const json:PowerJson={parameters:{T2M:{units:"C"}},properties:{parameter:{T2M:values}}};
+  assert.ok(Math.abs(annualTemperatures(json,2000,2001)[0].temperature-29/366)<1e-12);
+  delete values["200105"];
+  assert.deepEqual(annualTemperatures(json,2000,2001).map(p=>p.year),[2000]);
+  assert.throws(()=>annualTemperatures({...json,parameters:{T2M:{units:"F"}}},2000,2001));
+});
+
+test("geocoding validates coordinates, deduplicates and submits complete addresses", async () => {
+  const payload={features:[{place_name:"Field address",center:[105.5,10],place_type:["address"]},{place_name:"Duplicate",center:[105.5,10]},
+    {place_name:"Invalid",center:[999,10]},{place_name:"String coordinate",center:["105",10]}]};
+  assert.deepEqual(parseGeocoding(payload),[{name:"Field address",lon:105.5,lat:10,zoom:17}]);
+  let calls=0;
+  const fetcher:typeof fetch=async(input)=>{calls++; const url=new URL(String(input));
+    assert.equal(url.searchParams.get("language"),"vi"); assert.equal(url.searchParams.get("autocomplete"),"false");
+    assert.match(decodeURIComponent(url.pathname),/Cờ Đỏ/); return Response.json(payload);};
+  assert.equal((await geocode("Cờ Đỏ, Cần Thơ","vi","test-key",fetcher)).length,1); assert.equal(calls,1);
+  await assert.rejects(geocode("test","en","test-key",async()=>new Response("",{status:403})));
+});
+
+test("NDVI screening ignores rejected QA and cannot bridge cloud gaps", () => {
+  const series:NdviSeries={...ndviSnapshot,evidence:undefined,status:"observed",points:[
+    {date:"2024-01-01",ndvi:0.3,quality:"good"},{date:"2024-01-17",ndvi:0.8,quality:"good"},
+    {date:"2024-02-02",ndvi:0.3,quality:"good"},{date:"2024-02-18",ndvi:0.95,quality:"rejected"},
+    {date:"2024-06-01",ndvi:0.9,quality:"good"},{date:"2024-06-17",ndvi:0.2,quality:"good"}]};
+  assert.deepEqual(ndviSeasonPeaks(series).peaks,[{date:"2024-01-17",ndvi:0.8}]);
+});
+
+test("ERA5 cross-check validates units and excludes incomplete years", () => {
+  const time=Array.from({length:366},(_,i)=>new Date(Date.UTC(2024,0,1+i)).toISOString().slice(0,10));
+  const json:Era5Daily={latitude:10,longitude:105,timezone:"Asia/Ho_Chi_Minh",daily_units:{temperature_2m_max:"°C"},
+    daily:{time,temperature_2m_max:time.map((_,i)=>i<20?35:34.9)}};
+  assert.deepEqual(era5HotYears(json,2024,2024),[{year:2024,days:366,hotDays:20}]);
+  json.daily!.temperature_2m_max[25]=null;
+  assert.deepEqual(era5HotYears(json,2024,2024),[]);
+  assert.throws(()=>era5HotYears({...json,daily_units:{temperature_2m_max:"°F"}},2024,2024));
+});
+
+test("bare and fallow rain cells describe wash-off and fixed soil texture changes water demand", () => {
+  const climate=getDemoSnapshot();
+  const run=(soilType:FarmProfile["soilType"])=>runEngine({farm:{...farm,soilType},climate,scenarios:[],settings}).reference.years[0];
+  assert.ok(run("loam").waterDemand.median>run("clay").waterDemand.median);
+  const result={...run(farm.soilType),monthlyCover:Array(12).fill("fallow")};
+  const calendar=buildCalendar({result,farm,climate,assumption:"baseline",extremes:null});
+  assert.ok(calendar.rows.find(r=>r.id==="rain")!.cells.every(c=>c.risk?.en==="Wash-off"));
+});
+
+test("demo economics remain illustrative with explicit source/assumption records", () => {
+  for(const crop of CROPS) {
+    const data=ILLUSTRATIVE_ECONOMICS[crop.id];
+    assert.equal(data.status,"illustrative"); assert.ok(data.source);
+    assert.ok([data.yieldT,data.priceVnd,data.costMVnd].every(v=>Number.isFinite(v)&&v>=0));
+  }
+  const climate=getDemoSnapshot(),scenarios=buildDefaultScenarios(farm,climate,settings);
+  const result=runEngine({farm,climate,scenarios,settings:{...settings,economics:ILLUSTRATIVE_ECONOMICS}});
+  for(const simulation of [result.reference,...Object.values(result.results)])for(const year of simulation.years) {
+    assert.equal(year.economics?.status,"illustrative"); assert.ok(Number.isFinite(year.economics?.grossMargin));
+  }
+});
 
 // Tiny georeferenced GeoTIFFs exercise the WCS request, decoder, pixel lookup AND unit conversion.
 const SOIL_RAW: Record<string, number> = {

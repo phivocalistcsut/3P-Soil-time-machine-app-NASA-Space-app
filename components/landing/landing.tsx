@@ -20,10 +20,9 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useApp } from "@/lib/store";
 import { createDemoFarm } from "@/lib/data/demo";
-import { useMounted } from "@/lib/hooks";
 import { LanguageSwitcher, Logo } from "@/components/common";
-import { buttonClass, Skeleton } from "@/components/ui/primitives";
-import { HeroDemo } from "./hero-demo";
+import { buttonClass } from "@/components/ui/primitives";
+import { HeroEarth } from "./hero-earth";
 import {
   IlloBalance,
   IlloGrow,
@@ -35,7 +34,6 @@ export function Landing() {
   const { L } = useI18n();
   const router = useRouter();
   const setFarm = useApp((s) => s.setFarm);
-  const mounted = useMounted();
   const startDemo = () => {
     setFarm(createDemoFarm());
     router.push("/overview");
@@ -45,16 +43,16 @@ export function Landing() {
     {
       icon: MapPin,
       art: IlloLocate,
-      title: L("Locate your farm", "Xác định trang trại"),
+      title: L("Locate your farm", "Chọn vị trí ruộng"),
       text: L(
         "Pin your field on the map, or start from the Mekong Delta demo farm.",
-        "Ghim ruộng của bạn trên bản đồ, hoặc bắt đầu với trang trại mẫu ở ĐBSCL.",
+        "Tìm địa chỉ rồi ghim đúng thửa ruộng, hoặc khám phá trước với ruộng mẫu ở Đồng bằng sông Cửu Long.",
       ),
     },
     {
       icon: Layers,
       art: IlloSatellite,
-      title: L("Understand your soil and climate", "Hiểu đất và khí hậu"),
+      title: L("Understand your soil and climate", "Tìm hiểu đất và khí hậu"),
       text: L(
         "See regional rainfall, temperature, and soil moisture history for your location.",
         "Xem 10 năm số liệu mưa, nhiệt độ và độ ẩm đất của NASA cho khu vực của bạn.",
@@ -66,16 +64,16 @@ export function Landing() {
       title: L("Try new planting plans", "Thử cách trồng mới"),
       text: L(
         "Pick a plan and a year up to 5 years ahead, and see water, soil and risks change.",
-        "Chọn cách trồng và một năm trong 5 năm tới, xem nước, đất và rủi ro thay đổi ra sao.",
+        "Thử các phương án luân canh trong 5 năm để so sánh nhu cầu tưới, carbon trong đất và rủi ro mùa vụ.",
       ),
     },
     {
       icon: Scale,
       art: IlloBalance,
-      title: L("Make a more informed decision", "Ra quyết định sáng suốt hơn"),
+      title: L("Make a more informed decision", "Chọn phương án phù hợp"),
       text: L(
         "Compare plans against your own priorities and turn one into a season plan.",
-        "So sánh các cách trồng theo ưu tiên của bạn và biến một lựa chọn thành kế hoạch mùa vụ.",
+        "Cân nhắc từng phương án theo nhu cầu của gia đình, sau đó lập lịch gieo trồng cho từng vụ.",
       ),
     },
   ];
@@ -86,23 +84,23 @@ export function Landing() {
       title: L("Water scarcity", "Khan hiếm nước"),
       text: L(
         "Dry-season irrigation competes with saltwater intrusion and upstream flow changes. Every season of flooded rice needs land-preparation and percolation water on top of crop use.",
-        "Tưới mùa khô phải cạnh tranh với xâm nhập mặn và dòng chảy thượng nguồn thay đổi. Mỗi vụ lúa ngập cần thêm nước làm đất và bù thấm ngoài lượng cây sử dụng.",
+        "Mùa khô và xâm nhập mặn khiến nguồn nước tưới khó bảo đảm. Ngoài lượng nước cây cần, mỗi vụ lúa còn dùng nước làm đất, duy trì ngập và bù thấm.",
       ),
     },
     {
       icon: Mountain,
       title: L("Soil degradation", "Suy thoái đất"),
       text: L(
-        "Continuous cropping of the same crop removes nutrients and keeps soils permanently flooded. Rotation with legumes and green manure is one widely studied way to rebuild soil function.",
-        "Độc canh liên tục lấy đi dinh dưỡng và giữ đất luôn ngập. Luân canh với cây họ đậu và phân xanh là một hướng đã được nghiên cứu nhiều để phục hồi chức năng của đất.",
+        "Repeated cropping, residue removal and water management affect soil carbon and nutrients. Legumes and green manure can return organic matter; the outcome depends on local management.",
+        "Canh tác liên tục, lấy tàn dư khỏi ruộng và chế độ nước đều ảnh hưởng đến dinh dưỡng và carbon trong đất. Cây họ đậu, phân xanh có thể bổ sung hữu cơ, nhưng hiệu quả cần được đánh giá tại ruộng.",
       ),
     },
     {
       icon: ThermometerSun,
-      title: L("Climate uncertainty", "Khí hậu bất định"),
+      title: L("Climate uncertainty", "Thời tiết khó lường"),
       text: L(
         "Hotter, drier or wetter seasons change which crops fit. Testing a plan against several climate assumptions shows where it is fragile before you plant.",
-        "Mùa nóng hơn, khô hơn hay ẩm hơn sẽ thay đổi cây nào phù hợp. Thử kế hoạch với nhiều giả định khí hậu cho thấy điểm yếu trước khi xuống giống.",
+        "Nắng nóng, thiếu nước hoặc mưa nhiều có thể làm một số cây khó thích nghi. Thử trước các tình huống thời tiết giúp nhận diện rủi ro trước khi xuống giống.",
       ),
     },
   ];
@@ -165,7 +163,7 @@ export function Landing() {
       name: "ISRIC SoilGrids",
       what: L(
         "Global modeled soil pH, organic carbon and texture (non-NASA, supplementary).",
-        "Bản đồ đất toàn cầu mô hình hóa: pH, carbon hữu cơ, sa cấu (không thuộc NASA, bổ sung).",
+        "Ước tính pH, carbon hữu cơ và thành phần cơ giới đất theo mô hình toàn cầu (nguồn bổ sung ngoài NASA).",
       ),
       use: L(
         "Optional regional estimate when you have no soil test.",
@@ -177,8 +175,8 @@ export function Landing() {
 
   const facts = [
     { value: "4", label: L("NASA datasets", "bộ dữ liệu NASA") },
-    { value: "5", label: L("years ahead", "năm phía trước") },
-    { value: "3+1", label: L("plans vs. today", "cách trồng so với hiện tại") },
+    { value: "5", label: L("years ahead", "năm mô phỏng") },
+    { value: L("Compare", "So sánh"), label: L("planting strategies", "phương án canh tác") },
     { value: "1981", label: L("weather history since", "lịch sử thời tiết từ") },
   ];
 
@@ -203,34 +201,34 @@ export function Landing() {
         <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-4 pb-24 pt-10 md:px-6 lg:grid-cols-[1fr_1fr] lg:pb-32 lg:pt-16">
           <div>
             <p className="eyebrow text-lime-bright">
-              {L("See the future of your soil. Shape it today.", "Thấy trước tương lai của đất. Định hình ngay hôm nay.")}
+              {L("See the future of your soil. Shape it today.", "Hiểu đất hôm nay, chủ động mùa vụ ngày mai.")}
             </p>
             <h1 className="title-caps mt-5 text-[36px] font-extrabold leading-[1.04] md:text-[54px] lg:text-[60px]">
-              {L("What if you could see the future of your farm?", "Nếu bạn có thể nhìn thấy tương lai của ruộng mình?")}
+              {L("What if you could see the future of your farm?", "Chọn cách trồng hôm nay, chuẩn bị cho những mùa vụ tới.")}
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
               {L(
                 "Explore how today's crop rotation decisions may shape tomorrow's soil health, water demand, and climate resilience — powered by NASA Earth observations.",
-                "Khám phá các quyết định luân canh hôm nay có thể định hình sức khỏe đất, nhu cầu nước và khả năng chống chịu khí hậu ngày mai ra sao — dựa trên dữ liệu quan sát Trái Đất của NASA.",
+                "Dùng dữ liệu NASA và mô hình nông học để so sánh phương án luân canh, ước tính nhu cầu tưới và theo dõi carbon trong đất qua từng năm.",
               )}
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link href="/setup" className={buttonClass("primary", "lg")}>
-                {L("Explore My Farm", "Khám phá trang trại của tôi")}
+                {L("Explore My Farm", "Thiết lập ruộng của tôi")}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
               <button onClick={startDemo} className={buttonClass("glass", "lg")}>
-                {L("Try Interactive Demo", "Dùng thử bản demo")}
+                {L("Try Interactive Demo", "Khám phá ruộng mẫu")}
               </button>
             </div>
             <p className="mt-5 text-xs text-white/60">
               {L(
                 "No sign-up. Works with free NASA data. Demo values are clearly labeled.",
-                "Không cần đăng ký. Dùng dữ liệu NASA miễn phí. Giá trị demo được ghi nhãn rõ ràng.",
+                "Không cần đăng ký. Có sẵn ruộng mẫu để dùng thử; mỗi số liệu đều kèm nguồn và mức độ tin cậy.",
               )}
             </p>
           </div>
-          <div>{mounted ? <HeroDemo /> : <Skeleton className="h-[420px] rounded-[28px] bg-white/10" />}</div>
+          <HeroEarth />
         </div>
       </section>
 
@@ -241,7 +239,7 @@ export function Landing() {
             <div key={f.label} className={`px-5 py-6 text-center md:py-8 ${i % 2 ? "border-l border-line" : ""} ${i > 1 ? "border-t border-line md:border-t-0" : ""} ${i === 2 ? "md:border-l" : ""}`}>
               <dt className="sr-only">{f.label}</dt>
               <dd>
-                <span className="block font-display text-4xl font-extrabold text-lime-ink tabular md:text-5xl">{f.value}</span>
+                <span className="block font-display text-3xl font-extrabold text-lime-ink tabular md:text-4xl">{f.value}</span>
                 <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-ink-2">{f.label}</span>
               </dd>
             </div>
@@ -254,7 +252,7 @@ export function Landing() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="eyebrow justify-center text-lime-ink">{L("How it works", "Cách hoạt động")}</p>
           <h2 className="title-caps mt-3 text-3xl font-extrabold md:text-4xl">
-            {L("From one field to several possible futures", "Từ một thửa ruộng đến nhiều tương lai có thể")}
+            {L("From one field to several possible futures", "So sánh cách trồng, chọn hướng phù hợp cho ruộng")}
           </h2>
         </div>
         <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -283,7 +281,7 @@ export function Landing() {
           <div className="max-w-2xl">
             <p className="eyebrow text-lime-bright">{L("Why it matters", "Vì sao quan trọng")}</p>
             <h2 className="title-caps mt-3 text-3xl font-extrabold md:text-[42px] md:leading-[1.1]">
-              {L("Three pressures meet on every field", "Ba áp lực gặp nhau trên mỗi thửa ruộng")}
+              {L("Three pressures meet on every field", "Những thách thức cần cân nhắc trước mỗi mùa vụ")}
             </h2>
             <p className="mt-3 text-sm text-white/70">
               {L(
@@ -315,7 +313,7 @@ export function Landing() {
             <p className="mt-4 text-sm leading-relaxed text-ink-2">
               {L(
                 "NASA missions describe the climate and land conditions around your farm. They do not measure or predict the soil health of an individual field. Soil Time Machine combines these regional observations with transparent agronomic rules to explore scenarios — and labels every number as observed, estimated, illustrative or unavailable.",
-                "Các sứ mệnh NASA mô tả khí hậu và điều kiện mặt đất quanh trang trại của bạn. Chúng không đo hay dự báo sức khỏe đất của từng thửa ruộng. Soil Time Machine kết hợp số liệu theo vùng này với các quy tắc nông học minh bạch để khám phá kịch bản — và ghi nhãn mọi con số là quan trắc, ước tính, minh họa hoặc chưa có dữ liệu.",
+                "Dữ liệu NASA cung cấp bối cảnh khí hậu và điều kiện bề mặt theo vùng. Ứng dụng kết hợp các dữ liệu này với thông tin ruộng và mô hình nông học để so sánh phương án canh tác. Kết quả có nhãn nguồn, mức độ tin cậy và giới hạn; cần đối chiếu với số đo thực địa.",
               )}
             </p>
             <Link href="/methodology" className={buttonClass("dark", "md", "mt-6")}>
@@ -362,7 +360,7 @@ export function Landing() {
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Link href="/setup" className={buttonClass("primary", "lg")}>
-              {L("Start Exploring", "Bắt đầu khám phá")}
+              {L("Start Exploring", "Bắt đầu với ruộng của tôi")}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <button onClick={startDemo} className={buttonClass("glass", "lg")}>
@@ -384,7 +382,7 @@ export function Landing() {
             <p>
               {L(
                 "Not affiliated with or endorsed by NASA. Data: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
-                "Không liên kết hay được NASA bảo trợ. Dữ liệu: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
+                "Sản phẩm độc lập, không do NASA bảo trợ. Dữ liệu: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
               )}
             </p>
             <p>{L("Photographs: NASA / International Space Station crew.", "Ảnh: NASA / phi hành đoàn Trạm Vũ trụ Quốc tế.")}</p>

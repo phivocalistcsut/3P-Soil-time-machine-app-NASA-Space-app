@@ -27,6 +27,7 @@ import { CROPS, SEASONS, SEASON_ORDER } from "@/lib/data/crops";
 import { validCoordinates } from "@/lib/data/evidence";
 import { fieldBoundary } from "@/lib/data/geometry";
 import { resolveSoilInput } from "@/lib/data/farm-soil";
+import type { PlaceResult } from "@/lib/services/geocoding";
 import { createDemoFarm, GAZETTEER, newId } from "@/lib/data/demo";
 import type { Drainage, FarmProfile, IrrigationSource, PriorityId, SalinityRisk, SeasonId, SoilTexture, SourceTag, WaterAvailability } from "@/lib/types";
 import { FarmMap, type Basemap } from "@/components/map/farm-map";
@@ -90,7 +91,7 @@ const INITIAL: Draft = {
 const inMekong = (lat: number, lon: number) => lat > 8.4 && lat < 11.3 && lon > 104.3 && lon < 107;
 
 export function SetupWizard() {
-  const { L, t, num, crop, season, month } = useI18n();
+  const { L, t, num, crop, season, month, lang } = useI18n();
   const router = useRouter();
   const hydrated = useHydrated();
   const setFarm = useApp((s) => s.setFarm);
@@ -99,7 +100,11 @@ export function SetupWizard() {
   const [basemap, setBasemap] = useState<Basemap>("satellite");
   const [drawing, setDrawing] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ name: string; lat: number; lon: number }[] | null>(null);
+  const [results, setResults] = useState<PlaceResult[] | null>(null);
+  const [searchNotice, setSearchNotice] = useState("");
+  const [searchProvider, setSearchProvider] = useState(false);
+  const [locatedName, setLocatedName] = useState("");
+  const searchRequest = useRef(0);
   const [searching, setSearching] = useState(false);
   const [soilLoading, setSoilLoading] = useState(false);
   const [view, setView] = useState<{ center: [number, number]; zoom: number }>({ center: [INITIAL.lon, INITIAL.lat], zoom: 13 });
@@ -138,26 +143,37 @@ export function SetupWizard() {
   };
 
   const search = async () => {
-    const q = query.trim().toLowerCase();
-    if (!q) return;
+    const q = query.trim();
+    if (q.length < 2 || searching) return;
+    const id = ++searchRequest.current;
     const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
-    const local = GAZETTEER.filter((g) => norm(g.name).includes(norm(q)));
-    setResults(local);
+    const local = GAZETTEER.filter((g) => norm(g.name).includes(norm(q))).map((g) => ({ ...g, zoom: 13 }));
+    setResults(null); setSearchNotice(""); setSearchProvider(false); setLocatedName("");
     setSearching(true);
     try {
-      const r = await fetch(`/api/geocode?q=${encodeURIComponent(query.trim())}`);
-      const j = (await r.json()) as { results: { name: string; lat: number; lon: number }[] };
-      setResults([...local, ...(j.results ?? [])].slice(0, 8));
-      if (!r.ok && !local.length) toast.info(L("Online search unavailable — try a province name or enter coordinates.", "Tìm kiếm trực tuyến chưa khả dụng — thử tên tỉnh hoặc nhập tọa độ."));
+      const r = await fetch(`/api/geocode?${new URLSearchParams({ q, lang })}`, { signal: AbortSignal.timeout(10000) });
+      const j = (await r.json()) as { results?: PlaceResult[]; error?: string; provider?: string };
+      if (id !== searchRequest.current) return;
+      const online = r.ok ? j.results ?? [] : [];
+      const matches = [...online, ...local.filter((g) => !online.some((v) => Math.abs(g.lat - v.lat) < 0.001 && Math.abs(g.lon - v.lon) < 0.001))].slice(0, 8);
+      setResults(matches); setSearchProvider(j.provider === "maptiler");
+      if (!r.ok) setSearchNotice(j.error === "not_configured" ? "geo.notConfigured" : "geo.unavailable");
+      if (matches.length === 1) {
+        const place = matches[0];
+        goTo(place.lat, place.lon, place.zoom); setLocatedName(place.name);
+      }
     } catch {
-      if (!local.length) toast.info(L("Online search unavailable — try a province name or enter coordinates.", "Tìm kiếm trực tuyến chưa khả dụng — thử tên tỉnh hoặc nhập tọa độ."));
+      if (id !== searchRequest.current) return;
+      setResults(local); setSearchNotice("geo.unavailable");
+      if (local.length === 1) { goTo(local[0].lat, local[0].lon, local[0].zoom); setLocatedName(local[0].name); }
     } finally {
-      setSearching(false);
+      if (id === searchRequest.current) setSearching(false);
     }
   };
 
   const goTo = (lat: number, lon: number, zoom = 14) => {
     setCoords(lat, lon);
+    setDrawing(false);
     setView({ center: [lon, lat], zoom });
   };
 
@@ -362,20 +378,25 @@ export function SetupWizard() {
                         search();
                       }}
                     >
-                      <Input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={L("e.g. Cờ Đỏ, Cần Thơ", "VD: Cờ Đỏ, Cần Thơ")} />
-                      <Button type="submit" variant="secondary" size="icon" aria-label={L("Search", "Tìm")}>
+                      <Input id="q" value={query} maxLength={160} onChange={(e) => { setQuery(e.target.value); searchRequest.current++; setSearching(false); setResults(null); setSearchNotice(""); }} placeholder={L("Address, commune, district, province…", "Địa chỉ, xã/phường, huyện, tỉnh…")} />
+                      <Button type="submit" variant="secondary" size="icon" disabled={searching || query.trim().length < 2} aria-label={L("Search", "Tìm")}>
                         {searching ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Search className="h-4 w-4" aria-hidden />}
                       </Button>
                     </form>
+                    <div role="status" aria-live="polite" className="mt-2 text-xs leading-relaxed text-ink-2">
+                      {searching ? t("geo.searching") : locatedName ? t("geo.located", { name: locatedName }) : results?.length ? t("geo.choose") : ""}
+                      {searchNotice && <p className="mt-1">{t(searchNotice)}</p>}
+                    </div>
                     {results && (
                       <ul className="mt-2 max-h-48 overflow-auto rounded-xl border border-line">
-                        {results.length === 0 && !searching && <li className="px-3 py-2 text-xs text-ink-2">{L("No places found.", "Không tìm thấy địa điểm.")}</li>}
+                        {results.length === 0 && !searching && !searchNotice && <li className="px-3 py-2 text-xs text-ink-2">{L("No places found.", "Không tìm thấy địa điểm.")}</li>}
                         {results.map((r, i) => (
                           <li key={`${r.name}-${i}`}>
                             <button
                               className="w-full px-3 py-2 text-left text-xs hover:bg-mint/50"
                               onClick={() => {
-                                goTo(r.lat, r.lon, 13);
+                                goTo(r.lat, r.lon, r.zoom);
+                                setLocatedName(r.name);
                                 setResults(null);
                               }}
                             >
@@ -385,7 +406,8 @@ export function SetupWizard() {
                         ))}
                       </ul>
                     )}
-                    <Hint>{L("Search runs on submit. Offline list covers Mekong Delta provinces.", "Tìm khi nhấn Enter. Danh sách ngoại tuyến gồm các tỉnh ĐBSCL.")}</Hint>
+                    <Hint>{t("geo.hint")}</Hint>
+                    {searchProvider && <p className="mt-2 text-[10px] text-ink-3">© <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noreferrer" className="underline">MapTiler</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">OpenStreetMap contributors</a></p>}
                   </Card>
                   <Card className="p-4">
                     <p className="mb-2 text-sm font-medium">{L("Coordinates", "Tọa độ")}</p>
