@@ -6,7 +6,9 @@ A decision-support prototype (NASA Space Apps · climate-resilient crop rotation
 how different crop rotations could affect irrigation demand, soil-related outcomes and climate fit on the same
 piece of land over the next 3–5 years.
 
-**Live demo:** https://soil-time-machine-3p.vercel.app · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E)
+**Hosted demo:** [soil-time-machine-3p.vercel.app](https://soil-time-machine-3p.vercel.app/) · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E).
+
+**Latest source:** [3P Soil Time Machine · main](https://github.com/phivocalistcsut/3P-Soil-time-machine-app-NASA-Space-app/tree/main). The hosted demo reflects the last successful Vercel deployment. Use the quick start below to run the current code from GitHub.
 
 > **Tóm tắt (VI):** Ứng dụng web giúp nông dân so sánh nhiều "tương lai" luân canh cho cùng một thửa ruộng:
 > nhu cầu tưới, mức thiếu nước, đa dạng luân canh, carbon hữu cơ đất (RothC, t C/ha) và mức phù hợp khí hậu — dựa trên
@@ -20,7 +22,9 @@ piece of land over the next 3–5 years.
 Requirements: Node.js 20+ (tested with Node 24) and npm.
 
 ```bash
-npm install
+git clone https://github.com/phivocalistcsut/3P-Soil-time-machine-app-NASA-Space-app.git
+cd 3P-Soil-time-machine-app-NASA-Space-app
+npm ci
 npm run dev          # http://localhost:3000
 npm run build && npm start   # production
 npm test            # provider and engine regression checks
