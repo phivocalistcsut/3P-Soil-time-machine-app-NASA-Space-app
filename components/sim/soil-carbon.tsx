@@ -5,8 +5,10 @@ import type { SimulationResult } from "@/lib/types";
 import { SoilMeter, StatusBadge } from "@/components/common";
 
 /** One presentation of the RothC result across simulator, comparison, planner and landing. */
-export function SoilCarbon({ result, compact = false, details = false, badge = true }: {
+export function SoilCarbon({ result, compact = false, details = false, badge = true, notes = true }: {
   result: SimulationResult; compact?: boolean; details?: boolean; badge?: boolean;
+  /** source/limitation footnotes; turn off when the page shows them once for several cards */
+  notes?: boolean;
 }) {
   const { t, num, signed } = useI18n();
   const soil = result.soilImprovementPotential;
@@ -26,8 +28,8 @@ export function SoilCarbon({ result, compact = false, details = false, badge = t
       delta: signed(soil.deltaTCHa, 2), rate: signed(soil.deltaPctPerYear, 2),
     })}</p>
     <SoilMeter level={soil.level} compact={compact} />
-    <p className="text-[10px] text-ink-3">{t("rothc.depthSource")}</p>
-    {compact && <p className="text-[10px] leading-relaxed text-ink-2">{t("rothc.compactLimit")}</p>}
+    {notes && <p className="text-[10px] text-ink-3">{t("rothc.depthSource")}</p>}
+    {notes && compact && <p className="text-[10px] leading-relaxed text-ink-2">{t("rothc.compactLimit")}</p>}
     {details && inputs && <div className="rounded-lg bg-sand p-2 text-xs leading-relaxed text-ink-2">
       <p className="font-semibold text-ink">{t("rothc.gapTitle")}</p>
       <p>{t("rothc.inputGap", { equilibrium: num(inputs.equilibriumPlantC, 2),

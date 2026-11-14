@@ -1,6 +1,5 @@
 "use client";
 
-import { SoilCarbon } from "./soil-carbon";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -50,9 +49,8 @@ import { FarmMap } from "@/components/map/farm-map";
 import { LayerPanel, LayerTimeBar, MapLegend } from "@/components/map/layer-panel";
 import {
   ClimateNotice,
-  ModelRainSource,
   CropIcon,
-  FarmDemoNotice,
+  DataChips,
   NoFarmState,
   scenarioColor,
   StatusBadge,
@@ -79,7 +77,6 @@ import {
   PageHeader,
   SectionPanel,
   SectionTabs,
-  StatTile,
   Strip,
   useSection,
 } from "@/components/ui/sections";
@@ -138,7 +135,7 @@ function fieldStatus(metric: MapMetric, r: SimulationResult) {
 }
 
 export function Simulator() {
-  const { L, t, crop, num, season } = useI18n();
+  const { L, t, crop, num, season, signed } = useI18n();
   const farm = useApp((s) => s.farm);
   const scenarios = useScenarios();
   const activeId = useApp((s) => s.activeScenarioId);
@@ -349,6 +346,7 @@ export function Simulator() {
     { id: "warmer", icon: ThermometerSun },
   ];
   const dWater = result.waterDemand.median - refResult.waterDemand.median;
+  const soilNow = result.soilImprovementPotential;
   const seasonToCheck = result.waterRisk.worstSeason
     ?? result.seasons.find((s) => s.risks.includes("risk.dryYear"))?.season;
   const plannerHref = seasonToCheck ? `/planner#plan-season-${seasonToCheck}` : "/planner#calendar";
@@ -414,7 +412,7 @@ export function Simulator() {
   return (
     <div className="space-y-5">
       <PageHeader
-        tone="blue"
+        image="space-horizon"
         icon={TrendingUp}
         eyebrow={L("5-year simulator", "Mô phỏng 5 năm")}
         title={L(
@@ -429,26 +427,21 @@ export function Simulator() {
           <Link
             href="/compare#cards"
             onClick={includeInComparison}
-            className={buttonClass(
-              "primary",
-              "md",
-              "bg-white text-[#1F4F72] hover:bg-water-soft",
-            )}
+            className={buttonClass("primary", "lg")}
           >
             <Scale className="h-4 w-4" aria-hidden />
             {L("Compare plans", "So sánh cách trồng")}
           </Link>
         }
+        meta={<DataChips climate={climate} usesImerg={usesImerg} />}
       />
-      <FarmDemoNotice />
       <ClimateNotice climate={climate} />
-      <ModelRainSource usesImerg={usesImerg} />
 
       {/* STEP 1 — plan */}
       <Card className="p-4 md:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2F6F9C] text-sm font-extrabold text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
               1
             </span>
             {L("Choose a planting plan", "Chọn cách trồng")}
@@ -547,7 +540,7 @@ export function Simulator() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div>
           <h2 className="mb-2 flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2F6F9C] text-sm font-extrabold text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
               2
             </span>
             {L("Choose a year", "Chọn năm")}
@@ -561,31 +554,10 @@ export function Simulator() {
             usesImerg={usesImerg}
             color={color}
           />
-          <Card className="mt-3 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-bold">{L(`Water to plan for in ${year}`, `Nước tưới cần chuẩn bị năm ${year}`)}</h3>
-              <StatusBadge status={result.dataStatus.waterDemand} withTip={false} />
-            </div>
-            <p className="mt-1 font-display text-2xl font-extrabold tabular">
-              {num(result.waterDemand.m3PerHa * farm.areaHa)} <span className="text-sm">m³</span>
-            </p>
-            <p className="text-xs text-ink-2">{L(`Across your ${num(farm.areaHa, 2)} ha field`, `Cho toàn bộ ${num(farm.areaHa, 2)} ha ruộng`)}</p>
-            {seasonToCheck && (
-              <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                <ShieldAlert className="h-4 w-4 shrink-0 text-amber-ink" aria-hidden />
-                {L(`Check water supply for ${season(seasonToCheck)}`, `Kiểm tra nguồn nước cho vụ ${season(seasonToCheck)}`)}
-                <StressBadge level={result.waterRisk.level} />
-              </p>
-            )}
-            <Link href={plannerHref} className={buttonClass("secondary", "md", "mt-3")}>
-              {seasonToCheck ? L("See this season", "Xem lịch vụ này") : L("Open season calendar", "Mở lịch mùa vụ")}
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Card>
         </div>
         <div>
           <h2 className="mb-2 flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2F6F9C] text-sm font-extrabold text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
               3
             </span>
             {L("Choose the weather", "Chọn thời tiết")}
@@ -610,8 +582,8 @@ export function Simulator() {
                 className={cn(
                   "rounded-xl border p-2.5 text-left transition-colors",
                   assumption === c.id
-                    ? "border-transparent bg-[#2F6F9C] text-white"
-                    : "border-line hover:border-water",
+                    ? "border-transparent bg-space-900 text-white"
+                    : "border-line hover:border-lime",
                 )}
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
@@ -638,76 +610,107 @@ export function Simulator() {
         </div>
       </div>
 
-      {/* HEADLINE RESULT */}
-      <div className="rounded-3xl border border-line bg-white/80 p-4 backdrop-blur">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-bold">
-            <span
-              className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle"
-              style={{ background: color }}
-              aria-hidden
-            />
+      {/* READOUT: the selected plan in the selected year, at a glance */}
+      <section
+        aria-label={L("Result at a glance", "Kết quả tóm tắt")}
+        className="relative isolate overflow-hidden rounded-3xl bg-space-900 p-4 text-white shadow-[var(--shadow-float)] md:p-5"
+      >
+        <div aria-hidden className="absolute inset-0 -z-10 bg-stars opacity-40" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} aria-hidden />
             {scenario.name} · {year}
-            {draft && <Badge tone="amber" className="ml-2">{L("Unsaved preview", "Bản xem trước chưa lưu")}</Badge>}
+            {draft && <Badge tone="amber">{L("Unsaved preview", "Bản xem trước chưa lưu")}</Badge>}
             {result.isBaselineYear && (
-              <span className="ml-2 text-xs font-medium text-ink-2">
-                (
-                {L(
-                  "today — same for every plan",
-                  "hiện tại — mọi cách trồng như nhau",
-                )}
-                )
+              <span className="text-xs font-medium text-white/60">
+                ({L("today — same for every plan", "hiện tại — mọi cách trồng như nhau")})
               </span>
             )}
           </p>
           <StatusBadge status={output.climateStatus} />
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile
-            tone="blue"
-            icon={Droplets}
-            label={L("Irrigation water", "Nước tưới")}
-            value={num(result.waterDemand.median)}
-            unit={L("mm/year", "mm/năm")}
-            note={
-              Math.abs(dWater) < 5
+        <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 lg:grid-cols-5">
+          <div className="bg-space-900 p-3.5">
+            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              <Gauge className="h-3.5 w-3.5 text-lime-bright" aria-hidden />
+              {L("Overall score", "Điểm tổng hợp")}
+            </dt>
+            <dd className="mt-1.5 font-display text-3xl font-extrabold text-lime-bright tabular value-transition">
+              {num(result.overallScore)}
+              <span className="ml-1 text-xs font-semibold text-white/60">/100</span>
+            </dd>
+            <dd className="text-[11px] text-white/60">{L(`today: ${num(refResult.overallScore)}`, `hiện tại: ${num(refResult.overallScore)}`)}</dd>
+          </div>
+          <div className="bg-space-900 p-3.5">
+            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              <Droplets className="h-3.5 w-3.5 text-water" aria-hidden />
+              {L("Irrigation water", "Nước tưới")}
+            </dt>
+            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
+              {num(result.waterDemand.median)}
+              <span className="ml-1 text-xs font-semibold text-white/60">{L("mm/year", "mm/năm")}</span>
+            </dd>
+            <dd className="text-[11px] text-white/60">
+              {Math.abs(dWater) < 5
                 ? L("same as today", "như hiện tại")
                 : L(
                     `${dWater < 0 ? "−" : "+"}${num(Math.abs(dWater))} mm vs today`,
                     `${dWater < 0 ? "ít hơn" : "nhiều hơn"} ${num(Math.abs(dWater))} mm so với hiện tại`,
-                  )
-            }
-          />
-          <StatTile
-            tone="amber"
-            icon={ShieldAlert}
-            label={L("Water shortage risk", "Nguy cơ thiếu nước")}
-            value={<StressBadge level={result.waterRisk.level} />}
-            note={L(
-              `today: ${t(`stress.${refResult.waterRisk.level}`)}`,
-              `hiện tại: ${t(`stress.${refResult.waterRisk.level}`)}`,
-            )}
-          />
-          <StatTile
-            tone="green"
-            icon={Sprout}
-            label={t("rothc.title")}
-            value={<SoilCarbon result={result} compact />}
-            note={t("rothc.limit")}
-          />
-          <StatTile
-            tone="violet"
-            icon={Gauge}
-            label={L("Overall score", "Điểm tổng hợp")}
-            value={num(result.overallScore)}
-            unit="/100"
-            note={L(
-              `today: ${num(refResult.overallScore)}`,
-              `hiện tại: ${num(refResult.overallScore)}`,
-            )}
-          />
-        </div>
-      </div>
+                  )}
+            </dd>
+          </div>
+          <div className="bg-space-900 p-3.5">
+            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              <Droplets className="h-3.5 w-3.5 text-water" aria-hidden />
+              {L(`Water for ${num(farm.areaHa, 2)} ha`, `Nước cho ${num(farm.areaHa, 2)} ha`)}
+            </dt>
+            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
+              {num(result.waterDemand.m3PerHa * farm.areaHa)}
+              <span className="ml-1 text-xs font-semibold text-white/60">m³</span>
+            </dd>
+            <dd className="text-[11px] text-white/60">{t(`status.${result.dataStatus.waterDemand}`)}</dd>
+          </div>
+          <div className="bg-space-900 p-3.5">
+            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              <ShieldAlert className="h-3.5 w-3.5 text-amber" aria-hidden />
+              {L("Water shortage risk", "Nguy cơ thiếu nước")}
+            </dt>
+            <dd className="mt-2">
+              <StressBadge level={result.waterRisk.level} />
+            </dd>
+            <dd className="mt-1 text-[11px] text-white/60">
+              {L(`today: ${t(`stress.${refResult.waterRisk.level}`)}`, `hiện tại: ${t(`stress.${refResult.waterRisk.level}`)}`)}
+            </dd>
+          </div>
+          <div className="col-span-2 bg-space-900 p-3.5 lg:col-span-1">
+            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              <Sprout className="h-3.5 w-3.5 text-lime-bright" aria-hidden />
+              {L("Soil carbon", "Carbon đất")}
+            </dt>
+            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
+              {soilNow ? num(soilNow.socTCHa, 2) : "—"}
+              <span className="ml-1 text-xs font-semibold text-white/60">t C/ha</span>
+            </dd>
+            <dd className="text-[11px] text-white/60">
+              {soilNow
+                ? `${signed(soilNow.deltaTCHa, 2)} t C/ha · ${t("status.estimated")} (RothC)`
+                : t("status.unavailable")}
+            </dd>
+          </div>
+        </dl>
+        {seasonToCheck && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber/40 bg-amber/10 px-4 py-3">
+            <p className="flex items-center gap-2 text-sm">
+              <ShieldAlert className="h-4 w-4 shrink-0 text-amber" aria-hidden />
+              {L(`Check water supply for ${season(seasonToCheck)}`, `Kiểm tra nguồn nước cho vụ ${season(seasonToCheck)}`)}
+            </p>
+            <Link href={plannerHref} className={buttonClass("primary", "sm")}>
+              {L("See this season", "Xem lịch vụ này")}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+        )}
+      </section>
 
       <SectionTabs
         tabs={tabs}
@@ -1063,9 +1066,10 @@ export function Simulator() {
         </Card>
       </SectionPanel>
 
-      <Card className="flex flex-col gap-3 bg-gradient-to-r from-[#1F4F72] to-[#2F6F9C] p-5 text-white md:flex-row md:items-center md:justify-between">
+      <Card className="relative isolate flex flex-col gap-3 overflow-hidden border-transparent bg-space-900 p-5 text-white md:flex-row md:items-center md:justify-between">
+        <div aria-hidden className="absolute inset-0 -z-10 bg-stars opacity-40" />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-white/75">
+          <p className="eyebrow text-lime-bright">
             {L("Next step", "Bước tiếp theo")}
           </p>
           <p className="mt-0.5 text-lg font-bold">
@@ -1085,22 +1089,14 @@ export function Simulator() {
           <Link
             href="/compare#cards"
             onClick={includeInComparison}
-            className={buttonClass(
-              "primary",
-              "md",
-              "bg-white text-[#1F4F72] hover:bg-water-soft",
-            )}
+            className={buttonClass("primary", "lg")}
           >
             {L("Compare plans", "So sánh cách trồng")}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
           <Link
             href="/planner#calendar"
-            className={buttonClass(
-              "outline",
-              "md",
-              "border-white/40 bg-transparent text-white hover:bg-white/10",
-            )}
+            className={buttonClass("glass", "lg")}
           >
             <ListChecks className="h-4 w-4" aria-hidden />
             {L("Make a season plan", "Lập kế hoạch mùa vụ")}
@@ -1140,8 +1136,8 @@ function CustomClimateCard({
       className={cn(
         "col-span-2 rounded-xl border p-3 transition-colors",
         active
-          ? "border-[#2F6F9C] bg-gradient-to-br from-water-soft to-white ring-1 ring-[#2F6F9C]"
-          : "border-dashed border-line hover:border-water",
+          ? "border-lime-ink bg-lime-soft ring-1 ring-lime-ink"
+          : "border-dashed border-line hover:border-lime",
       )}
     >
       <button
@@ -1151,9 +1147,9 @@ function CustomClimateCard({
         className="flex w-full items-center justify-between gap-2 text-left"
       >
         <span className="flex items-center gap-1.5 text-sm font-semibold">
-          <SlidersHorizontal className="h-4 w-4 text-[#2F6F9C]" aria-hidden />
+          <SlidersHorizontal className="h-4 w-4 text-lime-ink" aria-hidden />
           {t("clim.custom")}
-          <span className="rounded-full bg-[#2F6F9C] px-1.5 text-[10px] font-bold text-white">
+          <span className="rounded-full bg-lime px-1.5 text-[10px] font-bold text-space-900">
             {L("NEW", "MỚI")}
           </span>
         </span>
@@ -1183,7 +1179,7 @@ function CustomClimateCard({
             step={lim.rainPct.step}
             value={value.rainPct}
             onChange={(e) => onChange({ rainPct: Number(e.target.value) })}
-            className="mt-1 w-full accent-[#2F6F9C]"
+            className="mt-1 w-full accent-lime-ink"
             aria-label={L(
               "Rainfall change in percent",
               "Thay đổi lượng mưa theo phần trăm",

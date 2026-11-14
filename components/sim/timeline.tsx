@@ -64,8 +64,8 @@ export function TimelineSlider({
             label={L("Simulation year", "Năm mô phỏng")}
             valueText={String(value)}
             className="h-11"
-            trackClassName="h-2.5 bg-[repeating-linear-gradient(90deg,#DDF0E2_0_10px,#eef6f0_10px_20px)]"
-            rangeClassName="bg-forest"
+            trackClassName="h-2.5 bg-[repeating-linear-gradient(90deg,#E2EFD1_0_10px,#F1F6EA_10px_20px)]"
+            rangeClassName="bg-lime"
             thumbClassName="h-7 w-7 border-[3px]"
           />
           <div className="mt-2 grid" style={{ gridTemplateColumns: `repeat(${years.length}, minmax(0,1fr))` }}>

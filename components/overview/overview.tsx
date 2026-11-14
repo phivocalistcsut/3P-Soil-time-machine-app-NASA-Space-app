@@ -34,7 +34,7 @@ import { FarmMap, type Basemap } from "@/components/map/farm-map";
 import { BasemapToggle, LayerPanel, MapLegend, LayerTimeBar } from "@/components/map/layer-panel";
 import { PrecipChart, SoilWetnessChart, TemperatureChart } from "@/components/charts";
 import { MetricCard } from "@/components/metric-card";
-import { ClimateNotice, CropIcon, FarmDemoNotice, NoFarmState, StatusBadge, Term } from "@/components/common";
+import { ClimateNotice, CropIcon, DataChips, NoFarmState, StatusBadge, Term } from "@/components/common";
 import { ExtremesByYear, ExtremesChart, NdviChart, RiskCalendar, ndviDips } from "@/components/insights";
 import { Badge, Card, Select, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/overlays";
@@ -94,7 +94,7 @@ export function Overview() {
   return (
     <div className="space-y-5">
       <PageHeader
-        tone="green"
+        image="mekong-delta"
         icon={Sprout}
         eyebrow={L("My farm", "Ruộng của tôi")}
         title={farm.name}
@@ -105,13 +105,13 @@ export function Overview() {
           </span>
         }
         actions={
-          <Link href="/simulator" className={buttonClass("primary", "lg", "bg-white text-forest hover:bg-mint")}>
+          <Link href="/simulator" className={buttonClass("primary", "lg")}>
             {L("See the next 5 years", "Xem 5 năm tới")}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         }
+        meta={<DataChips climate={climate} />}
       />
-      <FarmDemoNotice />
       <ClimateNotice climate={climate} />
 
       <SectionTabs tabs={tabs} value={section} onChange={setSection} label={L("Farm topics", "Chủ đề về ruộng")} />

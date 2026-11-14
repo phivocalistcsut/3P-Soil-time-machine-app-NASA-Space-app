@@ -54,7 +54,7 @@ No provider API keys are needed. Offline mode uses previously saved data or the 
 app/
   page.tsx                 landing
   setup/page.tsx           farm setup wizard
-  (app)/layout.tsx         sidebar / mobile navigation shell
+  (app)/layout.tsx         top-bar / mobile bottom-bar navigation shell
   (app)/{overview,simulator,compare,planner,methodology,settings}/page.tsx
   api/climate/route.ts     NASA POWER proxy (normalised ClimateDataset)
   api/soil/route.ts        ISRIC SoilGrids proxy (regional estimate)
