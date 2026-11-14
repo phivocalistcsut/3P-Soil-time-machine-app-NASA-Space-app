@@ -14,6 +14,7 @@ import type {
   SimulationResult,
 } from "@/lib/types";
 import { prepareClimate } from "./climate";
+import { translateMessage } from "../i18n/messages";
 
 /* ============================================================================
  * Insights built on top of engine results:
@@ -204,6 +205,8 @@ export function buildEvidence(input: {
   hasEconomics: boolean;
 }): Evidence {
   const { scenario, result: r, reference: ref, farm, climate, extremes, ndvi, calendar } = input;
+  const soilMessage = (key: string, values?: Record<string, string | number>): Localized =>
+    ({ en: translateMessage("en", key, values), vi: translateMessage("vi", key, values) });
   const why: Localized[] = [];
   const kind = scenario.kind;
   if (kind === "conventional") why.push(Lx("Compare the crops and planting dates with your current practice.", "So sánh cây và lịch gieo của phương án này với cách đang trồng."));
@@ -265,15 +268,21 @@ export function buildEvidence(input: {
       source: Lx("Farm profile", "Hồ sơ trang trại"),
     },
     {
-      label: Lx("Soil outlook & pest breaks", "Triển vọng đất, cắt sâu bệnh"),
-      value: Lx("rule-based, qualitative", "theo quy tắc, định tính"),
-      status: "estimated",
+      label: soilMessage("rothc.title"),
+      value: r.soilImprovementPotential ? Lx(`${r.soilImprovementPotential.socTCHa.toFixed(2)} t C/ha`, `${r.soilImprovementPotential.socTCHa.toFixed(2)} t C/ha`) : soilMessage(r.metricSources.soilImprovementPotential),
+      status: r.dataStatus.soilImprovementPotential,
       confidence: "low",
-      source: Lx("Agronomic rules listed on the Data & Methodology page", "Quy tắc nông học ghi ở trang Dữ liệu & Phương pháp"),
+      source: soilMessage("rothc.evidenceSource"),
     },
   ];
 
   const gaps: Localized[] = [];
+  if (r.soilCarbonInputs) gaps.push(soilMessage("rothc.inputGap", {
+    equilibrium: r.soilCarbonInputs.equilibriumPlantC.toFixed(2), residues: r.soilCarbonInputs.referencePlantC.toFixed(2),
+    ratio: (r.soilCarbonInputs.inputRatio * 100).toFixed(1),
+  }));
+  else gaps.push(soilMessage(r.metricSources.soilImprovementPotential));
+  gaps.push(soilMessage("rothc.limit"));
   if (farm.soilSources.soilPH.status !== "observed") gaps.push(Lx("No soil test for pH: crop fit on acidic soil is uncertain.", "Chưa có xét nghiệm pH đất: mức hợp của cây trên đất chua chưa chắc chắn."));
   if (farm.soilSources.soilType.status !== "observed") gaps.push(Lx("Soil texture is an estimate, not a field description.", "Loại đất là ước tính, chưa phải mô tả thực tế của ruộng."));
   if (!usableNdvi) gaps.push(Lx("No satellite greenness record for this field yet.", "Chưa có chuỗi độ xanh vệ tinh cho ruộng này."));
@@ -284,6 +293,7 @@ export function buildEvidence(input: {
   gaps.push(Lx("Crop durations are typical values, not the varieties you plant.", "Thời gian sinh trưởng là giá trị điển hình, chưa theo giống anh/chị trồng."));
 
   const ask: Localized[] = [];
+  ask.push(soilMessage("rothc.gapAction"));
   const newCrops = [...new Set(r.seasons.map((s) => s.cropId).filter((c): c is string => !!c && c !== "fallow" && !Object.values(farm.cropHistory.typicalPattern).includes(c)))];
   newCrops.forEach((id) => {
     const c = getCrop(id)!;

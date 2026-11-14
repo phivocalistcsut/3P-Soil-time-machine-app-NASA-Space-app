@@ -11,6 +11,8 @@ import { fieldBoundary } from "../lib/data/geometry";
 import { buildDefaultScenarios, createDemoFarm, weightsFromPriorities } from "../lib/data/demo";
 import { climateWithImerg, smapWetMonths } from "../lib/engine/environment";
 import { runEngine } from "../lib/engine/simulate";
+import { prepareClimate } from "../lib/engine/climate";
+import { rothCMonths, soilCarbonRating } from "../lib/engine/soil-carbon";
 import { ProviderError, upstreamJson } from "../lib/services/http";
 import { aggregateImerg } from "../lib/services/imerg";
 import { fetchNdviSeries, normalizeNdvi } from "../lib/services/ndvi";
@@ -113,6 +115,77 @@ test("all catalog crops have sourced, non-negative estimated RothC residue input
   assert.ok(Math.abs(rice.residueCTHa - 1.074058592549) < 0.000001);
   // Non-tuber roots are based on vine biomass; harvested sweet-potato tubers cannot be credited as roots.
   assert.ok(Math.abs(CROPS.find((c) => c.id === "sweetpotato")!.rothc.residueCTHa - 0.55743036096) < 0.000001);
+});
+
+test("RothC integration anchors the initial stock, shares spin-up and is deterministic", () => {
+  const climate = getDemoSnapshot();
+  const scenarios = buildDefaultScenarios(farm, climate, settings);
+  const input = { farm, climate, scenarios, settings: { ...settings, climateAssumption: "drier" as const } };
+  const result = runEngine(input);
+  assert.deepEqual(runEngine(input), result);
+  const all = [result.reference, ...Object.values(result.results), ...Object.values(result.baselineClimate)];
+  for (const simulation of all) {
+    const start = simulation.years[0];
+    assert.ok(start.isBaselineYear);
+    assert.ok(Math.abs(start.soilImprovementPotential!.socTCHa - farm.socStockTCHa!) / farm.socStockTCHa! < 0.01);
+    assert.equal(start.soilImprovementPotential!.deltaTCHa, 0);
+    assert.equal(start.soilImprovementPotential!.deltaPctPerYear, 0);
+    assert.equal(start.soilCarbonInputs!.equilibriumPlantC, result.reference.years[0].soilCarbonInputs!.equilibriumPlantC);
+    for (const year of simulation.years) {
+      assert.equal(year.dataStatus.soilImprovementPotential, "estimated");
+      assert.ok(Number.isFinite(year.soilImprovementPotential!.socTCHa));
+      assert.ok(Number.isFinite(year.overallScore));
+      const soil = year.soilImprovementPotential!;
+      assert.ok(Math.abs(year.criteriaScores.soil! - (0.7 * soil.score + 0.3 * year.rotationDiversity.score)) < 1e-10);
+    }
+  }
+});
+
+test("missing soil or an unidentifiable bare-fallow spin-up excludes the soil criterion", () => {
+  const climate = getDemoSnapshot();
+  const scenarios = buildDefaultScenarios(farm, climate, settings);
+  for (const patch of [{ clayPercent: null }, { socStockTCHa: null }, { cropHistory: { ...farm.cropHistory, typicalPattern: { S1: "fallow", S2: "fallow", S3: "fallow" } } }]) {
+    const result = runEngine({ farm: { ...farm, ...patch }, scenarios, climate, settings });
+    for (const simulation of [result.reference, ...Object.values(result.results)]) for (const year of simulation.years) {
+      assert.equal(year.soilImprovementPotential, null);
+      assert.equal(year.criteriaScores.soil, null);
+      assert.equal(year.dataStatus.soilImprovementPotential, "unavailable");
+      assert.equal(year.contributions.soil, 0);
+      assert.ok(Number.isFinite(year.overallScore));
+    }
+  }
+});
+
+test("RothC months align Dec–Nov climate, leap days and cross-year harvest carbon", () => {
+  const climate = getDemoSnapshot();
+  const prepared = prepareClimate(climate, "baseline");
+  const initial = runEngine({ farm, climate, scenarios: [], settings }).reference.years[0];
+  const next = { year: 2028, monthlyCover: Array(12).fill(null) as (string | null)[] };
+  next.monthlyCover[0] = "rice";
+  const crop = CROPS.find((c) => c.id === "rice")!;
+  const carry = { ...initial.seasons[0], year: 2027, startOffset: 10, durationDays: 100, cropId: "rice" };
+  const months = rothCMonths(next, prepared, [carry], true);
+  assert.equal(months[0].tempC, prepared.climatology[11].t2m);
+  assert.equal(months[0].panEvapMm, prepared.climatology[11].et0Day * 31 / 0.75);
+  assert.equal(months[2].panEvapMm, prepared.climatology[1].et0Day * 29 / 0.75);
+  assert.equal(months[0].waterRegime, "paddyFlooded");
+  assert.equal(months[1].waterRegime, "paddyDrained");
+  assert.equal(rothCMonths(next, prepared, [], false)[1].waterRegime, "upland");
+  assert.ok(Math.abs(months[1].plantC - crop.rothc.residueCTHa) < 1e-12); // Oct 1 + 99 days -> Jan 8.
+  assert.ok(Math.abs(months.reduce((sum, m) => sum + m.plantC, 0) - crop.rothc.residueCTHa) < 1e-12);
+  assert.ok(months.every((m) => m.fymC === 0));
+});
+
+test("SOC levels and score follow the disclosed 4-per-1000 reference scale", () => {
+  assert.equal(soilCarbonRating(-0.401).level, 1);
+  assert.equal(soilCarbonRating(-0.4).level, 2);
+  assert.equal(soilCarbonRating(-0.1).level, 2);
+  assert.equal(soilCarbonRating(0).level, 3);
+  assert.equal(soilCarbonRating(0.1).level, 4);
+  assert.equal(soilCarbonRating(0.4).level, 5);
+  assert.equal(soilCarbonRating(-2).score, 0);
+  assert.equal(soilCarbonRating(0).score, 50);
+  assert.equal(soilCarbonRating(2).score, 100);
 });
 
 test("point coordinates and historical dates reject invalid values", () => {

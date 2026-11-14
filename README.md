@@ -7,7 +7,7 @@ how different crop rotations could affect irrigation demand, soil-related outcom
 piece of land over the next 3–5 years.
 
 > **Tóm tắt (VI):** Ứng dụng web giúp nông dân so sánh nhiều "tương lai" luân canh cho cùng một thửa ruộng:
-> nhu cầu tưới, mức thiếu nước, đa dạng luân canh, triển vọng đất (định tính) và mức phù hợp khí hậu — dựa trên
+> nhu cầu tưới, mức thiếu nước, đa dạng luân canh, carbon hữu cơ đất (RothC, t C/ha) và mức phù hợp khí hậu — dựa trên
 > dữ liệu NASA POWER thật, mô hình quy tắc minh bạch và nhãn dữ liệu rõ ràng (Quan trắc / Ước tính / Minh họa /
 > Chưa có dữ liệu). Hỗ trợ tiếng Anh và tiếng Việt.
 
@@ -74,7 +74,9 @@ lib/
   data/climate-datasets.ts cached real POWER snapshot + clearly-labelled illustrative fallback
   data/layers.ts           NASA GIBS layer definitions (IDs verified against GetCapabilities)
   engine/climate.ts        climate assumptions, FAO-56 Penman–Monteith ET0, effective rainfall
-  engine/simulate.ts       the scenario engine (water, stress, suitability, diversity, soil, N, scoring)
+  engine/simulate.ts       the scenario engine (water, stress, suitability, diversity, N, scoring)
+  engine/soil-carbon.ts    shared inverse spin-up, Dec–Nov crop/climate inputs, annual SOC and scoring
+  engine/rothc.ts          pure monthly RothC pools and paddy rate extension
   i18n/                    EN/VI messages + useI18n()
   store.ts                 Zustand store persisted to localStorage
   hooks.ts                 useClimate (live → cache → fallback), useEngine (single source of truth)
@@ -86,7 +88,7 @@ scripts/                   engine smoke test, snapshot refresher
 
 Live point lookups use NASA POWER weather, GPM IMERG rainfall, SMAP Level 4 soil moisture and quality-screened MODIS NDVI. Overview → Data sources shows each record's time range, spatial scale, retrieval date and quality. NASA GIBS is reserved for map imagery. Farm soil and management inputs are stored in the browser.
 
-The model uses IMERG rainfall when it covers every month of the POWER climate window. SMAP supports a regional drainage warning. MODIS NDVI provides context. SoilGrids WCS supplies modeled topsoil properties and 0–30 cm SOC stock / depth-weighted clay for future RothC integration; farmer measurements take priority. The demo uses a real SoilGrids snapshot alongside its illustrative farm details. An offline run uses a matching browser snapshot or the bundled Thới Lai dataset. New locations with unavailable weather wait for data.
+The model uses IMERG rainfall when it covers every month of the POWER climate window. SMAP supports a regional drainage warning. MODIS NDVI provides context. SoilGrids WCS supplies modeled topsoil properties and 0–30 cm SOC stock / depth-weighted clay for the RothC carbon model; farmer measurements take priority. The demo uses a real SoilGrids snapshot alongside its illustrative farm details. An offline run uses a matching browser snapshot or the bundled Thới Lai dataset. New locations with unavailable weather wait for data.
 
 See the [architecture, provider matrix, environment setup and live validation](docs/data-and-validation.md).
 
@@ -101,7 +103,7 @@ Pure, deterministic, JSON-serialisable functions (`runEngine(EngineInput) → En
 5. **Water stress** = irrigation need ÷ assumed seasonal supply (availability × source, reduced for dry-season salinity).
 6. **Climate suitability**: temperature, heat stress, waterlogging × drainage, soil texture & pH, salinity, season (limiting factor weighted 60 %).
 7. **Rotation diversity**: Shannon index over a trailing 3-year window.
-8. **Soil improvement potential** (qualitative, 5 levels): legume/green-manure points, consecutive flooded-rice penalties, carried forward with soil memory.
+8. **Soil organic carbon (RothC, engine 0.5.0)**: one inverse spin-up of the current rotation under baseline mean climate initializes shared pools at 0–30 cm. Future Dec–Nov cycles use adjusted monthly temperature/rainfall, pan evaporation = ET0/day × calendar days ÷ 0.75, existing monthly cover, harvest-month residue C and sourced DPM/RPM; FYM is zero without farmer input. The initial displayed year is the post-spin-up stock, followed by end-November stocks. Show SOC (t C/ha), change from the initial stock and linear annualized % change. Five display bands use −0.4, −0.1, +0.1 and +0.4%/yr; the +0.4 anchor is the aspirational 4 per 1000 reference. Score = clamp(50 + 125 × annualized %, 0, 100); soil criterion = 0.7 × score + 0.3 × diversity. Missing clay/SOC, climate or an identifiable current-practice input cycle leaves soil unavailable and excludes it from scoring. Report the inverse-input versus estimated-residue gap without rescaling residues. See [model details, smoke tables and local information gaps](docs/rothc-integration-report.md).
 9. **Fertiliser N proxy** with legume credits; optional **gross margin** only from user-entered (or explicitly illustrative) economics.
 10. **Multi-criteria score** = Σ(weight × criterion) ÷ Σ weights, with per-criterion contributions; criteria without data are excluded.
 
@@ -110,7 +112,7 @@ All parameters are listed on `/methodology`.
 
 ## Verification
 
-Run `npm test` for mocked adapter, geometry and simulation checks. With the app running, use `npm run verify:live` to exercise the real endpoints and compare four locations. Set `STM_VERIFY_URL` for a Vercel preview or a different local port. No provider credentials are required.
+Run `npm test` for adapter, geometry, monthly RothC reference and integration checks; `npm run engine:smoke` prints SOC for current practice and three alternatives under all five climate assumptions. On this Windows sandbox, production builds use `$env:CIRCLE_NODE_TOTAL="2"; $env:UV_THREADPOOL_SIZE="1"; npm run build` to avoid concurrent prerender-directory creation errors. With the app running, use `npm run verify:live` to exercise the real endpoints and compare four locations. Set `STM_VERIFY_URL` for a Vercel preview or a different local port. No provider credentials are required.
 
 ## Internationalisation & accessibility
 
@@ -129,5 +131,5 @@ Run `npm test` for mocked adapter, geometry and simulation checks. With the app 
 ## Limitations
 
 Regional pixels are not field measurements; there is no yield, pest, market or flood-depth model; the soil indicator is
-qualitative with low confidence; validation with local field trials and extension officers is the necessary next step.
+an estimated RothC SOC balance with low confidence. SoilGrids pixels and crop residues are estimates, paddy factors need local validation, and original RothC excludes permanently waterlogged soils. Validation with local field trials and extension officers is the necessary next step.
 *This tool provides decision-support scenarios, not a substitute for local agronomic advice or field measurements.*

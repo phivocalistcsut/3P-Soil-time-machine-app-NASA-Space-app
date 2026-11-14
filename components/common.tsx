@@ -95,7 +95,7 @@ export function SuitBadge({ cls }: { cls: "good" | "fair" | "poor" }) {
   );
 }
 
-/** 5-step qualitative meter — deliberately has no numeric axis. */
+/** Five bands of modeled annualized SOC change; numeric stock is displayed alongside. */
 export function SoilMeter({ level, compact }: { level: 1 | 2 | 3 | 4 | 5; compact?: boolean }) {
   const { t } = useI18n();
   const colors = ["#D97167", "#E4A84C", "#A3ADA8", "#66AD79", "#287043"];

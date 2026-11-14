@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import { Droplets, FlaskConical, Sprout } from "lucide-react";
 import { FarmMap } from "@/components/map/farm-map";
 import { Slider } from "@/components/ui/overlays";
-import { CropIcon, SoilMeter } from "@/components/common";
+import { CropIcon } from "@/components/common";
 import { ChartTooltip, AXIS, GRID } from "@/components/charts";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from "recharts";
+import { SoilCarbon } from "@/components/sim/soil-carbon";
 import { useI18n } from "@/lib/i18n";
 import { createDemoFarm, buildDefaultScenarios, weightsFromPriorities } from "@/lib/data/demo";
 import { getDemoSnapshot } from "@/lib/data/climate-datasets";
@@ -44,7 +45,7 @@ export function HeroDemo() {
     a: sim.out.results["scenario-a"].years[i].waterDemand.median,
     c: sim.out.results["scenario-c"].years[i].waterDemand.median,
   }));
-  const level = res.soilImprovementPotential.level;
+  const level = res.soilImprovementPotential?.level;
 
   return (
     <div className="relative overflow-hidden rounded-[28px] border border-white/15 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,.55)]">
@@ -66,7 +67,7 @@ export function HeroDemo() {
             zoom={15.6}
             basemap="satellite"
             boundary={sim.farm.boundary}
-            fieldFill={{ color: SOIL_COLORS[level - 1], opacity: 0.55 }}
+            fieldFill={{ color: level ? SOIL_COLORS[level - 1] : "#A3ADA8", opacity: 0.55 }}
             className="absolute inset-0"
             scrollZoom={false}
             attributionPosition="top-right"
@@ -135,7 +136,7 @@ export function HeroDemo() {
               <p className="mb-1 flex items-center gap-1 text-[11px] font-medium text-leaf-ink">
                 <Sprout className="h-3.5 w-3.5" aria-hidden /> {L("Soil outlook", "Triển vọng đất")}
               </p>
-              <SoilMeter level={level} />
+              <SoilCarbon result={res} compact />
             </div>
           </div>
           <div className="h-[110px]">

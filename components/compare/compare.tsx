@@ -13,8 +13,9 @@ import { EvidencePanel } from "@/components/insights";
 import { PageHeader, SectionPanel, SectionTabs, Strip, useSection } from "@/components/ui/sections";
 import { SEASON_ORDER } from "@/lib/data/crops";
 import type { CriterionId, RotationScenario, SimulationResult } from "@/lib/types";
+import { SoilCarbon } from "@/components/sim/soil-carbon";
 import { AXIS, ChartFrame, ChartTooltip, GRID } from "@/components/charts";
-import { ClimateNotice, ModelRainSource, CropIcon, FarmDemoNotice, NoFarmState, scenarioColor, SoilMeter, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
+import { ClimateNotice, ModelRainSource, CropIcon, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { InfoTip, Slider } from "@/components/ui/overlays";
 
@@ -92,7 +93,7 @@ export function Compare() {
   const rows: Row[] = [
     { id: "water", label: L("Irrigation demand (mm/yr)", "Nhu cầu tưới (mm/năm)"), better: "lower", value: (r) => r.waterDemand.median, fmt: (v, r) => `${num(v)} (${num(r.waterDemand.p10)}–${num(r.waterDemand.p90)})` },
     { id: "stress", label: L("Water stress exposure", "Mức thiếu nước"), better: "lower", value: (r) => r.waterRisk.level, fmt: (_v, r) => <StressBadge level={r.waterRisk.level} /> },
-    { id: "soil", label: L("Soil improvement potential", "Tiềm năng cải thiện đất"), better: "higher", value: (r) => r.soilImprovementPotential.level, fmt: (_v, r) => <SoilMeter level={r.soilImprovementPotential.level} compact /> },
+    { id: "soil", label: `${t("rothc.title")} (t C/ha)`, better: "higher", value: (r) => r.soilImprovementPotential?.socTCHa ?? null, fmt: (_v, r) => <SoilCarbon result={r} compact /> },
     { id: "div", label: L("Rotation diversity (H′)", "Đa dạng luân canh (H′)"), better: "higher", value: (r) => r.rotationDiversity.shannon, fmt: (v) => num(v, 2) },
     { id: "suit", label: L("Climate suitability (0–100)", "Phù hợp khí hậu (0–100)"), better: "higher", value: (r) => r.cropSuitability.score, fmt: (v, r) => (
       <span className="inline-flex items-center gap-1.5">
@@ -134,8 +135,8 @@ export function Compare() {
     const out: { good: boolean; text: string }[] = [];
     const dW = r.waterDemand.median - b.waterDemand.median;
     if (Math.abs(dW) > 15) out.push({ good: dW < 0, text: L(`${dW < 0 ? "Uses" : "Needs"} ${num(Math.abs(dW))} mm ${dW < 0 ? "less" : "more"} irrigation than current practice`, `${dW < 0 ? "Tiết kiệm" : "Cần thêm"} ${num(Math.abs(dW))} mm nước tưới so với hiện tại`) });
-    const dS = r.soilImprovementPotential.level - b.soilImprovementPotential.level;
-    if (dS !== 0) out.push({ good: dS > 0, text: L(`Soil outlook ${dS > 0 ? "improves" : "worsens"} by ${Math.abs(dS)} step(s)`, `Triển vọng đất ${dS > 0 ? "tăng" : "giảm"} ${Math.abs(dS)} bậc`) });
+    const dS = r.soilImprovementPotential && b.soilImprovementPotential ? r.soilImprovementPotential.socTCHa - b.soilImprovementPotential.socTCHa : 0;
+    if (Math.abs(dS) >= 0.005) out.push({ good: dS > 0, text: t("rothc.tradeoff", { delta: (dS > 0 ? "+" : "−") + num(Math.abs(dS), 2) }) });
     const dN = r.nitrogenNeed - b.nitrogenNeed;
     if (Math.abs(dN) > 5) out.push({ good: dN < 0, text: L(`${num(Math.abs(dN))} kg/ha ${dN < 0 ? "less" : "more"} fertiliser N`, `${dN < 0 ? "Bớt" : "Thêm"} ${num(Math.abs(dN))} kg/ha phân đạm`) });
     const dC = r.cropSuitability.score - b.cropSuitability.score;
@@ -250,6 +251,10 @@ export function Compare() {
           <h2 className="text-base font-bold">{L("Current practice", "Cách đang trồng")}</h2>
           <p className="mt-1 text-sm text-ink-2">{output.reference.years[ti].seasons.map((s) => crop(s.cropId)).join(" · ")}</p>
           <p className="mt-2 text-sm">{num(output.reference.years[ti].waterDemand.median)} mm · {num(output.reference.years[ti].overallScore)} / 100</p>
+          <div className="mt-3 border-t border-line pt-3">
+            <p className="mb-1 text-xs font-semibold">{t("rothc.title")}</p>
+            <SoilCarbon result={output.reference.years[ti]} compact />
+          </div>
         </Card>
         {chosen.map((s) => {
           const r = res(s);
@@ -304,10 +309,9 @@ export function Compare() {
                   </dd>
                 </div>
                 <div className="rounded-lg bg-mint/60 p-2">
-                  <dt className="mb-1 text-leaf-ink">{L("Soil outlook", "Triển vọng đất")}</dt>
+                  <dt className="mb-1 text-leaf-ink">{t("rothc.title")}</dt>
                   <dd>
-                    <SoilMeter level={r.soilImprovementPotential.level} compact />
-                    <span className="mt-1 block text-[10.5px] font-semibold">{t(`soil.${r.soilImprovementPotential.level}`)}</span>
+                    <SoilCarbon result={r} compact />
                   </dd>
                 </div>
                 <div className="rounded-lg bg-sand p-2">
@@ -648,7 +652,7 @@ export function Compare() {
               <ul className="mt-1.5 space-y-1 text-xs text-ink-2">
                 <li>• {L(`Climate: ${climate.data?.source ?? ""}, ${climate.data?.resolution ?? ""}.`, `Khí hậu: ${climate.data?.source ?? ""}, ${climate.data?.resolution ?? ""}.`)}</li>
                 <li>• {L(`Soil inputs: ${farm.soilSources.soilType.source}.`, `Đầu vào đất: ${farm.soilSources.soilType.source}.`)}</li>
-                <li>• {L("Soil outlook is qualitative (low confidence).", "Triển vọng đất là định tính (độ tin cậy thấp).")}</li>
+                <li>• {t("rothc.limit")}</li>
                 {res(top)!.criteriaScores.income === null && <li>• {L("Income not scored — no local economic data.", "Chưa chấm thu nhập — thiếu số liệu kinh tế.")}</li>}
               </ul>
             </div>

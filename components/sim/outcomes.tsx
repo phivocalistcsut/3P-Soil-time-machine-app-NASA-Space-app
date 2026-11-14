@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, Bug, ChevronDown, CloudRain, Coins, Droplets, Minus, ShieldAlert, Shuffle, Sprout, ThermometerSun } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import type { Confidence, DataStatus, SimulationResult } from "@/lib/types";
-import { ConfidenceBadge, SoilMeter, StatusBadge, StressBadge, SuitBadge, Term } from "@/components/common";
+import { ConfidenceBadge, StatusBadge, StressBadge, SuitBadge, Term } from "@/components/common";
+import { SoilCarbon } from "./soil-carbon";
 import { Badge, Card, cn } from "@/components/ui/primitives";
 
 function Delta({ value, better, unit, digits = 0, neutralBand = 0.5 }: { value: number; better: "lower" | "higher"; unit?: string; digits?: number; neutralBand?: number }) {
@@ -147,18 +148,15 @@ export function OutcomePanel({ result, reference }: { result: SimulationResult; 
       <Outcome
         icon={<Sprout className="h-4 w-4" aria-hidden />}
         accent="bg-mint text-forest"
-        title={L("Soil improvement potential", "Tiềm năng cải thiện đất")}
+        title={t("rothc.title")}
         status={r.dataStatus.soilImprovementPotential}
         confidence={r.uncertainty.soilImprovementPotential}
-        baseline={t(`soil.${b.soilImprovementPotential.level}`)}
-        delta={<Delta value={r.soilImprovementPotential.level - b.soilImprovementPotential.level} better="higher" neutralBand={0.5} unit={L("level(s)", "bậc")} />}
-        method={t(r.metricSources.soilImprovementPotential) + " " + t("asm.soilMemory")}
-        explanation={L(
-          "Qualitative direction of change from rotation practices — not a soil-carbon number.",
-          "Xu hướng thay đổi định tính theo tập quán luân canh — không phải con số carbon trong đất.",
-        )}
+        baseline={b.soilImprovementPotential ? `${num(b.soilImprovementPotential.socTCHa, 2)} t C/ha` : "—"}
+        delta={r.soilImprovementPotential && b.soilImprovementPotential ? <Delta value={r.soilImprovementPotential.socTCHa - b.soilImprovementPotential.socTCHa} better="higher" digits={2} neutralBand={0.005} unit="t C/ha" /> : <span />}
+        method={t(r.metricSources.soilImprovementPotential) + " " + t("asm.rothc")}
+        explanation={t("rothc.limit")}
       >
-        <SoilMeter level={r.soilImprovementPotential.level} />
+        <SoilCarbon result={r} details badge={false} />
       </Outcome>
 
       <Outcome

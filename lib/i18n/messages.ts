@@ -39,11 +39,11 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
   "div.low": { en: "Low diversity", vi: "Đa dạng thấp" },
   "div.moderate": { en: "Moderate diversity", vi: "Đa dạng vừa" },
   "div.high": { en: "High diversity", vi: "Đa dạng cao" },
-  "soil.1": { en: "Higher risk of decline", vi: "Nguy cơ suy giảm cao" },
-  "soil.2": { en: "Some risk of decline", vi: "Có nguy cơ suy giảm" },
-  "soil.3": { en: "Stable / uncertain", vi: "Ổn định / chưa rõ" },
-  "soil.4": { en: "Improvement possible", vi: "Có thể cải thiện" },
-  "soil.5": { en: "Strong improvement potential", vi: "Tiềm năng cải thiện rõ" },
+  "soil.1": { en: "SOC decline > 0.4%/yr", vi: "SOC giảm trên 0,4%/năm" },
+  "soil.2": { en: "SOC decline 0.1–0.4%/yr", vi: "SOC giảm 0,1–0,4%/năm" },
+  "soil.3": { en: "SOC approximately stable", vi: "SOC gần ổn định" },
+  "soil.4": { en: "SOC gain 0.1–0.4%/yr", vi: "SOC tăng 0,1–0,4%/năm" },
+  "soil.5": { en: "SOC gain ≥ 0.4%/yr", vi: "SOC tăng ≥ 0,4%/năm" },
 
   // criteria
   "crit.soil": { en: "Improve soil health", vi: "Cải thiện sức khỏe đất" },
@@ -138,8 +138,8 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
     vi: "Chỉ số đa dạng Shannon của cây trồng trong 3 năm gần nhất (tính cả cách canh tác hiện tại ở những năm đầu).",
   },
   "src.soil": {
-    en: "Qualitative practice indicator: legumes and green manure add points, consecutive flooded rice subtracts; carried forward with soil memory. No numerical soil carbon prediction.",
-    vi: "Chỉ báo định tính theo tập quán canh tác: cây họ đậu và phân xanh cộng điểm, lúa ngập liên tiếp trừ điểm; có tính “trí nhớ của đất”. Không dự báo con số carbon hữu cơ.",
+    en: "RothC monthly SOC balance at 0–30 cm; one baseline-climate inverse spin-up from supplied soil stock (farmer measurement or SoilGrids), then crop-residue inputs under the selected climate. Estimated, low confidence.",
+    vi: "Cân bằng SOC hàng tháng theo RothC ở 0–30 cm; spin-up nghịch một lần với khí hậu nền từ trữ lượng đất được cung cấp (nông dân đo hoặc SoilGrids), sau đó dùng đầu vào tàn dư cây dưới khí hậu đã chọn. Ước tính, độ tin cậy thấp.",
   },
   "src.nitrogen": {
     en: "Typical crop N requirement minus legume credit from the previous crop (illustrative regional values).",
@@ -167,10 +167,8 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
     en: "Seasonal water supply assumed: abundant 1000 mm, moderate 550 mm, limited 300 mm; reduced for salinity in dry seasons.",
     vi: "Nguồn nước giả định mỗi vụ: dồi dào 1000 mm, vừa 550 mm, hạn chế 300 mm; giảm khi có mặn trong mùa khô.",
   },
-  "asm.soilMemory": {
-    en: "Soil indicator carries 60% of last year's state forward (soil changes slowly).",
-    vi: "Chỉ báo đất giữ lại 60% trạng thái năm trước (đất thay đổi chậm).",
-  },
+  "asm.rothc": { en: "SOC starts at the shared inverse-spin-up stock; future values are end-of-crop-year estimates (December–November). Pan evaporation = ET0/day × calendar days ÷ 0.75; FYM = 0 because none was entered.", vi: "SOC bắt đầu từ cùng trữ lượng sau spin-up nghịch; các giá trị tương lai là ước tính cuối năm vụ (tháng 12–11). Bốc hơi chảo = ET0/ngày × số ngày lịch ÷ 0,75; FYM = 0 vì chưa có số nhập." },
+  "asm.rothcGap": { en: "Equilibrium carbon input can differ from estimated crop residues. The difference is disclosed; residues are never rescaled to force equilibrium.", vi: "Đầu vào carbon cân bằng có thể khác tàn dư cây ước tính. Chênh lệch được công bố; không tự chỉnh tàn dư để ép cân bằng." },
   "asm.noStorage": {
     en: "Monthly water balance with no soil-water carry-over between months (conservative).",
     vi: "Cân bằng nước theo tháng, không tính nước trữ trong đất chuyển sang tháng sau (thận trọng).",
@@ -197,18 +195,34 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
     en: "Under “{assumption}” ({def}) irrigation need is {delta} mm vs. historical conditions.",
     vi: "Với giả định “{assumption}” ({def}) nhu cầu tưới thay đổi {delta} mm so với điều kiện lịch sử.",
   },
-  "why.soilUp": {
-    en: "Soil indicator moves up ({from} → {to}): {legumes} legume and {green} green-manure season(s) this year.",
-    vi: "Chỉ báo đất tăng ({from} → {to}): năm này có {legumes} vụ cây họ đậu và {green} vụ phân xanh.",
-  },
-  "why.soilDown": {
-    en: "Soil indicator moves down ({from} → {to}): {rice} consecutive flooded-rice season(s) with little rotation.",
-    vi: "Chỉ báo đất giảm ({from} → {to}): {rice} vụ lúa ngập liên tiếp, ít luân canh.",
-  },
-  "why.soilSame": {
-    en: "Soil indicator holds at “{level}” — soil responds slowly, so changes build over several years.",
-    vi: "Chỉ báo đất giữ ở mức “{level}” — đất thay đổi chậm, hiệu quả tích lũy qua nhiều năm.",
-  },
+  "why.rothc": { en: "SOC changed {delta} t C/ha since the previous year. This year returns an estimated {carbon} t C/ha in residues/green manure, with {cover} covered and {flood} flooded months.", vi: "SOC thay đổi {delta} t C/ha so với năm trước. Năm này trả lại khoảng {carbon} t C/ha từ tàn dư/phân xanh, có {cover} tháng che phủ và {flood} tháng ngập." },
+  "why.rothcDrivers": { en: "Retained residues and incorporated green manure add carbon. Cover and the paddy factors slow modeled decomposition; SOC depends on their full carbon balance, not a reward or penalty for rice.", vi: "Tàn dư giữ lại và phân xanh vùi bổ sung carbon. Che phủ và hệ số ruộng lúa làm chậm phân giải trong mô hình; SOC phụ thuộc toàn bộ cân bằng carbon, không phải điểm thưởng hay phạt cho lúa." },
+  "why.rothcClimate": { en: "The selected climate changes modeled SOC by {delta} t C/ha versus the same rotation under historical baseline climate.", vi: "Khí hậu đã chọn làm SOC mô phỏng chênh {delta} t C/ha so với cùng luân canh dưới khí hậu nền lịch sử." },
+  "rothc.scoreLabel": { en: "SOC-change score", vi: "điểm thay đổi SOC" },
+  "rothc.compactLimit": { en: "Low confidence · estimated inputs · paddy factors need local validation", vi: "Tin cậy thấp · đầu vào ước tính · cần kiểm chứng hệ số ruộng lúa tại địa phương" },
+  "rothc.glossary": { en: "RothC estimates SOC stocks at 0–30 cm in t C/ha and changes from the initial stock. It combines farmer measurements or modeled SoilGrids soil with climate and estimated residues. These are low-confidence scenario estimates that need field SOC measurements and local calibration.", vi: "RothC ước tính trữ lượng SOC ở 0–30 cm theo t C/ha và chênh lệch so với đầu kỳ. Mô hình kết hợp đất nông dân đo hoặc SoilGrids, khí hậu và tàn dư ước tính. Đây là kịch bản có độ tin cậy thấp, cần đo SOC thực địa và hiệu chỉnh địa phương." },
+  "rothc.residueColumn": { en: "Residue C, t C/ha/crop", vi: "C tàn dư, t C/ha/vụ" },
+  "rothc.title": { en: "Soil organic carbon (RothC)", vi: "Carbon hữu cơ đất (RothC)" },
+  "rothc.tradeoff": { en: "SOC {delta} t C/ha versus current practice", vi: "SOC chênh {delta} t C/ha so với hiện trạng" },
+  "rothc.change": { en: "Δ {delta} t C/ha · {rate}%/yr vs initial stock", vi: "Δ {delta} t C/ha · {rate}%/năm so với trữ lượng đầu kỳ" },
+  "rothc.depthSource": { en: "0–30 cm · RothC · POWER/IMERG · farmer/SoilGrids soil", vi: "0–30 cm · RothC · POWER/IMERG · đất nông dân đo/SoilGrids" },
+  "rothc.limit": { en: "Low confidence: modeled soil and estimated residues. Paddy factors need local validation; original RothC excludes permanently waterlogged soil.", vi: "Độ tin cậy thấp: đất theo mô hình, tàn dư ước tính. Hệ số ruộng lúa cần kiểm chứng địa phương; RothC gốc không áp dụng cho đất ngập thường xuyên." },
+  "rothc.missing": { en: "SOC unavailable: supply clay (%) and a positive SOC stock for 0–30 cm.", vi: "Chưa có SOC: cần tỷ lệ sét (%) và trữ lượng SOC dương cho lớp 0–30 cm." },
+  "rothc.noInput": { en: "SOC unavailable: the current rotation supplies no crop carbon, so inverse spin-up is not identifiable.", vi: "Chưa có SOC: luân canh hiện tại không có đầu vào carbon cây trồng, chưa thể xác định spin-up nghịch." },
+  "rothc.climateMissing": { en: "SOC unavailable: twelve complete monthly climate inputs are required.", vi: "Chưa có SOC: cần đủ đầu vào khí hậu cho 12 tháng." },
+  "rothc.gapTitle": { en: "Carbon-input information gap", vi: "Khoảng trống thông tin về đầu vào carbon" },
+  "rothc.inputGap": { en: "Inverse spin-up requires {equilibrium} t C/ha/yr at equilibrium; current-practice residues supply {residues} ({ratio}% of that input).", vi: "Spin-up nghịch cần {equilibrium} t C/ha/năm để cân bằng; tàn dư hiện trạng cung cấp {residues} ({ratio}% lượng cần)." },
+  "rothc.gapAction": { en: "Check field SOC, residue retention, harvest height and drainage history with a local expert. The model keeps this mismatch visible.", vi: "Cần chuyên gia địa phương kiểm tra SOC thực địa, tỷ lệ tàn dư giữ lại, chiều cao cắt và lịch sử thoát nước. Mô hình giữ nguyên và công bố chênh lệch này." },
+  "rothc.methodTitle": { en: "RothC monthly carbon model", vi: "Mô hình carbon hàng tháng RothC" },
+  "rothc.methodPools": { en: "DPM (decomposable plant material), RPM (resistant plant material), BIO, HUM and inert IOM. Each active pool retains C × exp(−a·b·c·p·k/12); k = 10, 0.3, 0.66, 0.02 /yr, respectively. IOM does not decompose. No radiocarbon age is calculated.", vi: "Các pool DPM (vật liệu dễ phân giải), RPM (khó phân giải), BIO, HUM và IOM trơ. Mỗi pool hoạt tính giữ C × exp(−a·b·c·p·k/12); k lần lượt = 10; 0,3; 0,66; 0,02 /năm. IOM không phân giải. Không tính tuổi phóng xạ." },
+  "rothc.methodModifiers": { en: "a = 47.91/[1+exp(106.06/(T+18.27))], zero below −5 °C. Max TSMD = −(20+1.3·clay−0.01·clay²)×30/23. Accumulate rain−0.75·pan, capped at 0 and the vegetation-dependent deficit limit. b=1 above 0.444·max; otherwise b=0.2+0.8·(max−TSMD)/(max−0.444·max). Bare-soil limit=0.556·max. c=0.6 covered, 1 bare.", vi: "a = 47,91/[1+exp(106,06/(T+18,27))], bằng 0 dưới −5 °C. TSMD tối đa = −(20+1,3·sét−0,01·sét²)×30/23. Tích lũy mưa−0,75·bốc hơi chảo, giới hạn bởi 0 và mức thiếu hụt theo che phủ. b=1 trên 0,444·max; nếu không b=0,2+0,8·(max−TSMD)/(max−0,444·max). Giới hạn đất trống=0,556·max. c=0,6 khi có cây, 1 khi trống." },
+  "rothc.methodPartition": { en: "x = 1.67·[1.85+1.6·exp(−0.0786·clay)] = CO₂/(BIO+HUM). Of decomposed C, x/(1+x) becomes CO₂; the remainder splits 46% BIO / 54% HUM. Residues enter DPM/RPM at harvest/incorporation month using sourced crop ratios; simultaneous inputs mix by carbon mass. FYM remains zero without farmer input.", vi: "x = 1,67·[1,85+1,6·exp(−0,0786·sét)] = CO₂/(BIO+HUM). Carbon phân giải chia x/(1+x) thành CO₂; phần còn lại chia 46% BIO / 54% HUM. Tàn dư vào DPM/RPM trong tháng thu hoạch/vùi theo tỷ lệ có nguồn của cây; đầu vào cùng tháng được trộn theo khối lượng carbon. FYM bằng 0 khi chưa có nông dân nhập." },
+  "rothc.methodSpinup": { en: "IOM = 0.049·SOC^1.139 (Falloon et al., 1998). One inverse spin-up repeats the current rotation under baseline monthly mean climate to match the initial stock. Every alternative and climate test shares those initial pools and TSMD. The first displayed year is that initial stock; subsequent values are November year-end stocks. Annualized change = 100·(SOC−initial SOC)/(initial SOC·elapsed years), not compound growth.", vi: "IOM = 0,049·SOC^1,139 (Falloon và cs., 1998). Spin-up nghịch lặp luân canh hiện tại với khí hậu trung bình tháng nền để khớp trữ lượng ban đầu. Mọi phương án và phép thử khí hậu dùng chung pool và TSMD đầu kỳ. Năm hiển thị đầu tiên là mốc trữ lượng đó; năm sau là trữ lượng cuối tháng 11. Thay đổi bình quân năm = 100·(SOC−SOC đầu)/(SOC đầu·số năm), không phải lãi kép." },
+  "rothc.methodPaddy": { en: "Shirato & Yokozawa (2005), Fig.2 / Table 3: p=0.2 during rice growing, p=0.6 in other months of a paddy field; upland p=1. Covered flooded-rice months follow the existing monthly-cover calendar. Ponding resets TSMD to zero: an explicit app extension for irrigated rice, not a verified statement from that paper. A paddy field remains paddy-drained after rice; permanent land conversion and flood dates need expert validation.", vi: "Shirato & Yokozawa (2005), Hình 2 / Bảng 3: p=0,2 trong vụ lúa, p=0,6 các tháng khác của ruộng lúa; đất cạn p=1. Tháng lúa ngập theo lịch che phủ hàng tháng hiện có. Ngập đặt TSMD về 0: mở rộng được công bố của app cho lúa có tưới, không phải kết luận đã xác minh trong bài gốc. Ruộng lúa tiếp tục được xem là đã tháo nước sau vụ; chuyển đổi đất lâu dài và lịch ngập cần chuyên gia kiểm chứng." },
+  "rothc.methodData": { en: "Only two RothC input datasets: NASA POWER monthly climate (weather 0.5°×0.625°, solar ~1°; complete IMERG 0.1° rainfall when available), and ISRIC SoilGrids 2.0 (250 m). Use mean T/rain/ET0 by calendar month after climate adjustment; pan=ET0/day×calendar days/0.75. Soil depth is 0–30 cm, combining 0–5, 5–15 and 15–30 cm; no coarse-fragment correction. NDVI and SMAP do not enter RothC.", vi: "Chỉ hai bộ đầu vào RothC: khí hậu tháng NASA POWER (thời tiết 0,5°×0,625°, bức xạ ~1°; mưa IMERG 0,1° khi đủ toàn kỳ) và ISRIC SoilGrids 2.0 (250 m). Dùng T/mưa/ET0 trung bình theo tháng lịch sau chỉnh khí hậu; bốc hơi chảo=ET0/ngày×số ngày/0,75. Độ sâu đất 0–30 cm gộp 0–5, 5–15 và 15–30 cm; chưa trừ đá sỏi thô. NDVI và SMAP không tham gia RothC." },
+  "rothc.methodLevels": { en: "Annualized SOC change: level 1 <−0.4%; level 2 −0.4% to −0.1% inclusive; level 3 >−0.1% and <+0.1%; level 4 ≥+0.1% and <+0.4%; level 5 ≥+0.4%. The +0.4% anchor comes from 4 per 1000, an aspirational orientation, not a field guarantee. The other boundaries are transparent app choices. Score=clamp(50+125×annualized %, 0, 100); soil criterion=0.7×score+0.3×diversity, excluded when unavailable.", vi: "Thay đổi SOC bình quân năm: mức 1 <−0,4%; mức 2 từ −0,4% đến −0,1%, gồm hai đầu; mức 3 >−0,1% và <+0,1%; mức 4 ≥+0,1% và <+0,4%; mức 5 ≥+0,4%. Mốc +0,4% lấy từ 4 per 1000, là định hướng, không bảo đảm cho thửa ruộng. Các ngưỡng còn lại là lựa chọn minh bạch của app. Điểm=clamp(50+125×% bình quân năm, 0, 100); tiêu chí đất=0,7×điểm+0,3×đa dạng, bỏ qua nếu chưa có dữ liệu." },
+  "rothc.diagram": { en: "Topsoil tone follows the modeled SOC-change level. The diagram is illustrative; its thickness is fixed and is not a predicted soil-depth change.", vi: "Màu đất mặt theo mức thay đổi SOC mô phỏng. Sơ đồ là minh họa; độ dày cố định, không phải dự báo thay đổi độ sâu đất." },
+  "rothc.evidenceSource": { en: "RothC + POWER climate + SoilGrids / farmer soil + sourced residue estimates", vi: "RothC + khí hậu POWER + đất SoilGrids / số đo nông dân + tàn dư ước tính có nguồn" },
   "why.diversity": {
     en: "{n} different crops from {f} plant families in the last 3 years (Shannon index {h}).",
     vi: "{n} loại cây từ {f} họ thực vật trong 3 năm gần nhất (chỉ số Shannon {h}).",
@@ -230,3 +244,10 @@ export const MESSAGES: Record<string, { en: string; vi: string }> = {
     vi: "Đây là kịch bản mô phỏng theo các giả định đã nêu. Kết quả thực tế phụ thuộc điều kiện đất, giống và cách quản lý tại chỗ.",
   },
 };
+
+/** Pure formatter for both React UI and engine evidence (no store/React dependency). */
+export function translateMessage(lang: "en" | "vi", key: string, values?: Record<string, string | number>) {
+  let message = MESSAGES[key]?.[lang] ?? key;
+  if (values) for (const [name, value] of Object.entries(values)) message = message.split(`{${name}}`).join(String(value));
+  return message;
+}

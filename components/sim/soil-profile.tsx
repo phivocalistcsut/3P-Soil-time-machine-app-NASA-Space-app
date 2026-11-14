@@ -8,7 +8,7 @@ import type { SimulationResult } from "@/lib/types";
 /**
  * ILLUSTRATIVE soil-future diagram. Three columns = the three seasons of the selected
  * year (canopy, ponding water, rooting depth from the crop catalog). The shared topsoil
- * band's tone follows the qualitative soil indicator. Not to scale; not a measured profile.
+ * band's tone follows the RothC SOC-change level. Not to scale; not a measured profile.
  */
 const TOPSOIL = ["#B9A48A", "#9E8466", "#86684A", "#6B4F33", "#523A22"];
 
@@ -87,13 +87,13 @@ export function SoilProfile({ result }: { result: SimulationResult }) {
   const H = 250;
   const ground = 92;
   const colW = W / 3;
-  const level = result.soilImprovementPotential.level;
-  const topsoilDepth = 26 + level * 5; // illustrative only
+  const level = result.soilImprovementPotential?.level;
+  const topsoilDepth = 42; // Fixed illustrative geometry; SOC does not predict changing soil thickness.
   const mPerPx = 1.3 / (H - ground - 24); // 1.3 m drawn depth
 
   return (
     <figure className="w-full">
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={L(`Illustrative soil diagram for ${result.year}: ${t(`soil.${level}`)}`, `Sơ đồ đất minh họa năm ${result.year}: ${t(`soil.${level}`)}`)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={L(`Illustrative soil diagram for ${result.year}: ${level ? t(`soil.${level}`) : t("status.unavailable")}`, `Sơ đồ đất minh họa năm ${result.year}: ${level ? t(`soil.${level}`) : t("status.unavailable")}`)}>
         <defs>
           <pattern id="subsoil" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <rect width="8" height="8" fill="#B8B9A6" />
@@ -107,10 +107,10 @@ export function SoilProfile({ result }: { result: SimulationResult }) {
         <rect x="0" y="0" width={W} height={ground} fill="url(#sky)" />
         {/* subsoil */}
         <rect x="0" y={ground} width={W} height={H - ground} fill="url(#subsoil)" />
-        {/* topsoil band (qualitative tone) */}
-        <rect x="0" y={ground} width={W} height={topsoilDepth} fill={TOPSOIL[level - 1]} style={{ transition: "all 350ms ease" }} />
+        {/* topsoil band (modeled SOC-change tone) */}
+        <rect x="0" y={ground} width={W} height={topsoilDepth} fill={level ? TOPSOIL[level - 1] : "#A3ADA8"} style={{ transition: "all 350ms ease" }} />
         {/* organic flecks increase with level */}
-        {Array.from({ length: level * 9 }, (_, i) => (
+        {Array.from({ length: (level ?? 0) * 9 }, (_, i) => (
           <circle key={i} cx={(i * 67) % W + 8} cy={ground + 6 + ((i * 13) % Math.max(8, topsoilDepth - 10))} r="1.6" fill="#2E2014" opacity="0.55" />
         ))}
         {result.seasons.map((s, i) => {
@@ -166,10 +166,7 @@ export function SoilProfile({ result }: { result: SimulationResult }) {
         <FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-ink" aria-hidden />
         <span>
           <strong className="font-semibold text-amber-ink">{L("Illustrative diagram", "Sơ đồ minh họa")}</strong> —{" "}
-          {L(
-            "not to scale and not a measured soil profile. Topsoil tone follows the qualitative soil outlook; blue = ponded water; white = typical rooting depth; green nodules = N-fixing legumes.",
-            "không theo tỷ lệ và không phải mặt cắt đất đo thực tế. Màu lớp đất mặt theo triển vọng đất định tính; xanh dương = nước ngập; trắng = độ sâu rễ điển hình; nốt xanh = cây họ đậu cố định đạm.",
-          )}
+          {t("rothc.diagram")}
         </span>
       </figcaption>
     </figure>

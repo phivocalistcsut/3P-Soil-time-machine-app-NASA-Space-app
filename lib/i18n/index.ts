@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useApp } from "@/lib/store";
-import { MESSAGES } from "./messages";
+import { translateMessage } from "./messages";
 import { getCrop, SEASONS } from "@/lib/data/crops";
 import type { CustomClimate, Lang, SeasonId, SuitabilityFactor } from "@/lib/types";
 
@@ -12,10 +12,7 @@ const MONTHS: Record<Lang, string[]> = {
 };
 
 export function translate(lang: Lang, key: string, values?: Record<string, string | number>) {
-  const m = MESSAGES[key];
-  let s = m ? m[lang] : key;
-  if (values) for (const [k, v] of Object.entries(values)) s = s.split(`{${k}}`).join(String(v));
-  return s;
+  return translateMessage(lang, key, values);
 }
 
 /** Values for the "{rain}" and "{temp}" placeholders of the custom climate text. */

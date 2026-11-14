@@ -59,7 +59,6 @@ export const CROPS: Crop[] = [
       nFixing: false,
       rootDepthM: 0.3,
       residueReturn: "medium",
-      soilPoints: 0,
       note: {
         en: "Flooded crop: needs ponding water, land preparation and percolation losses.",
         vi: "Cây ngập nước: cần giữ nước mặt ruộng, làm đất và bù thất thoát do thấm.",
@@ -93,7 +92,6 @@ export const CROPS: Crop[] = [
       nFixing: false,
       rootDepthM: 1.0,
       residueReturn: "high",
-      soilPoints: 0.4,
       note: {
         en: "Upland break crop: dry soil phase interrupts continuous flooding; deep roots.",
         vi: "Cây màu cạn: tạo giai đoạn đất khô, cắt chuỗi ngập liên tục; rễ ăn sâu.",
@@ -128,7 +126,6 @@ export const CROPS: Crop[] = [
       nFixing: true,
       rootDepthM: 0.6,
       residueReturn: "medium",
-      soilPoints: 1.0,
       note: {
         en: "Legume: biological N fixation and soil cover between rice crops.",
         vi: "Cây họ đậu: cố định đạm sinh học và che phủ đất giữa các vụ lúa.",
@@ -162,7 +159,6 @@ export const CROPS: Crop[] = [
       nFixing: true,
       rootDepthM: 0.8,
       residueReturn: "medium",
-      soilPoints: 1.0,
       note: {
         en: "Legume: fixes nitrogen; more tolerant of short wet spells than mung bean.",
         vi: "Cây họ đậu: cố định đạm; chịu ẩm ngắn ngày tốt hơn đậu xanh.",
@@ -198,7 +194,6 @@ export const CROPS: Crop[] = [
       nFixing: true,
       rootDepthM: 0.6,
       residueReturn: "medium",
-      soilPoints: 0.9,
       note: {
         en: "Legume best on light, well-drained soils; pods struggle in heavy clay.",
         vi: "Cây họ đậu hợp đất nhẹ, thoát nước tốt; khó tạo củ trên đất sét nặng.",
@@ -234,7 +229,6 @@ export const CROPS: Crop[] = [
       nFixing: false,
       rootDepthM: 0.9,
       residueReturn: "low",
-      soilPoints: 0.3,
       note: {
         en: "Drought-hardy dry-season crop; very sensitive to waterlogging.",
         vi: "Chịu hạn tốt cho mùa khô; rất nhạy cảm với ngập úng.",
@@ -269,7 +263,6 @@ export const CROPS: Crop[] = [
       nFixing: false,
       rootDepthM: 0.9,
       residueReturn: "medium",
-      soilPoints: 0.3,
       note: {
         en: "Root crop with dense ground cover; prefers raised beds on clay soils.",
         vi: "Cây lấy củ, che phủ đất tốt; nên lên luống cao trên đất sét.",
@@ -309,7 +302,6 @@ export const CROPS: Crop[] = [
       nFixing: true,
       rootDepthM: 1.2,
       residueReturn: "high",
-      soilPoints: 2.0,
       note: {
         en: "Flood-tolerant legume grown to be incorporated as green manure (organic matter + N).",
         vi: "Cây họ đậu chịu ngập, trồng để vùi làm phân xanh (bổ sung chất hữu cơ và đạm).",
@@ -346,7 +338,6 @@ export const CROPS: Crop[] = [
       nFixing: false,
       rootDepthM: 0,
       residueReturn: "low",
-      soilPoints: 0.1,
       note: {
         en: "No crop: no irrigation, no income; breaks pest cycles.",
         vi: "Không trồng: không cần tưới, không có thu nhập; cắt vòng đời sâu bệnh.",

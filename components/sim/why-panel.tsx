@@ -73,29 +73,21 @@ export function useWhyReasons({
   }
 
   const soil = result.soilImprovementPotential;
-  if (previous) {
-    const legumes = result.seasons.filter((s) => getCrop(s.cropId)?.agronomicProperties.nFixing && getCrop(s.cropId)?.category !== "green_manure").length;
-    const green = result.seasons.filter((s) => getCrop(s.cropId)?.category === "green_manure").length;
-    let riceRun = 0;
-    result.seasons.forEach((s, i) => {
-      const prevCrop = i === 0 ? previous.seasons[2]?.cropId : result.seasons[i - 1].cropId;
-      if (getCrop(s.cropId)?.flooded && getCrop(prevCrop)?.flooded) riceRun++;
-    });
-    const dIdx = soil.index - previous.soilImprovementPotential.index;
-    if (soil.level > previous.soilImprovementPotential.level || dIdx > 0.08)
-      reasons.push({
-        icon: Sprout,
-        tone: "positive",
-        text: t("why.soilUp", { from: t(`soil.${previous.soilImprovementPotential.level}`), to: t(`soil.${soil.level}`), legumes, green }),
-      });
-    else if (soil.level < previous.soilImprovementPotential.level || dIdx < -0.08)
-      reasons.push({
-        icon: Leaf,
-        tone: "negative",
-        text: t("why.soilDown", { from: t(`soil.${previous.soilImprovementPotential.level}`), to: t(`soil.${soil.level}`), rice: riceRun }),
-      });
-    else reasons.push({ icon: Leaf, tone: soil.level <= 2 ? "negative" : "neutral", text: t("why.soilSame", { level: t(`soil.${soil.level}`) }) });
-  }
+  const inputs = result.soilCarbonInputs;
+  if (soil && inputs) {
+    if (previous?.soilImprovementPotential) {
+      const delta = soil.deltaTCHa - previous.soilImprovementPotential.deltaTCHa;
+      reasons.push({ icon: Sprout, tone: delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral",
+        text: t("why.rothc", { delta: signed(delta, 2), carbon: num(inputs.annualPlantC, 2),
+          cover: inputs.vegetatedMonths, flood: inputs.floodedMonths }) });
+      reasons.push({ icon: Leaf, tone: "neutral", text: t("why.rothcDrivers") });
+    }
+    if (assumption !== "baseline" && baselineClimate?.soilImprovementPotential && !result.isBaselineYear)
+      reasons.push({ icon: CloudSun, tone: "neutral", text: t("why.rothcClimate", {
+        delta: signed(soil.socTCHa - baselineClimate.soilImprovementPotential.socTCHa, 2) }) });
+    reasons.push({ icon: Info, tone: "neutral", text: t("rothc.inputGap", {
+      equilibrium: num(inputs.equilibriumPlantC, 2), residues: num(inputs.referencePlantC, 2), ratio: num(inputs.inputRatio * 100, 1) }) });
+  } else reasons.push({ icon: Info, tone: "neutral", text: t(result.metricSources.soilImprovementPotential) });
 
   const div = result.rotationDiversity;
   reasons.push({

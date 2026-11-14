@@ -9,7 +9,8 @@ import { CROPS } from "@/lib/data/crops";
 import { IMERG_SOURCE, SMAP_SOURCE } from "@/lib/data/evidence";
 import { OVERLAYS } from "@/lib/data/layers";
 import { CLIMATE_ASSUMPTIONS, CUSTOM_CLIMATE_LIMITS, type PresetClimate } from "@/lib/engine/climate";
-import { LAND_PREP_MM, PERCOLATION_MM_DAY, SUPPLY_MM, ENGINE_VERSION, SOIL_LEVEL_THRESHOLDS, REF_IRRIGATION_MM, REF_NITROGEN } from "@/lib/engine/simulate";
+import { LAND_PREP_MM, PERCOLATION_MM_DAY, SUPPLY_MM, ENGINE_VERSION, REF_IRRIGATION_MM, REF_NITROGEN } from "@/lib/engine/simulate";
+import { RothCMethod } from "./sim/rothc-method";
 import { CropIcon, StatusBadge } from "@/components/common";
 import { Card, CardHeader } from "@/components/ui/primitives";
 import type { DataStatus, SoilTexture } from "@/lib/types";
@@ -121,16 +122,6 @@ export function Methodology() {
     { s: "unavailable", icon: CircleSlash },
   ];
 
-  const soilPointsRows = [
-    [L("Flooded rice after another flooded rice", "Lúa ngập sau một vụ lúa ngập"), "−0.6"],
-    [L("Three flooded seasons in one year (extra)", "Ba vụ ngập trong một năm (thêm)"), "−0.3"],
-    [L("Legume grain crop (mung bean, soybean, peanut)", "Cây họ đậu lấy hạt (đậu xanh, đậu nành, đậu phộng)"), "+0.9 … +1.0"],
-    [L("Green manure incorporated (Sesbania)", "Vùi phân xanh (điền thanh)"), "+2.0"],
-    [L("Upland cereal break crop (maize)", "Cây ngũ cốc cạn cắt vụ (bắp)"), "+0.4"],
-    [L("Sesame / sweet potato", "Mè / khoai lang"), "+0.3"],
-    [L("Fallow", "Để đất nghỉ"), "+0.1"],
-  ];
-
   return (
     <div className="space-y-5">
       <PageHeader
@@ -231,7 +222,7 @@ export function Methodology() {
               <strong className="text-ink">{L("Rotation diversity.", "Đa dạng luân canh.")}</strong> {t("src.diversity")} H′ = −Σ pᵢ ln pᵢ.
             </li>
             <li>
-              <strong className="text-ink">{L("Soil outlook.", "Triển vọng đất.")}</strong> {t("src.soil")} {t("asm.soilMemory")}
+              <strong className="text-ink">{L("Soil outlook.", "Triển vọng đất.")}</strong> {t("src.soil")} {t("asm.rothc")}
             </li>
           </ol>
         </Card>
@@ -297,32 +288,14 @@ export function Methodology() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h2 className="text-base font-semibold">{L("Qualitative soil indicator", "Chỉ báo đất định tính")}</h2>
-          <table className="mt-3 w-full text-xs">
-            <tbody>
-              {soilPointsRows.map(([a, b]) => (
-                <tr key={a} className="border-t border-line">
-                  <td className="py-1.5">{a}</td>
-                  <td className="py-1.5 text-right font-semibold tabular">{b}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-2 text-xs text-ink-2">
-            {L(
-              `Yearly points are averaged over the three seasons and carried forward (index = 0.6 × last year + 0.4 × this year). Levels: ≤ ${SOIL_LEVEL_THRESHOLDS[0]} · ≤ ${SOIL_LEVEL_THRESHOLDS[1]} · ≤ ${SOIL_LEVEL_THRESHOLDS[2]} · ≤ ${SOIL_LEVEL_THRESHOLDS[3]} · above. The indicator shows direction, not magnitude, and has low confidence.`,
-              `Điểm năm là trung bình ba vụ và được mang sang năm sau (chỉ số = 0,6 × năm trước + 0,4 × năm nay). Các mức: ≤ ${SOIL_LEVEL_THRESHOLDS[0]} · ≤ ${SOIL_LEVEL_THRESHOLDS[1]} · ≤ ${SOIL_LEVEL_THRESHOLDS[2]} · ≤ ${SOIL_LEVEL_THRESHOLDS[3]} · cao hơn. Chỉ báo thể hiện xu hướng, không phải độ lớn, và có độ tin cậy thấp.`,
-            )}
-          </p>
-        </Card>
+        <RothCMethod />
         <Card className="p-5">
           <h2 className="flex items-center gap-2 text-base font-semibold">
             <Scale className="h-4 w-4 text-forest" aria-hidden />
             {L("Multi-criteria score", "Điểm đa tiêu chí")}
           </h2>
           <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-ink-2">
-            <li>• {t("crit.soil")}: 0.7 × {L("soil indicator", "chỉ báo đất")} + 0.3 × {L("diversity", "đa dạng")}</li>
+            <li>• {t("crit.soil")}: 0.7 × {t("rothc.scoreLabel")} + 0.3 × {L("diversity", "đa dạng")}</li>
             <li>• {t("crit.water")}: 100 × (1 − {L("irrigation", "tưới")} ÷ {REF_IRRIGATION_MM} mm)</li>
             <li>• {t("crit.drought")}: 100 − {L("mean stress level", "mức thiếu nước TB")} × 33 − 10 {L("if dry years exceed supply", "nếu năm khô vượt nguồn nước")}</li>
             <li>• {t("crit.income")}: {L("gross margin vs current practice, −8 per high-risk season; excluded without economic data", "lãi gộp so với hiện tại, −8 mỗi vụ rủi ro cao; bỏ qua nếu thiếu dữ liệu kinh tế")}</li>
@@ -344,7 +317,7 @@ export function Methodology() {
           <table className="w-full min-w-[900px] text-xs">
             <thead>
               <tr className="text-left text-ink-2">
-                {[L("Crop", "Cây"), L("Days", "Ngày"), "Kc ini/mid/end", L("Kc source", "Nguồn Kc"), L("Opt. temp °C", "Nhiệt độ tối ưu °C"), "pH", L("Waterlogging", "Chịu ngập"), L("Salinity", "Chịu mặn"), L("N kg/ha", "Đạm kg/ha"), L("N credit", "Đạm để lại")].map((h) => (
+                {[L("Crop", "Cây"), L("Days", "Ngày"), "Kc ini/mid/end", L("Kc source", "Nguồn Kc"), L("Opt. temp °C", "Nhiệt độ tối ưu °C"), "pH", L("Waterlogging", "Chịu ngập"), L("Salinity", "Chịu mặn"), L("N kg/ha", "Đạm kg/ha"), L("N credit", "Đạm để lại"), t("rothc.residueColumn"), "DPM/RPM"].map((h) => (
                   <th key={h} className="px-3 py-2 font-semibold">
                     {h}
                   </th>
@@ -375,6 +348,8 @@ export function Methodology() {
                   <td className="px-3 py-2">{c.salinityTolerance}</td>
                   <td className="px-3 py-2 tabular">{c.nitrogenNeed}</td>
                   <td className="px-3 py-2 tabular">{c.nitrogenCredit}</td>
+                  <td className="px-3 py-2 tabular" title={c.rothc.source}>{c.rothc.residueCTHa.toFixed(2)} <StatusBadge status="estimated" withTip={false} /></td>
+                  <td className="px-3 py-2 tabular">{c.rothc.dpmRpm}</td>
                 </tr>
               ))}
             </tbody>
@@ -418,7 +393,7 @@ export function Methodology() {
           {[
             L("Regional satellite and reanalysis pixels are not field measurements.", "Điểm ảnh vệ tinh và tái phân tích theo vùng không phải số đo thực địa."),
             L("No yield model: income uses your yields with simple suitability penalties.", "Không có mô hình năng suất: thu nhập dùng năng suất bạn nhập với hệ số phạt đơn giản."),
-            L("No numerical soil-carbon prediction is made.", "Không dự báo con số carbon trong đất."),
+            t("rothc.limit"),
             L("Pests, diseases, markets and labour are not modeled.", "Chưa mô hình hóa sâu bệnh, thị trường và lao động."),
             L("Flood-season inundation depth is not modeled beyond monthly rainfall.", "Độ sâu ngập mùa lũ chưa được mô hình hóa ngoài lượng mưa tháng."),
             L("Validation against local field trials is the next required step.", "Bước bắt buộc tiếp theo là kiểm chứng với thí nghiệm đồng ruộng tại địa phương."),
