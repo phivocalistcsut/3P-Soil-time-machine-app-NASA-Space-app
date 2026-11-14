@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test scripts/evidence.test.ts",
+    "test": "node --import tsx --test scripts/evidence.test.ts scripts/rothc.test.ts",
     "verify:live": "node --import tsx scripts/verify-live.ts",
     "engine:smoke": "tsx scripts/engine-smoke.ts"
   },
