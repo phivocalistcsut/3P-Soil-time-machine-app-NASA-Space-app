@@ -5,6 +5,8 @@
  * GetCapabilities document.
  */
 export type OverlayId = "imerg" | "smap" | "lst";
+export type OverlayOpacity = Record<OverlayId, number>;
+export const DEFAULT_OVERLAY_OPACITY: OverlayOpacity = { imerg: 0.65, smap: 0.65, lst: 0.65 };
 
 export interface OverlayDef {
   id: OverlayId;
@@ -113,8 +115,10 @@ export function overlayTiles(o: OverlayDef, date: string) {
 
 export const BASEMAPS = {
   map: {
-    tiles: ["a", "b", "c"].map((s) => `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png`),
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+    // Direct browser requests retain Referer and normal HTTP caching. No key,
+    // proxy, prefetch or offline tile download: OSMF standard tile policy.
+    tiles: [process.env.NEXT_PUBLIC_STREET_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+    attribution: process.env.NEXT_PUBLIC_STREET_TILE_ATTRIBUTION || '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxzoom: 19,
   },
   satellite: {

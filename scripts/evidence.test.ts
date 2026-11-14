@@ -16,7 +16,8 @@ import { temperatureTrend } from "../lib/engine/statistics";
 import { annualTemperatures } from "../lib/services/climate-trend";
 import { era5HotYears, type Era5Daily } from "../lib/services/weather-crosscheck";
 import { ndviSeasonPeaks } from "../lib/engine/ndvi-seasons";
-import { parseGeocoding, geocode } from "../lib/services/geocoding";
+import { parseGeocoding, geocode, parsePhoton, geocodePhoton } from "../lib/services/geocoding";
+import { OVERLAYS, overlayDateFor } from "../lib/data/layers";
 import { buildCalendar } from "../lib/engine/insights";
 import ndviSnapshot from "../data/ndvi-thoi-lai.json";
 import type { NdviSeries } from "../lib/types";
@@ -71,6 +72,38 @@ test("geocoding validates coordinates, deduplicates and submits complete address
     assert.match(decodeURIComponent(url.pathname),/Cờ Đỏ/); return Response.json(payload);};
   assert.equal((await geocode("Cờ Đỏ, Cần Thơ","vi","test-key",fetcher)).length,1); assert.equal(calls,1);
   await assert.rejects(geocode("test","en","test-key",async()=>new Response("",{status:403})));
+});
+
+test("Photon handles local OSM addresses and rejects invalid or duplicate coordinates", async () => {
+  const point = (coordinates: unknown[], properties: object) => ({ geometry: { type: "Point", coordinates }, properties });
+  const payload = { features: [point([108.05, 12.68], { name: "Buôn Ma Thuột", city: "Buôn Ma Thuột", state: "Đắk Lắk", country: "Việt Nam", type: "city" }),
+    point([105.5, 10], { housenumber: "12", street: "Nguyễn Trãi", city: "Cần Thơ" }),
+    point([105.5, 10], { name: "Duplicate" }), point(["105", 10], { name: "String coordinate" }),
+    point([999, 10], { name: "Outside world" }), point([0, 0], {})] };
+  assert.deepEqual(parsePhoton(payload), [
+    { name: "Buôn Ma Thuột, Đắk Lắk, Việt Nam", lat: 12.68, lon: 108.05, zoom: 12 },
+    { name: "12 Nguyễn Trãi, Cần Thơ", lat: 10, lon: 105.5, zoom: 17 },
+  ]);
+  let calls = 0;
+  const fetcher: typeof fetch = async (input, init) => {
+    calls++; const url = new URL(String(input));
+    assert.equal(url.searchParams.get("q"), "Buôn Ma Thuột");
+    assert.equal(url.searchParams.has("key"), false);
+    assert.equal(url.searchParams.has("lang"), false); // local OSM names, not unsupported vi
+    assert.match(String((init?.headers as Record<string,string>)["User-Agent"]), /SoilTimeMachine/);
+    return Response.json(payload);
+  };
+  assert.equal((await geocodePhoton("Buôn Ma Thuột", "vi", fetcher)).length, 2);
+  assert.equal(calls, 1);
+  await assert.rejects(geocodePhoton("test", "en", async () => new Response(null, { status: 429 })));
+  assert.throws(() => parsePhoton({ features: null }));
+});
+
+test("NASA timeline keeps product-specific dates and caps the requested month", () => {
+  const now = new Date("2026-11-14T00:00:00Z");
+  assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, null, now)), ["2026-11-11", "2026-11-10", "2026-10-01"]);
+  assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, "2016-03", now)), ["2016-03-15", "2016-03-15", "2016-03-01"]);
+  assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, "2026-12", now)), ["2026-11-11", "2026-11-10", "2026-10-01"]);
 });
 
 test("NDVI screening ignores rejected QA and cannot bridge cloud gaps", () => {

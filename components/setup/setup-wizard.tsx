@@ -97,12 +97,12 @@ export function SetupWizard() {
   const setFarm = useApp((s) => s.setFarm);
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Draft>(INITIAL);
-  const [basemap, setBasemap] = useState<Basemap>("satellite");
+  const [basemap, setBasemap] = useState<Basemap>("map");
   const [drawing, setDrawing] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlaceResult[] | null>(null);
   const [searchNotice, setSearchNotice] = useState("");
-  const [searchProvider, setSearchProvider] = useState(false);
+  const [searchProvider, setSearchProvider] = useState<string | null>(null);
   const [locatedName, setLocatedName] = useState("");
   const searchRequest = useRef(0);
   const [searching, setSearching] = useState(false);
@@ -148,16 +148,16 @@ export function SetupWizard() {
     const id = ++searchRequest.current;
     const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
     const local = GAZETTEER.filter((g) => norm(g.name).includes(norm(q))).map((g) => ({ ...g, zoom: 13 }));
-    setResults(null); setSearchNotice(""); setSearchProvider(false); setLocatedName("");
+    setResults(null); setSearchNotice(""); setSearchProvider(null); setLocatedName("");
     setSearching(true);
     try {
-      const r = await fetch(`/api/geocode?${new URLSearchParams({ q, lang })}`, { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(`/api/geocode?${new URLSearchParams({ q, lang })}`, { signal: AbortSignal.timeout(18000) });
       const j = (await r.json()) as { results?: PlaceResult[]; error?: string; provider?: string };
       if (id !== searchRequest.current) return;
       const online = r.ok ? j.results ?? [] : [];
       const matches = [...online, ...local.filter((g) => !online.some((v) => Math.abs(g.lat - v.lat) < 0.001 && Math.abs(g.lon - v.lon) < 0.001))].slice(0, 8);
-      setResults(matches); setSearchProvider(j.provider === "maptiler");
-      if (!r.ok) setSearchNotice(j.error === "not_configured" ? "geo.notConfigured" : "geo.unavailable");
+      setResults(matches); setSearchProvider(j.provider ?? null);
+      if (!r.ok) setSearchNotice("geo.unavailable");
       if (matches.length === 1) {
         const place = matches[0];
         goTo(place.lat, place.lon, place.zoom); setLocatedName(place.name);
@@ -355,7 +355,7 @@ export function SetupWizard() {
                     <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                       <BasemapToggle value={basemap} onChange={setBasemap} />
                     </div>
-                    <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/95 px-3 py-2 text-xs shadow-sm">
+                    <div className="absolute inset-x-3 bottom-12 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/95 px-3 py-2 text-xs shadow-sm">
                       <span className="flex items-center gap-1.5 font-medium text-ink">
                         {drawing ? <PenLine className="h-3.5 w-3.5 text-amber-ink" aria-hidden /> : <MapPin className="h-3.5 w-3.5 text-forest" aria-hidden />}
                         {drawing
@@ -400,14 +400,16 @@ export function SetupWizard() {
                                 setResults(null);
                               }}
                             >
-                              {r.name}
+                              <span className="block">{r.name}</span>
+                              <span className="mt-0.5 block text-[10px] text-ink-3">{num(r.lat, 5)}°, {num(r.lon, 5)}°</span>
                             </button>
                           </li>
                         ))}
                       </ul>
                     )}
                     <Hint>{t("geo.hint")}</Hint>
-                    {searchProvider && <p className="mt-2 text-[10px] text-ink-3">© <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noreferrer" className="underline">MapTiler</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">OpenStreetMap contributors</a></p>}
+                    <p className="mt-2 text-[11px] text-ink-3">{L("Search online, then click the map to refine the pin. Road maps update as OSM is edited; satellite images are dated mosaics.", "Tìm địa chỉ trực tuyến rồi bấm trên bản đồ để chỉnh ghim cho đúng ruộng. Bản đồ đường được cập nhật từ OSM; ảnh vệ tinh là ảnh ghép có niên đại.")}</p>
+                    {searchProvider && <p className="mt-2 text-[10px] text-ink-3">{searchProvider === "maptiler" ? <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noreferrer" className="underline">MapTiler</a> : <a href="https://photon.komoot.io" target="_blank" rel="noreferrer" className="underline">Photon</a>} · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">OpenStreetMap contributors</a></p>}
                   </Card>
                   <Card className="p-4">
                     <p className="mb-2 text-sm font-medium">{L("Coordinates", "Tọa độ")}</p>
