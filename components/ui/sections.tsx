@@ -129,12 +129,14 @@ export function SectionTabs({
   onChange,
   label,
   className,
+  size = "md",
 }: {
   tabs: SectionTab[];
   value: string;
   onChange: (id: string) => void;
   label: string;
   className?: string;
+  size?: "md" | "lg";
 }) {
   const active = tabs.find((t) => t.id === value);
   return (
@@ -154,10 +156,11 @@ export function SectionTabs({
                 onClick={() => onChange(t.id)}
                 className={cn(
                   "flex h-10 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-[13.5px] font-semibold transition-colors",
+                  size === "lg" && "h-13 px-5 text-base font-bold",
                   on ? "bg-space-900 text-white" : "text-ink-2 hover:bg-sand hover:text-ink",
                 )}
               >
-                <t.icon className={cn("h-4 w-4", on ? "text-lime-bright" : TONES[t.tone].ink)} aria-hidden />
+                <t.icon className={cn("h-4 w-4", size === "lg" && "h-5 w-5", on ? "text-lime-bright" : TONES[t.tone].ink)} aria-hidden />
                 {t.label}
                 {t.badge && <span className={cn("rounded-full px-1.5 text-[10px] font-bold", on ? "bg-lime text-space-900" : "bg-lime-soft text-lime-ink")}>{t.badge}</span>}
               </button>
