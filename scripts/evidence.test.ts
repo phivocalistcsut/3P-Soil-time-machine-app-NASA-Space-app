@@ -18,6 +18,7 @@ import { era5HotYears, type Era5Daily } from "../lib/services/weather-crosscheck
 import { ndviSeasonPeaks } from "../lib/engine/ndvi-seasons";
 import { parseGeocoding, geocode, parsePhoton, geocodePhoton } from "../lib/services/geocoding";
 import { OVERLAYS, overlayDateFor } from "../lib/data/layers";
+import { planSeasonBar, planSeasonPeriod } from "../lib/data/plan-calendar";
 import { buildCalendar } from "../lib/engine/insights";
 import ndviSnapshot from "../data/ndvi-thoi-lai.json";
 import type { NdviSeries } from "../lib/types";
@@ -104,6 +105,25 @@ test("NASA timeline keeps product-specific dates and caps the requested month", 
   assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, null, now)), ["2026-11-11", "2026-11-10", "2026-10-01"]);
   assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, "2016-03", now)), ["2016-03-15", "2016-03-15", "2016-03-01"]);
   assert.deepEqual(OVERLAYS.map(o => overlayDateFor(o, "2026-12", now)), ["2026-11-11", "2026-11-10", "2026-10-01"]);
+});
+
+test("planner dates preserve the engine's inclusive days across the crop year and leap day", () => {
+  const period = planSeasonPeriod({ year: 2028, startOffset: 0, durationDays: 100 })!;
+  assert.equal(period.start.toISOString().slice(0,10), "2027-12-01");
+  assert.equal(period.end.toISOString().slice(0,10), "2028-03-09");
+  assert.equal((period.endExclusive.getTime()-period.start.getTime())/86400000, 100);
+  const leap = planSeasonPeriod({ year: 2028, startOffset: 1, durationDays: 60 })!;
+  assert.equal(leap.end.toISOString().slice(0,10), "2028-02-29");
+  const december = planSeasonBar({ year: 2028, startOffset: 0, durationDays: 31 },2028)!;
+  assert.ok(Math.abs(december.left - 100/14) < 1e-10);
+  assert.ok(Math.abs(december.width - 100/14) < 1e-10);
+});
+
+test("planner clips long seasons to the visible window and never invents a fallow duration", () => {
+  assert.deepEqual(planSeasonBar({year:2028,startOffset:-2,durationDays:600},2028), {left:0,width:100,clippedStart:true,clippedEnd:true});
+  assert.equal(planSeasonBar({year:2026,startOffset:0,durationDays:30},2028),null);
+  assert.equal(planSeasonPeriod({year:2028,startOffset:0,durationDays:0}),null);
+  assert.equal(planSeasonPeriod({year:2028,startOffset:NaN,durationDays:30}),null);
 });
 
 test("NDVI screening ignores rejected QA and cannot bridge cloud gaps", () => {

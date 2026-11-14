@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarRange, Download, FolderOpen, ListOrdered, NotebookPen, Pencil, Printer, Save, Table2, Trash2, X } from "lucide-react";
+import { ArrowLeft, CalendarRange, ChevronLeft, ChevronRight, Download, Droplets, FolderOpen, Info, ListOrdered, NotebookPen, Pencil, Printer, Save, Table2, Trash2, X } from "lucide-react";
 import { PageHeader, SectionPanel, SectionTabs, useSection } from "@/components/ui/sections";
 import { climateValues, useI18n } from "@/lib/i18n";
 import { SoilCarbon } from "@/components/sim/soil-carbon";
@@ -11,12 +11,13 @@ import { useEngine, useScenarios } from "@/lib/hooks";
 import { getCrop, SEASONS } from "@/lib/data/crops";
 import { newId } from "@/lib/data/demo";
 import { screenCrops } from "@/lib/engine/simulate";
-import type { SeasonResult } from "@/lib/types";
+import type { SeasonId, SeasonResult } from "@/lib/types";
 import { ClimateNotice, DataChips, CropIcon, Disclaimer, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Select, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/overlays";
-import { RotationGantt } from "@/components/sim/timeline";
 import { RotationBuilder } from "@/components/sim/rotation-builder";
+import { PlanCalendar } from "./plan-calendar";
+import { planSeasonPeriod } from "@/lib/data/plan-calendar";
 
 export function Planner() {
   const { L, t, num, crop, season, month, lang } = useI18n();
@@ -37,6 +38,7 @@ export function Planner() {
   const discardDraft = useApp((s) => s.discardScenarioDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [selectedSeason, setSelectedSeason] = useState<SeasonId>("S1");
   const { output, climate, modelClimate, modelLoading, settings, usesImerg } = useEngine();
   const screen = useMemo(() => (farm && modelClimate ? screenCrops(farm, modelClimate, settings) : null), [farm, modelClimate, settings]);
 
@@ -50,14 +52,18 @@ export function Planner() {
     const openSeason = () => {
       const id = window.location.hash.slice(1);
       if (!/^plan-season-S[123]$/.test(id)) return;
-      const card = document.getElementById(id);
-      card?.scrollIntoView({ block: "start" });
-      card?.focus({ preventScroll: true });
+      setSelectedSeason(id.slice(-2) as SeasonId);
+      setSection("calendar");
+      requestAnimationFrame(() => {
+        const card = document.getElementById(id);
+        card?.scrollIntoView({ block: "nearest" });
+        card?.focus({ preventScroll: true });
+      });
     };
-    openSeason();
+    const frame = requestAnimationFrame(openSeason);
     window.addEventListener("hashchange", openSeason);
-    return () => window.removeEventListener("hashchange", openSeason);
-  }, [ready]);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("hashchange", openSeason); };
+  }, [ready, setSection]);
 
   if (!farm) return <NoFarmState />;
   if (!climate.data && !modelLoading) return <ClimateNotice climate={climate} />;
@@ -83,7 +89,7 @@ export function Planner() {
   const plantingDate = (s: SeasonResult) => new Date(Date.UTC(s.year, s.startOffset - 1, 1));
   const monthAndYear = (d: Date) => `${month(d.getUTCMonth() + 1)} ${d.getUTCFullYear()}`;
   const harvest = (s: SeasonResult) => {
-    return monthAndYear(new Date(plantingDate(s).getTime() + s.durationDays * 86400000));
+    return monthAndYear(planSeasonPeriod(s)?.end ?? plantingDate(s));
   };
 
   const summaryText = () => {
@@ -142,7 +148,7 @@ export function Planner() {
         image="orbital-sunrise"
         icon={CalendarRange}
         eyebrow={L("Season plan", "Kế hoạch mùa vụ")}
-        title={L("Your season-by-season plan", "Kế hoạch từng vụ của bạn")}
+        title={<span className="landing-title-gradient">{L("Your season-by-season plan", "Kế hoạch mùa vụ của bạn")}</span>}
         desc={<>{farm.name} · {num(farm.areaHa, 2)} ha · {years[0]?.year}–{years[years.length - 1]?.year} · {t(`clim.${settings.climateAssumption}`)}</>}
         actions={
           <>
@@ -164,11 +170,11 @@ export function Planner() {
       />
       <ClimateNotice climate={climate} className="no-print" />
 
-      <Card className="p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
+      <Card className="rounded-3xl p-4 md:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
             <span className="h-3 w-3 rounded-full" style={{ background: color }} aria-hidden />
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-ink-2">{L("Selected rotation", "Luân canh đã chọn")}</p>
               <label className="sr-only" htmlFor="plan-scn">
                 {L("Scenario", "Kịch bản")}
@@ -180,7 +186,7 @@ export function Planner() {
                   setEditingId(null);
                   setActive(e.target.value);
                 }}
-                className="mt-0.5 h-10 min-w-[240px] font-semibold no-print"
+                className="mt-0.5 h-11 w-full min-w-0 font-semibold sm:min-w-[240px] no-print"
               >
                 {scenarios.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -191,7 +197,15 @@ export function Planner() {
               {draft && <Badge tone="amber" className="mt-1">{L("Unsaved preview", "Bản xem trước chưa lưu")}</Badge>}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 no-print">
+          <div className="flex flex-wrap items-center gap-3 no-print">
+            <div className="flex items-center rounded-2xl border border-line bg-sand p-1">
+              <Button variant="ghost" size="icon" disabled={selected.year === years[0].year} onClick={() => setYear(selected.year - 1)} aria-label={L("Previous plan year", "Năm kế hoạch trước")}><ChevronLeft className="h-4 w-4" aria-hidden /></Button>
+              <label className="sr-only" htmlFor="plan-year">{L("Plan year", "Năm kế hoạch")}</label>
+              <Select id="plan-year" value={selected.year} onChange={e => setYear(Number(e.target.value))} className="h-10 w-28 border-none bg-transparent text-center text-lg font-bold text-forest">
+                {years.map(y => <option key={y.year} value={y.year}>{y.year}</option>)}
+              </Select>
+              <Button variant="ghost" size="icon" disabled={selected.year === years.at(-1)!.year} onClick={() => setYear(selected.year + 1)} aria-label={L("Next plan year", "Năm kế hoạch tiếp theo")}><ChevronRight className="h-4 w-4" aria-hidden /></Button>
+            </div>
             {!editing ? (
               <Button variant="secondary" onClick={() => setEditingId(scenario.id)}>
                 <Pencil className="h-4 w-4" aria-hidden />
@@ -228,10 +242,20 @@ export function Planner() {
             <RotationBuilder scenario={scenario} onChange={(s) => setDraft({ ...s, name: draft?.name ?? s.name })} screen={screen} resultsBySlot={resultsBySlot} />
           </div>
         )}
+        <div className="mt-4 grid gap-4 border-t border-line pt-4 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-water-soft text-water-ink"><Droplets className="h-6 w-6" aria-hidden /></span>
+            <div><p className="text-xs text-ink-2">{L(`Estimated irrigation in ${selected.year} · whole field`, `Nước tưới ước tính năm ${selected.year} · cả ruộng`)}</p><p className="mt-1 text-2xl font-extrabold text-forest tabular">{num(selected.waterDemand.m3PerHa * farm.areaHa)} <span className="text-sm font-medium text-ink-2">m³ / {L("year", "năm")}</span></p></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {selected.seasons.map(s => <span key={s.slotId} className="inline-flex items-center gap-1.5 rounded-full bg-sand py-1 pl-1 pr-3 text-xs font-semibold text-ink-2"><CropIcon cropId={s.cropId} size={24} />{crop(s.cropId)}</span>)}
+            <StatusBadge status={selected.dataStatus.waterDemand} withTip={false} />
+          </div>
+        </div>
       </Card>
       </div>
 
-      <Card className="p-4 md:p-5 print:break-inside-avoid print:p-4">
+      <Card className="hidden p-4 md:p-5 print:block print:break-inside-avoid print:p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="text-lg font-bold">{L(`Season plan for ${selected.year}`, `Kế hoạch mùa vụ năm ${selected.year}`)}</h2>
@@ -241,12 +265,6 @@ export function Planner() {
             {selected.isBaselineYear && <p className="text-xs text-ink-2">{L("Starting year based on your usual crops", "Năm gốc theo các cây thường trồng")}</p>}
             {draft && <p className="text-xs font-semibold text-amber-ink">{L("Unsaved rotation preview", "Bản xem trước cách trồng chưa lưu")}</p>}
           </div>
-          <label className="text-xs font-semibold text-ink-2 no-print">
-            {L("Plan year", "Năm kế hoạch")}
-            <Select value={selected.year} onChange={(e) => setYear(Number(e.target.value))} className="mt-1 min-w-24">
-              {years.map((y) => <option key={y.year} value={y.year}>{y.year}</option>)}
-            </Select>
-          </label>
         </div>
         <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <StatusBadge status={selected.dataStatus.waterDemand} withTip={false} />
@@ -254,7 +272,7 @@ export function Planner() {
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3 print:grid-cols-1">
           {selected.seasons.map((s) => (
-            <section key={s.slotId} id={`plan-season-${s.season}`} tabIndex={-1}
+            <section key={s.slotId}
               className={cn("scroll-mt-20 rounded-xl border p-3 target:ring-2 target:ring-amber print:ring-0", s.season === seasonToCheck ? "border-amber bg-amber-soft/50" : "border-line")}>
               <h3 className="text-xs font-semibold text-ink-2">{season(s.season)}</h3>
               <p className="font-bold">{crop(s.cropId)}</p>
@@ -286,12 +304,7 @@ export function Planner() {
       <SectionTabs tabs={tabs} value={section} onChange={setSection} label={L("Plan topics", "Chủ đề kế hoạch")} />
 
       <SectionPanel id="calendar" active={section === "calendar"} keepMounted>
-      <Card>
-        <CardHeader title={L("Seasonal crop calendar", "Lịch thời vụ")} subtitle={L("Planting to harvest across the plan horizon", "Từ gieo đến thu hoạch trong suốt kế hoạch")} actions={<StatusBadge status="estimated" withTip={false} />} />
-        <div className="px-4 pb-4 pt-3">
-          <RotationGantt results={years} selectedYear={selectedYear} onSelect={setYear} />
-        </div>
-      </Card>
+        <PlanCalendar results={years} selectedYear={selected.year} selectedSeason={selectedSeason} onSelectYear={setYear} onSelectSeason={(year, season) => { setYear(year); setSelectedSeason(season); }} areaHa={farm.areaHa} />
       </SectionPanel>
 
       <SectionPanel id="seasons" active={section === "seasons"} keepMounted>
@@ -518,6 +531,15 @@ export function Planner() {
           </div>
         </div>
       </SectionPanel>
+
+      <details className="rounded-2xl border border-line bg-white px-4 py-3 text-xs text-ink-2">
+        <summary className="flex cursor-pointer items-center gap-2 font-semibold"><Info className="h-4 w-4 text-water-ink" aria-hidden />{L("Sources & estimate assumptions", "Nguồn dữ liệu & cách hiểu ước tính")}</summary>
+        <div className="mt-3 space-y-2 leading-relaxed">
+          <p>{t(`clim.${settings.climateAssumption}`, climateValues(lang, settings.customClimate))} · {climate.data?.source} {climate.data?.period.join("–")}{usesImerg ? " · GPM IMERG" : ""}</p>
+          <p>{L("Dates and water needs come from the model. The historical-weather range is not a field accuracy score. Confirm the plan with local measurements and advice.", "Lịch và lượng tưới được tính từ mô hình. Khoảng theo thời tiết lịch sử không phải mức chính xác tại ruộng. Cần đối chiếu số đo và tư vấn địa phương.")}</p>
+          <FarmDemoNotice />
+        </div>
+      </details>
       </div>
     </div>
   );
