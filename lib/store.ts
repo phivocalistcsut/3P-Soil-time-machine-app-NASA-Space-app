@@ -13,7 +13,7 @@ import type {
   RotationScenario,
   SavedPlan,
 } from "@/lib/types";
-import { DEFAULT_SCENARIO_NAMES, weightsFromPriorities } from "@/lib/data/demo";
+import { DEFAULT_SCENARIO_NAMES, ILLUSTRATIVE_ECONOMICS, weightsFromPriorities } from "@/lib/data/demo";
 import { withRothCSoil } from "@/lib/data/farm-soil";
 
 export type MapMetric = "stress" | "suitability" | "soil";
@@ -35,6 +35,7 @@ export interface AppState {
   horizon: number;
   selectedYear: number;
   economics: Record<string, EconomicInput>;
+  demoEconomicsRevision: number;
   plans: SavedPlan[];
   mapMetric: MapMetric;
   /** set when scenarios must be rebuilt from the engine (new farm) */
@@ -94,6 +95,7 @@ export const useApp = create<AppState>()(
       horizon: 5,
       selectedYear: thisYear + 2,
       economics: {},
+      demoEconomicsRevision: 1,
       plans: [],
       mapMetric: "stress",
       needsDefaultScenarios: false,
@@ -117,6 +119,7 @@ export const useApp = create<AppState>()(
       setFarm: (farm) =>
         set({
           farm,
+          economics: farm.isDemo ? ILLUSTRATIVE_ECONOMICS : farm.id === get().farm?.id ? get().economics : {},
           weights: weightsFromPriorities(farm.farmerPriorities),
           needsDefaultScenarios: true,
           scenarios: [],
@@ -183,7 +186,9 @@ export const useApp = create<AppState>()(
       version: 1,
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
-        return { ...current, ...saved, farm: saved.farm ? withRothCSoil(saved.farm) : null };
+        const seedDemo = saved.farm?.isDemo && !saved.demoEconomicsRevision && !Object.keys(saved.economics ?? {}).length;
+        return { ...current, ...saved, farm: saved.farm ? withRothCSoil(saved.farm) : null,
+          economics: seedDemo ? ILLUSTRATIVE_ECONOMICS : saved.economics ?? current.economics, demoEconomicsRevision: 1 };
       },
       partialize: (state) => ({ ...state, scenarioDrafts: undefined }),
     },

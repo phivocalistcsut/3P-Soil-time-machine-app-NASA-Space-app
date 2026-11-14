@@ -1,23 +1,16 @@
-/**
- * GET /api/geocode?q=...
- * Place search via OpenStreetMap Nominatim (usage policy: light use, identify the app,
- * search on submit only). The client falls back to a built-in gazetteer if this fails.
- */
+import { geocode } from "@/lib/services/geocoding";
+
+/** Address lookup on submit. Keep the provider key server-side and never log addresses. */
 export async function GET(request: Request) {
-  const q = new URL(request.url).searchParams.get("q")?.trim();
-  if (!q || q.length < 2 || q.length > 160) return Response.json({ results: [] });
+  const params = new URL(request.url).searchParams;
+  const q = params.get("q")?.trim();
+  const headers = { "Cache-Control": "no-store" };
+  if (!q || q.length < 2 || q.length > 160) return Response.json({ results: [] }, { headers });
+  const key = process.env.MAPTILER_API_KEY;
+  if (!key) return Response.json({ error: "not_configured", results: [] }, { status: 503, headers });
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?${new URLSearchParams({ q, format: "jsonv2", limit: "5", "accept-language": "vi,en" })}`,
-      { signal: ctrl.signal, headers: { "User-Agent": "SoilTimeMachine/0.1 (hackathon prototype)" }, cache: "no-store" },
-    );
-    clearTimeout(timer);
-    if (!res.ok) return Response.json({ error: `Geocoder responded ${res.status}`, results: [] }, { status: 502 });
-    const json = (await res.json()) as { display_name: string; lat: string; lon: string }[];
-    return Response.json({ results: json.map((r) => ({ name: r.display_name, lat: Number(r.lat), lon: Number(r.lon) })) });
+    return Response.json({ results: await geocode(q, params.get("lang") === "en" ? "en" : "vi", key), provider: "maptiler" }, { headers });
   } catch {
-    return Response.json({ error: "Geocoder unavailable", results: [] }, { status: 502 });
+    return Response.json({ error: "unavailable", results: [] }, { status: 502, headers });
   }
 }

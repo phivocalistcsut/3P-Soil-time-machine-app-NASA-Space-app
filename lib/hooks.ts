@@ -6,6 +6,8 @@ import { historyYears, vegetationDates, type EnvironmentalSeries } from "@/lib/d
 import { climateWithImerg } from "@/lib/engine/environment";
 import type { ClimateDataset, DailyExtremes, FarmProfile, NdviSeries, SimulationSettings } from "@/lib/types";
 import { getDemoDaily, getDemoNdvi, getDemoSnapshot, getOfflineClimate, getOfflineDaily, getOfflineNdvi } from "@/lib/data/climate-datasets";
+import trendSnapshot from "@/data/power-trend-thoi-lai.json";
+import type { TemperatureHistory } from "@/lib/services/climate-trend";
 
 /* --------------------------- generic remote dataset --------------------------- */
 
@@ -113,6 +115,14 @@ export function useDailyExtremes(farm: FarmProfile | null) {
     const cached = farm ? farm.isDemo ? getDemoDaily() : getOfflineDaily(farm.latitude, farm.longitude) : null;
     return snapshotCovers(years, cached) ? cached : null;
   }, 32000);
+}
+
+export function useClimateTrend(farm: FarmProfile | null) {
+  const period = { start: 1984, end: new Date().getUTCFullYear() - 1 };
+  return usePointData<TemperatureHistory>(farm, "climate-trend", period, () =>
+    farm?.isDemo && Math.abs(farm.latitude - trendSnapshot.latitude) < 0.00001 &&
+    Math.abs(farm.longitude - trendSnapshot.longitude) < 0.00001 && trendSnapshot.requestedEnd === period.end
+      ? { ...trendSnapshot, status: "estimated", cached: true } : null, 32000);
 }
 
 export function useNdvi(farm: FarmProfile | null) {

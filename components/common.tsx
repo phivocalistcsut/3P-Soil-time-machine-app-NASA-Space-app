@@ -167,7 +167,7 @@ export function Logo({ className, light }: { className?: string; light?: boolean
       <span className={cn("font-display text-[15px] font-extrabold uppercase leading-none tracking-wide", light ? "text-white" : "text-ink")}>
         Soil Time Machine
         <span className={cn("mt-1 block text-[10px] font-medium normal-case tracking-[0.08em]", light ? "text-lime-bright/80" : "text-ink-3")}>
-          {L("Crop rotation futures", "Tương lai luân canh")}
+          {L("Crop rotation futures", "Chủ động mùa vụ")}
         </span>
       </span>
     </Link>

@@ -1,0 +1,186 @@
+{
+  "points": [
+    {
+      "year": 1984,
+      "temperature": 27.412486338797812
+    },
+    {
+      "year": 1985,
+      "temperature": 27.728630136986297
+    },
+    {
+      "year": 1986,
+      "temperature": 27.439863013698638
+    },
+    {
+      "year": 1987,
+      "temperature": 28.605835616438355
+    },
+    {
+      "year": 1988,
+      "temperature": 28.870765027322403
+    },
+    {
+      "year": 1989,
+      "temperature": 27.417095890410952
+    },
+    {
+      "year": 1990,
+      "temperature": 27.549232876712328
+    },
+    {
+      "year": 1991,
+      "temperature": 27.37238356164384
+    },
+    {
+      "year": 1992,
+      "temperature": 27.230519125683056
+    },
+    {
+      "year": 1993,
+      "temperature": 27.03227397260274
+    },
+    {
+      "year": 1994,
+      "temperature": 27.03591780821918
+    },
+    {
+      "year": 1995,
+      "temperature": 27.203479452054786
+    },
+    {
+      "year": 1996,
+      "temperature": 26.731092896174857
+    },
+    {
+      "year": 1997,
+      "temperature": 26.85898630136986
+    },
+    {
+      "year": 1998,
+      "temperature": 28.080054794520546
+    },
+    {
+      "year": 1999,
+      "temperature": 26.29005479452055
+    },
+    {
+      "year": 2000,
+      "temperature": 26.89193989071038
+    },
+    {
+      "year": 2001,
+      "temperature": 27.076082191780817
+    },
+    {
+      "year": 2002,
+      "temperature": 27.616054794520544
+    },
+    {
+      "year": 2003,
+      "temperature": 27.524794520547943
+    },
+    {
+      "year": 2004,
+      "temperature": 27.60459016393443
+    },
+    {
+      "year": 2005,
+      "temperature": 27.7466301369863
+    },
+    {
+      "year": 2006,
+      "temperature": 27.376027397260273
+    },
+    {
+      "year": 2007,
+      "temperature": 27.358712328767123
+    },
+    {
+      "year": 2008,
+      "temperature": 27.11158469945355
+    },
+    {
+      "year": 2009,
+      "temperature": 27.066136986301373
+    },
+    {
+      "year": 2010,
+      "temperature": 28.059534246575346
+    },
+    {
+      "year": 2011,
+      "temperature": 26.99493150684932
+    },
+    {
+      "year": 2012,
+      "temperature": 27.24879781420765
+    },
+    {
+      "year": 2013,
+      "temperature": 27.609150684931507
+    },
+    {
+      "year": 2014,
+      "temperature": 28.00150684931507
+    },
+    {
+      "year": 2015,
+      "temperature": 28.137205479452053
+    },
+    {
+      "year": 2016,
+      "temperature": 28.005081967213112
+    },
+    {
+      "year": 2017,
+      "temperature": 27.010767123287668
+    },
+    {
+      "year": 2018,
+      "temperature": 27.074082191780825
+    },
+    {
+      "year": 2019,
+      "temperature": 27.3352602739726
+    },
+    {
+      "year": 2020,
+      "temperature": 27.702595628415306
+    },
+    {
+      "year": 2021,
+      "temperature": 26.906219178082193
+    },
+    {
+      "year": 2022,
+      "temperature": 26.887068493150686
+    },
+    {
+      "year": 2023,
+      "temperature": 27.52145205479452
+    },
+    {
+      "year": 2024,
+      "temperature": 28.270874316939896
+    },
+    {
+      "year": 2025,
+      "temperature": 27.28630136986302
+    }
+  ],
+  "requestedStart": 1984,
+  "requestedEnd": 2025,
+  "latitude": 10.0934,
+  "longitude": 105.5185,
+  "status": "estimated",
+  "cached": true,
+  "retrievedAt": "2026-11-14T08:35:42.250Z",
+  "source": "NASA POWER T2M · MERRA-2 · 0.5° × 0.625°",
+  "sourceUrl": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=T2M&community=AG&latitude=10.0934&longitude=105.5185&start=1984&end=2025&format=JSON",
+  "sampledPoint": [
+    105.519,
+    10.093,
+    1.91
+  ]
+}

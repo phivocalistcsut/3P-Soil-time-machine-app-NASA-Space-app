@@ -38,6 +38,7 @@ export interface CalendarCell {
   level: 0 | 1 | 2 | 3;
   cropId: string | null;
   value: Localized;
+  risk?: Localized;
 }
 export interface CalendarRow {
   id: RowId;
@@ -93,23 +94,25 @@ export function buildCalendar(input: {
 
   const rain: CalendarRow = {
     id: "rain",
-    name: Lx("Heavy rain & waterlogging", "Mưa lớn, ngập úng"),
+    name: Lx("Rain: waterlogging / wash-off", "Mưa: ngập úng / rửa trôi"),
     help: Lx(
       "Wet months hurt upland crops that dislike waterlogging, and wash nutrients out of bare soil.",
       "Tháng mưa nhiều làm hại cây màu kỵ úng và rửa trôi dinh dưỡng khỏi đất trống.",
     ),
-    status: ext ? "observed" : climateStatus,
+    status: extremes?.status ?? climateStatus,
     cells: CROP_YEAR_MONTHS.map((m, k) => {
       const p = clim[m - 1].precipMm;
       const heavy = ext?.[m - 1].heavyRainDays ?? 0;
       const crop = getCrop(result.monthlyCover[k]);
+      const bare = !crop || crop.id === "fallow";
       let level = 0;
-      if (!crop) level = p > 250 ? 2 : p > 150 ? 1 : 0;
+      if (bare) level = p > 250 ? 2 : p > 150 ? 1 : 0;
       else if (crop.waterloggingTolerance === "low") level = p > 250 ? 3 : p > 150 ? 2 : p > 100 ? 1 : 0;
       else if (crop.waterloggingTolerance === "moderate") level = p > 250 ? 2 : p > 150 ? 1 : 0;
       if (heavy >= 0.5) level += 1;
       const value = ext ? Lx(`${Math.round(p)} mm · ${heavy.toFixed(1)} heavy days`, `${Math.round(p)} mm · ${heavy.toFixed(1).replace(".", ",")} ngày mưa lớn`) : Lx(`${Math.round(p)} mm`, `${Math.round(p)} mm`);
-      return { cropId: result.monthlyCover[k], level: lv(level), value };
+      return { cropId: result.monthlyCover[k], level: lv(level), value,
+        risk: bare ? Lx("Wash-off", "Rửa trôi") : Lx("Waterlogging", "Ngập úng") };
     }),
   };
 
@@ -120,12 +123,12 @@ export function buildCalendar(input: {
       "Days with a daily maximum of 35 °C or more while a crop is in the field (NASA POWER daily; this reanalysis can run warmer than local stations).",
       "Số ngày nhiệt độ cao nhất từ 35 °C khi có cây trên ruộng (NASA POWER theo ngày; số liệu này có thể nóng hơn trạm đo địa phương).",
     ),
-    status: ext ? "observed" : "unavailable",
+    status: extremes?.status ?? "unavailable",
     cells: CROP_YEAR_MONTHS.map((m, k) => {
       const crop = getCrop(result.monthlyCover[k]);
       const hot = ext?.[m - 1].hotDays ?? null;
       if (hot === null) return { cropId: result.monthlyCover[k], level: 0, value: Lx("—", "—") };
-      const level = !crop ? 0 : hot < 1 ? 0 : hot < 5 ? 1 : hot < 15 ? 2 : 3;
+      const level = !crop || crop.id === "fallow" ? 0 : hot < 1 ? 0 : hot < 5 ? 1 : hot < 15 ? 2 : 3;
       return { cropId: result.monthlyCover[k], level: lv(level), value: Lx(`${hot.toFixed(0)} days`, `${hot.toFixed(0)} ngày`) };
     }),
   };

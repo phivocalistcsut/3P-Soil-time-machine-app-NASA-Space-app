@@ -232,7 +232,7 @@ export function OutcomePanel({ result, reference }: { result: SimulationResult; 
         status="estimated"
         confidence="low"
         baseline={L(`${b.bareSoil.months} months`, `${b.bareSoil.months} tháng`)}
-        delta={<Delta value={r.bareSoil.index - b.bareSoil.index} better="lower" digits={1} neutralBand={0.2} />}
+        delta={<Delta value={r.bareSoil.months - b.bareSoil.months} better="lower" unit={L("month(s)", "tháng")} neutralBand={0.5} />}
         method={L(
           "Sum over the 12 months of the share without living crop cover × (monthly rain ÷ 100 + 0.5 × heavy-rain days). Below 2 low, below 5 moderate. Slope is not included yet.",
           "Cộng 12 tháng: phần không có cây che phủ × (mưa tháng ÷ 100 + 0,5 × số ngày mưa lớn). Dưới 2 là thấp, dưới 5 là vừa. Chưa tính độ dốc.",

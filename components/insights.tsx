@@ -84,11 +84,12 @@ export function RiskCalendar({ calendar, compact }: { calendar: VulnerabilityCal
                   }
                   return (
                     <td key={k} className="border-l border-t border-line p-1">
-                      <div className={cn("flex h-11 flex-col items-center justify-center rounded-lg px-1 text-center leading-tight", LEVEL_BG[c.level], LEVEL_TEXT[c.level])} title={`${levels[c.level]} · ${c.value[lang]}`}>
+                      <div className={cn("flex flex-col items-center justify-center rounded-lg px-1 text-center leading-tight", c.risk ? "h-16" : "h-11", LEVEL_BG[c.level], LEVEL_TEXT[c.level])} title={`${c.risk?.[lang] ?? r.name[lang]} · ${levels[c.level]} · ${c.value[lang]}`}>
                         <span className="flex items-center gap-0.5 font-bold">
                           {c.level >= 2 && <AlertTriangle className="h-3 w-3" aria-hidden />}
                           {levels[c.level]}
                         </span>
+                        {c.risk && <span className="text-[10px] font-medium">{c.risk[lang]}</span>}
                         {!compact && <span className="line-clamp-1 text-[10px] opacity-90">{c.value[lang]}</span>}
                       </div>
                     </td>
@@ -278,15 +279,15 @@ export function NdviChart({ series }: { series: NdviSeries }) {
     <ChartFrame
       height={270}
       summary={L(
-        "Greenness (NDVI) of the field's 250 m pixel every 16 days from NASA MODIS. Low values mean bare or flooded land; high values mean dense green crops.",
-        "Độ xanh (NDVI) của điểm ảnh 250 m quanh ruộng, 16 ngày một lần, từ NASA MODIS. Giá trị thấp là đất trống hoặc ngập nước; giá trị cao là cây xanh dày.",
+        "NASA MODIS greenness of a mixed 250 m pixel, at 16-day intervals. Low values can reflect bare soil, water or cloud effects; high values indicate greener vegetation, not a confirmed crop type.",
+        "Độ xanh của điểm ảnh hỗn hợp 250 m từ NASA MODIS, mỗi 16 ngày. Giá trị thấp có thể do đất trống, nước hoặc ảnh hưởng của mây; giá trị cao cho thấy thực vật xanh hơn, chưa xác định được loại cây.",
       )}
       table={{ head: [L("Date", "Ngày"), "NDVI"], rows: data.map((d) => [d.date, d.ndvi === null ? "—" : num(d.ndvi, 2)]) }}
     >
       <LineChart data={data} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
         <CartesianGrid {...GRID} />
-        <ReferenceArea y1={0} y2={0.3} fill="#E4A84C" fillOpacity={0.14} label={{ value: lang === "vi" ? "Ít xanh: đất trống / ngập nước" : "Low: bare or flooded", position: "insideBottomLeft", fill: "#8a5a10", fontSize: 10.5 }} />
-        <ReferenceArea y1={0.6} y2={1} fill="#66AD79" fillOpacity={0.14} label={{ value: lang === "vi" ? "Rất xanh: cây phát triển mạnh" : "High: dense green crop", position: "insideTopLeft", fill: "#2f6e45", fontSize: 10.5 }} />
+        <ReferenceArea y1={0} y2={0.3} fill="#E4A84C" fillOpacity={0.14} label={{ value: lang === "vi" ? "NDVI thấp: cần đối chiếu lịch và QA" : "Low NDVI: check calendar and QA", position: "insideBottomLeft", fill: "#8a5a10", fontSize: 10.5 }} />
+        <ReferenceArea y1={0.6} y2={1} fill="#66AD79" fillOpacity={0.14} label={{ value: lang === "vi" ? "Thực vật xanh hơn" : "Greener vegetation", position: "insideTopLeft", fill: "#2f6e45", fontSize: 10.5 }} />
         <XAxis dataKey="label" {...AXIS} interval={5} tick={{ ...AXIS.tick, fontSize: 10.5 }} />
         <YAxis {...AXIS} width={40} domain={[0, 1]} ticks={[0, 0.3, 0.6, 1]} tickFormatter={(v) => num(v, 1)} />
         <Tooltip content={<ChartTooltip digits={2} labelFormatter={(l) => String(l)} />} />

@@ -22,8 +22,11 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useApp } from "@/lib/store";
-import { historyYears } from "@/lib/data/evidence";
-import { useEngine } from "@/lib/hooks";
+import { useClimateTrend, useEngine } from "@/lib/hooks";
+import { temperatureTrend } from "@/lib/engine/statistics";
+import { ClimateTrend } from "./climate-trend";
+import { SeasonCheck } from "./season-check";
+import { WeatherCrosscheck } from "./weather-crosscheck";
 import { climateSummary } from "@/lib/engine/simulate";
 import { buildCalendar } from "@/lib/engine/insights";
 import { extremesByYear } from "@/lib/services/power-daily";
@@ -36,7 +39,7 @@ import { PrecipChart, SoilWetnessChart, TemperatureChart } from "@/components/ch
 import { MetricCard } from "@/components/metric-card";
 import { ClimateNotice, CropIcon, DataChips, NoFarmState, StatusBadge, Term } from "@/components/common";
 import { ExtremesByYear, ExtremesChart, NdviChart, RiskCalendar, ndviDips } from "@/components/insights";
-import { Badge, Card, Select, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
+import { Badge, Card, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/overlays";
 import { PageHeader, SectionPanel, SectionTabs, StatTile, Strip, useSection } from "@/components/ui/sections";
 
@@ -45,11 +48,9 @@ const SECTIONS = ["map", "weather", "soil", "extremes", "green", "risk", "source
 export function Overview() {
   const { L, t, num, crop, season, month } = useI18n();
   const farm = useApp((s) => s.farm);
+  const temperatureHistory = useClimateTrend(farm);
+  const trend = useMemo(() => temperatureHistory.data ? temperatureTrend(temperatureHistory.data.points) : null, [temperatureHistory.data]);
   const { climate, modelClimate, modelLoading, extremes, output, ndvi, imerg, smap, usesImerg } = useEngine();
-  const defaultYears = historyYears(new URLSearchParams())!;
-  const selectedYears = useApp((s) => s.historyYears);
-  const setHistoryYears = useApp((s) => s.setHistoryYears);
-  const history = selectedYears ?? defaultYears;
   const [section, setSection] = useSection("overview", SECTIONS, "map");
   const [basemap, setBasemap] = useState<Basemap>("satellite");
   const [overlays, setOverlays] = useState<OverlayId[]>([]);
@@ -70,7 +71,6 @@ export function Overview() {
   const period = d ? `${d.period[0]}–${d.period[1]}` : "";
   const srcLabel = d ? `${d.source} · ${d.resolution}${d.retrievedAt ? ` · ${L("retrieved", "lấy ngày")} ${d.retrievedAt}` : ""}` : "";
   const toggle = (id: OverlayId) => setOverlays((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
-  const tDiff = summary ? summary.recentT - summary.meanT : 0;
   const yearly = extremes.data ? extremesByYear(extremes.data) : [];
   const avgHot = yearly.length ? yearly.reduce((s, y) => s + y.hotDays, 0) / yearly.length : null;
   const avgHeavy = yearly.length ? yearly.reduce((s, y) => s + y.heavyRainDays, 0) / yearly.length : null;
@@ -209,7 +209,7 @@ export function Overview() {
             <div className="grid gap-3 sm:grid-cols-3">
               <StatTile tone="blue" icon={Droplets} label={L("Average rain", "Mưa trung bình")} value={num(summary.meanAnnualPrecip)} unit={L("mm/year", "mm/năm")} note={L(`${summary.months.filter((m) => m.precip > 150).length} months above 150 mm`, `${summary.months.filter((m) => m.precip > 150).length} tháng mưa trên 150 mm`)} />
               <StatTile tone="amber" icon={Sun} label={L("Dry months", "Tháng khô")} value={summary.dryMonths} unit={L("per year", "mỗi năm")} note={L("rain below half of crop-water demand", "mưa dưới một nửa nhu cầu bốc hơi")} />
-              <StatTile tone="rose" icon={ThermometerSun} label={L("Recent warming", "Ấm lên gần đây")} value={`${tDiff >= 0 ? "+" : "−"}${num(Math.abs(tDiff), 2)}`} unit="°C" note={L(`${summary.recentYears[0]}–${summary.recentYears.at(-1)} vs ${period}`, `${summary.recentYears[0]}–${summary.recentYears.at(-1)} so với ${period}`)} />
+              <StatTile tone="rose" icon={ThermometerSun} label={L("Long-term trend", "Xu hướng dài hạn")} value={trend ? `${trend.slopePerYear >= 0 ? "+" : "−"}${num(Math.abs(trend.slopePerYear * 10), 2)}` : "—"} unit={L("°C/decade", "°C/10 năm")} note={trend ? `${trend.start}–${trend.end} · Sen / Mann–Kendall` : L("Requires 30 complete years", "Cần đủ 30 năm dữ liệu")} />
             </div>
             <Card className="p-4">
               <h3 className="mb-2 text-sm font-bold">{L("Rain each month vs. water the air takes back", "Mưa mỗi tháng so với lượng nước bốc hơi")}</h3>
@@ -228,6 +228,7 @@ export function Overview() {
           </div>
         )}
         <WaterEvidence series={imerg} kind="rain" />
+        <ClimateTrend history={temperatureHistory} />
       </SectionPanel>
 
       {/* SOIL */}
@@ -246,7 +247,7 @@ export function Overview() {
                 sub={`pH ${farm.soilPH === null ? "—" : num(farm.soilPH, 1)} · ${L("organic carbon", "carbon hữu cơ")} ${farm.soilOrganicCarbon === null ? "—" : num(farm.soilOrganicCarbon, 1) + " %"}`}
                 status={farm.soilSources.soilType.status}
                 source={farm.soilSources.soilType.source}
-                explanation={L("Texture controls paddy percolation and which upland crops drain well enough.", "Sa cấu đất quyết định nước thấm của ruộng lúa và cây màu nào thoát nước đủ tốt.")}
+                explanation={L("Texture controls paddy percolation and which upland crops drain well enough.", "Thành phần cơ giới đất ảnh hưởng đến khả năng giữ nước, tốc độ thấm và thoát nước, từ đó ảnh hưởng nhu cầu tưới và lựa chọn cây trồng.")}
                 limitation={L("Only a lab soil test gives reliable pH and organic carbon for your field.", "Chỉ xét nghiệm đất mới biết chắc pH và carbon hữu cơ trên ruộng.")}
               />
               <MetricCard
@@ -276,6 +277,7 @@ export function Overview() {
 
       {/* EXTREMES (U5) */}
       <SectionPanel id="extremes" active={section === "extremes"}>
+        <WeatherCrosscheck farm={farm} period={extremes.data?.period} />
         <Strip
           tone="rose"
           icon={Flame}
@@ -316,6 +318,7 @@ export function Overview() {
 
       {/* GREENNESS (U4) */}
       <SectionPanel id="green" active={section === "green"}>
+        {ndvi.data && <SeasonCheck series={ndvi.data} reference={output?.reference.years[0] ?? null} />}
         <Strip
           tone="leaf"
           icon={Leaf}
@@ -341,8 +344,8 @@ export function Overview() {
               </h3>
               <p className="mb-3 text-xs text-ink-2">
                 {L(
-                  "Each dip is usually a harvest, land preparation or a flooded field; each peak is a crop at full growth. Three dips a year match three crops a year.",
-                  "Mỗi lần giảm thường là lúc thu hoạch, làm đất hoặc ruộng ngập nước; mỗi đỉnh là lúc cây phát triển mạnh nhất. Ba lần giảm mỗi năm ứng với ba vụ mỗi năm.",
+                  "Greenness can fall after harvest or land preparation, during flooding, or because of cloud contamination. Compare QA-screened points with the crop calendar; the number of dips alone does not establish the number of crop seasons.",
+                  "Độ xanh có thể giảm sau thu hoạch, khi làm đất, ngập nước hoặc do mây ảnh hưởng. Cần đối chiếu điểm ảnh đã lọc chất lượng với lịch canh tác; số lần giảm chưa đủ để xác định số vụ.",
                 )}
               </p>
               <NdviChart series={ndvi.data} />
@@ -361,7 +364,7 @@ export function Overview() {
                 </div>
               </Card>
               <Card className="p-4 text-xs leading-relaxed text-ink-2">
-                <h3 className="mb-1 text-sm font-bold text-ink">{L("Read with care", "Đọc cho đúng")}</h3>
+                <h3 className="mb-1 text-sm font-bold text-ink">{L("Read with care", "Lưu ý khi sử dụng")}</h3>
                 {L(
                   "The 250 m square also covers canals, houses and neighbouring fields, and clouds can pull values down. Use it to see the rhythm of green and bare periods, not the exact state of your own plot.",
                   "Ô 250 m còn gồm kênh, nhà và ruộng xung quanh, và mây có thể kéo giá trị xuống. Dùng để thấy nhịp xanh – trống trong năm, không phải trạng thái chính xác của riêng thửa ruộng.",
@@ -375,25 +378,7 @@ export function Overview() {
       </SectionPanel>
 
       <SectionPanel id="sources" active={section === "sources"} className="space-y-4">
-        <Card className="p-4">
-          <h2 className="text-sm font-bold">{L("Years used for rotation analysis", "Các năm dùng để phân tích luân canh")}</h2>
-          <p className="mt-1 text-xs text-ink-2">{L("Choose up to ten complete calendar years. The greenness chart shows recent MODIS history.", "Chọn tối đa mười năm dương lịch trọn vẹn. Biểu đồ độ xanh dùng dữ liệu MODIS gần đây.")}</p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <label className="text-xs font-semibold">{L("From", "Từ")}
-              <Select className="mt-1" value={history.start} onChange={(e) => setHistoryYears({ ...history, start: Number(e.target.value) })}>
-                {Array.from({ length: Math.min(10, history.end - 1984 + 1) }, (_, i) => history.end - i).map((y) => <option value={y} key={y}>{y}</option>)}
-              </Select>
-            </label>
-            <label className="text-xs font-semibold">{L("Through", "Đến")}
-              <Select className="mt-1" value={history.end} onChange={(e) => {
-                const end = Number(e.target.value);
-                setHistoryYears({ start: Math.max(1984, end - (history.end - history.start)), end });
-              }}>
-                {Array.from({ length: defaultYears.end - 1984 + 1 }, (_, i) => defaultYears.end - i).map((y) => <option value={y} key={y}>{y}</option>)}
-              </Select>
-            </label>
-          </div>
-        </Card>
+        <p className="text-xs text-ink-2">{L("Weather reference window:", "Giai đoạn khí hậu tham chiếu:")} {period}. <Link href="/settings#history" className="font-semibold text-lime-ink underline">{L("Change in Settings", "Đổi trong Cài đặt")}</Link></p>
         <EvidenceList climate={climate} daily={extremes} ndvi={ndvi} imerg={imerg} smap={smap} usesImerg={usesImerg} />
       </SectionPanel>
 

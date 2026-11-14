@@ -64,16 +64,19 @@ export function weightsFromPriorities(priorities: PriorityId[]): Record<Criterio
 }
 
 /** ILLUSTRATIVE order-of-magnitude economics so the demo can show the income view. */
+const YIELD_SOURCE = "Historical yield: Can Tho Statistics Office 2024 annual report, Table 4 (ta/ha divided by 10); https://thongkecantho.gso.gov.vn/uploads/files/2025_01_cantho_so%20lieu%20ktxh%20nam%202024_02_1_2025.pdf";
+const RICE_PRICE_SOURCE = "Historical illustrative rice price 7,000 VND/kg: IPSARD/VnSAT rice market report February 2025, Can Tho Dai Thom 8 at 7,000–7,100 VND/kg; https://thitruongnongsan.gov.vn/images/2013/DANGNHAP/VnSAT_Lua%20gao/2025/Th%C3%A1ng/Bao%20cao%20Lua%20gao_Thang%2002_2025.pdf";
+const ASSUMED_PRICE_COST = "ILLUSTRATIVE scenario: price and cost are unvalidated placeholders, not market observations or forecasts. TODO(source): local farm budgets and current prices.";
 export const ILLUSTRATIVE_ECONOMICS: Record<string, EconomicInput> = {
-  rice: { yieldT: 6.0, priceVnd: 7000, costMVnd: 25, status: "illustrative" },
-  maize: { yieldT: 6.0, priceVnd: 6000, costMVnd: 22, status: "illustrative" },
-  mungbean: { yieldT: 1.2, priceVnd: 25000, costMVnd: 14, status: "illustrative" },
-  soybean: { yieldT: 2.0, priceVnd: 14000, costMVnd: 16, status: "illustrative" },
-  peanut: { yieldT: 3.0, priceVnd: 20000, costMVnd: 30, status: "illustrative" },
-  sesame: { yieldT: 1.0, priceVnd: 35000, costMVnd: 15, status: "illustrative" },
-  sweetpotato: { yieldT: 18, priceVnd: 5000, costMVnd: 45, status: "illustrative" },
-  sesbania: { yieldT: 0, priceVnd: 0, costMVnd: 3, status: "illustrative" },
-  fallow: { yieldT: 0, priceVnd: 0, costMVnd: 0, status: "illustrative" },
+  rice: { yieldT: 6.298, priceVnd: 7000, costMVnd: 25, status: "illustrative", source: `${YIELD_SOURCE}, yield rounded to 3 decimals; ${RICE_PRICE_SOURCE}; cost 25 million VND/ha/crop is an unvalidated illustrative assumption.` },
+  maize: { yieldT: 5.831, priceVnd: 6000, costMVnd: 22, status: "illustrative", source: `${YIELD_SOURCE}; ${ASSUMED_PRICE_COST}` },
+  mungbean: { yieldT: 1.38, priceVnd: 25000, costMVnd: 14, status: "illustrative", source: `Historical yield: Cho Moi, An Giang, five-variety mean 2004, Table 6; https://sj.ctu.edu.vn/ql/docgia/download/baibao-4853/fn_19_lvdung.pdf; ${ASSUMED_PRICE_COST}` },
+  soybean: { yieldT: 2.012, priceVnd: 14000, costMVnd: 16, status: "illustrative", source: `${YIELD_SOURCE}; ${ASSUMED_PRICE_COST}` },
+  peanut: { yieldT: 1.763, priceVnd: 20000, costMVnd: 30, status: "illustrative", source: `${YIELD_SOURCE}; ${ASSUMED_PRICE_COST}` },
+  sesame: { yieldT: 1.0, priceVnd: 35000, costMVnd: 15, status: "illustrative", source: `Yield reference: DH1 control, Mekong Delta trial, Bui Quang Dinh et al. 2018; https://tapchi.vaas.vn/sites/tapchi.vaas.vn/files/tapchi/2021-08/tc20-2018_1.pdf; ${ASSUMED_PRICE_COST}` },
+  sweetpotato: { yieldT: 12.491, priceVnd: 5000, costMVnd: 45, status: "illustrative", source: `${YIELD_SOURCE}; ${ASSUMED_PRICE_COST}` },
+  sesbania: { yieldT: 0, priceVnd: 0, costMVnd: 3, status: "illustrative", source: "Incorporated green manure: no marketed harvest; cost 3 million VND/ha is illustrative. TODO(source): seed and incorporation cost." },
+  fallow: { yieldT: 0, priceVnd: 0, costMVnd: 0, status: "illustrative", source: "No crop revenue; no assigned operating cost. Land rent and overhead are not modeled." },
 };
 
 let uid = 0;

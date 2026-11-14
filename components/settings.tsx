@@ -12,6 +12,7 @@ import type { EconomicInput, PriorityId } from "@/lib/types";
 import { CropIcon, LanguageSwitcher, StatusBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Input, Select, cn } from "@/components/ui/primitives";
 import { PageHeader } from "@/components/ui/sections";
+import { HistorySettings } from "@/components/history-settings";
 import { toast } from "@/components/ui/overlays";
 
 const ALL_PRIORITIES: PriorityId[] = ["soil", "water", "drought", "income", "inputs"];
@@ -56,7 +57,7 @@ export function Settings() {
       }
       const prev = st.economics[id];
       const same = prev && prev.yieldT === y && prev.priceVnd === p && prev.costMVnd === c;
-      out[id] = { yieldT: y, priceVnd: p, costMVnd: c, status: same ? prev.status : "observed" };
+      out[id] = { yieldT: y, priceVnd: p, costMVnd: c, status: same ? prev.status : "observed", source: same ? prev.source : undefined };
     }
     st.setEconomics(out);
     toast.success(L("Economic inputs saved", "Đã lưu số liệu kinh tế"));
@@ -151,7 +152,7 @@ export function Settings() {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium" htmlFor="hz">
-                {L("Years ahead", "Số năm phía trước")}
+                {L("Years ahead", "Số năm mô phỏng")}
               </label>
               <Select id="hz" value={st.horizon} onChange={(e) => st.setHorizon(Number(e.target.value))}>
                 {[3, 4, 5].map((h) => (
@@ -209,6 +210,8 @@ export function Settings() {
         </Card>
       </div>
 
+      <HistorySettings />
+
       <Card id="economics" className="scroll-mt-6">
         <CardHeader
           title={L("Local economic inputs (optional)", "Số liệu kinh tế địa phương (tùy chọn)")}
@@ -239,7 +242,7 @@ export function Settings() {
                   {(["yieldT", "priceVnd", "costMVnd"] as const).map((f) => (
                     <td key={f} className="px-2 py-1.5">
                       <Input
-                        aria-label={`${c.name[st.lang]} ${f}`}
+                        aria-label={`${c.name[st.lang]} ${f === "yieldT" ? L("yield", "năng suất") : f === "priceVnd" ? L("price", "giá bán") : L("cost", "chi phí")}`}
                         inputMode="decimal"
                         value={econ[c.id]?.[f] ?? ""}
                         onChange={(e) => setEcon((s) => ({ ...s, [c.id]: { ...s[c.id], [f]: e.target.value } }))}
@@ -247,7 +250,7 @@ export function Settings() {
                       />
                     </td>
                   ))}
-                  <td className="px-2 py-1.5">
+                  <td className="px-2 py-1.5" title={st.economics[c.id]?.source}>
                     {st.economics[c.id] ? <Badge tone={st.economics[c.id].status === "illustrative" ? "amber" : "green"}>{st.economics[c.id].status === "illustrative" ? t("status.illustrative") : L("Your data", "Dữ liệu của bạn")}</Badge> : <span className="text-xs text-ink-3">—</span>}
                   </td>
                 </tr>
@@ -271,6 +274,7 @@ export function Settings() {
               {L("Clear", "Xóa")}
             </Button>
           </div>
+          <p className="mt-3 px-2 text-xs leading-relaxed text-ink-2">{L("Demo yields use historical Can Tho statistics and regional trials; the rice price is a February 2025 example. Other prices and all costs remain explicit illustrative assumptions. Check the source on each status label and replace these values with your farm budget.", "Năng suất demo tham khảo thống kê Cần Thơ và thí nghiệm trong vùng; giá lúa là ví dụ từ tháng 2/2025. Giá các cây khác và toàn bộ chi phí vẫn là giả định minh họa. Xem nguồn tại nhãn trạng thái và thay bằng số liệu thu chi thực tế của ruộng.")}</p>
         </div>
       </Card>
 

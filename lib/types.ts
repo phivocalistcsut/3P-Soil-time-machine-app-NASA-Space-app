@@ -309,6 +309,7 @@ export interface EconomicInput {
   priceVnd: number; // VND per kg
   costMVnd: number; // million VND per ha
   status: "observed" | "estimated" | "illustrative";
+  source?: string;
 }
 
 export interface SimulationSettings {

@@ -1,0 +1,70 @@
+{
+  "latitude": 10.0934,
+  "longitude": 105.5185,
+  "start": 2016,
+  "end": 2025,
+  "thresholdC": 35,
+  "years": [
+    {
+      "year": 2016,
+      "powerHotDays": 117,
+      "era5HotDays": 50
+    },
+    {
+      "year": 2017,
+      "powerHotDays": 37,
+      "era5HotDays": 1
+    },
+    {
+      "year": 2018,
+      "powerHotDays": 58,
+      "era5HotDays": 1
+    },
+    {
+      "year": 2019,
+      "powerHotDays": 65,
+      "era5HotDays": 20
+    },
+    {
+      "year": 2020,
+      "powerHotDays": 100,
+      "era5HotDays": 17
+    },
+    {
+      "year": 2021,
+      "powerHotDays": 47,
+      "era5HotDays": 0
+    },
+    {
+      "year": 2022,
+      "powerHotDays": 25,
+      "era5HotDays": 1
+    },
+    {
+      "year": 2023,
+      "powerHotDays": 62,
+      "era5HotDays": 13
+    },
+    {
+      "year": 2024,
+      "powerHotDays": 101,
+      "era5HotDays": 30
+    },
+    {
+      "year": 2025,
+      "powerHotDays": 63,
+      "era5HotDays": 0
+    }
+  ],
+  "meanPowerHotDays": 67.5,
+  "meanEra5HotDays": 13.3,
+  "meanDifferenceDays": 54.2,
+  "powerRetrievedAt": "2026-11-14",
+  "era5RetrievedAt": "2026-11-14T08:56:27.564Z",
+  "era5SourceUrl": "https://archive-api.open-meteo.com/v1/archive?latitude=10.0934&longitude=105.5185&start_date=2016-01-01&end_date=2025-12-31&daily=temperature_2m_max&models=era5&timezone=Asia%2FHo_Chi_Minh&elevation=nan",
+  "era5GridPoint": {
+    "latitude": 10,
+    "longitude": 105.5
+  },
+  "method": "Complete-year counts of Tmax >=35 C; POWER LST versus ERA5 Asia/Ho_Chi_Minh (UTC+7 at this longitude). ERA5 0.25 degree via Open-Meteo; elevation=nan disables downscaling. Separate reanalysis comparison, not station or field validation. Neither product corrects the other or changes model inputs."
+}
