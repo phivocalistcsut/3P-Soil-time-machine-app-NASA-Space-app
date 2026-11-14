@@ -1,5 +1,28 @@
 import type { Crop, SeasonId } from "@/lib/types";
 
+const IPCC_RESIDUES = "IPCC 2019 Refinement Vol.4 Ch.11 Table 11.1a, Eqs.11.6–11.7: https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch11_Soils_N2O_CO2.pdf";
+const CANTHO_YIELDS = "Can Tho Statistics Office, 2024 annual report, table 4 (2024 estimates; tạ/ha ÷ 10 -> t/ha): https://thongkecantho.gso.gov.vn/uploads/files/2025_01_cantho_so%20lieu%20ktxh%20nam%202024_02_1_2025.pdf";
+const CROP_CARBON = "IPCC GPG 2000 Ch.4 Table 4.16 (residue C fraction, also used as a root-C proxy): https://www.ipcc-nggip.iges.or.jp/public/gp/english/4_Agriculture.pdf";
+const HERBACEOUS_CARBON = "Generic herbaceous C fraction 0.47 transferred to crop residues/roots, IPCC 2006 Vol.4 Ch.6 §6.2.1.4: https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_06_Ch6_Grassland.pdf";
+const DPM_RPM_SOURCE = "DPM/RPM=1.44, agricultural-crop default (including annual green manure, not woody vegetation), Coleman, Prout & Milne (Feb 2024), RothC Model Description §1.3: https://www.rothamsted.ac.uk/sites/default/files/Documents/RothC_description.pdf";
+
+/** Seasonal carbon input, not a yield prediction or a RothC turnover calculation.
+ * IPCC RAG is residue / dry harvested yield; RS is root / total shoot biomass.
+ * For tubers, Table 11.1a note f defines RS against shoots, excluding harvested tubers.
+ * Non-rice residues are retained: IPCC Ch.11 p.11.16 default of no removal when unknown.
+ */
+function residueEstimate(yieldT: number, dry: number, rag: number, rs: number, cf: number, source: string, retained = 1, tuber = false): Crop["rothc"] {
+  const productDM = yieldT * dry;
+  const residueDM = productDM * rag;
+  const rootDM = (tuber ? residueDM : productDM + residueDM) * rs;
+  return {
+    residueCTHa: (residueDM * retained + rootDM) * cf,
+    dpmRpm: 1.44,
+    status: "estimated",
+    source: `Estimated; Y=${yieldT} t/ha/crop, DRY=${dry}, RAG=${rag}, RS=${rs}, CF=${cf}, retained above-ground residue fraction=${retained}; roots=${tuber ? "residueDM" : "(productDM+residueDM)"}*RS. ${source}. ${IPCC_RESIDUES}. ${DPM_RPM_SOURCE}`,
+  };
+}
+
 /**
  * Reusable crop catalog. Crop coefficients follow FAO Irrigation & Drainage Paper 56
  * (Allen et al., 1998, Table 12) unless marked "estimated". Temperature, pH, soil and
@@ -9,6 +32,9 @@ import type { Crop, SeasonId } from "@/lib/types";
 export const CROPS: Crop[] = [
   {
     id: "rice",
+    // TODO(source): validate the transferred 5.6% stubble fraction for Mekong harvest heights.
+    rothc: residueEstimate((545891 + 415169 + 377976) / 212614, 0.89, 1.4, 0.16, 0.4144,
+      `${CANTHO_YIELDS}; annual rice production / harvested area. ${CROP_CARBON}. Only roots + stubble; harvested straw removed/burned (Hong Van et al. 2015, not 2014, DOI:10.1080/00380768.2015.1041862). Stubble fraction 0.056 transferred from Hu et al. (2018), Eq.5, China: https://doi.org/10.1080/17583004.2018.1526625; no ash/char carbon credited`, 0.056),
     name: { en: "Rice (paddy)", vi: "Lúa" },
     category: "cereal",
     family: "Poaceae",
@@ -42,6 +68,7 @@ export const CROPS: Crop[] = [
   },
   {
     id: "maize",
+    rothc: residueEstimate(5.831, 0.87, 1, 0.22, 0.4709, `${CANTHO_YIELDS}. ${CROP_CARBON}. All stover retained, IPCC no-removal default`),
     name: { en: "Maize", vi: "Bắp (ngô)" },
     category: "cereal",
     family: "Poaceae",
@@ -75,6 +102,8 @@ export const CROPS: Crop[] = [
   },
   {
     id: "mungbean",
+    rothc: residueEstimate(1.38, 0.91, 2.1, 0.19, 0.47,
+      `Yield: mean of five varieties, Cho Moi, An Giang, Xuan He 2004, Table 6: https://sj.ctu.edu.vn/ql/docgia/download/baibao-4853/fn_19_lvdung.pdf; IPCC Beans and Pulses defaults. ${HERBACEOUS_CARBON}. All haulms retained, IPCC no-removal default`),
     name: { en: "Mung bean", vi: "Đậu xanh" },
     category: "legume",
     family: "Fabaceae",
@@ -108,6 +137,7 @@ export const CROPS: Crop[] = [
   },
   {
     id: "soybean",
+    rothc: residueEstimate(2.012, 0.91, 2.1, 0.19, 0.47, `${CANTHO_YIELDS}; Soybeans defaults. ${HERBACEOUS_CARBON}. All haulms retained, IPCC no-removal default`),
     name: { en: "Soybean", vi: "Đậu nành" },
     category: "legume",
     family: "Fabaceae",
@@ -141,6 +171,9 @@ export const CROPS: Crop[] = [
   },
   {
     id: "peanut",
+    // TODO(source): replace the IPCC generic RS with a local peanut root measurement.
+    rothc: residueEstimate(1.763, 0.94, 1, 0.22, 0.47,
+      `${CANTHO_YIELDS}; Peanuts DRY and RAG; RS is unavailable in that row, so use generic-crops RS=0.22 per Table 11.1a note e. ${HERBACEOUS_CARBON}. All haulms retained; harvested pods excluded; IPCC no-removal default`),
     name: { en: "Peanut", vi: "Đậu phộng (lạc)" },
     category: "legume",
     family: "Fabaceae",
@@ -174,6 +207,9 @@ export const CROPS: Crop[] = [
   },
   {
     id: "sesame",
+    // TODO(source): replace generic crop residue/root/DRY factors with local sesame measurements.
+    rothc: residueEstimate(1, 0.85, 1, 0.22, 0.47,
+      `Yield: DH1 control, 10 ta/ha, Bui Quang Dinh et al. (2018), Vietnam J. Agricultural Science and Technology 8(93), Mekong Delta field trials: https://tapchi.vaas.vn/sites/tapchi.vaas.vn/files/tapchi/2021-08/tc20-2018_1.pdf; IPCC generic-crops row (sesame not listed). ${HERBACEOUS_CARBON}. All stalks retained, IPCC no-removal default`),
     name: { en: "Sesame", vi: "Mè (vừng)" },
     category: "oilseed",
     family: "Pedaliaceae",
@@ -207,6 +243,8 @@ export const CROPS: Crop[] = [
   },
   {
     id: "sweetpotato",
+    rothc: residueEstimate(12.491, 0.22, 0.4, 0.20, 0.4226,
+      `${CANTHO_YIELDS}; Potatoes and Tubers defaults, note f: non-tuber roots only. ${CROP_CARBON}; potato CF transferred to sweet potato. Vines retained, marketable tubers exported, unmarketable tubers not credited`, 1, true),
     name: { en: "Sweet potato", vi: "Khoai lang" },
     category: "root",
     family: "Convolvulaceae",
@@ -240,6 +278,13 @@ export const CROPS: Crop[] = [
   },
   {
     id: "sesbania",
+    // TODO(source): local Sesbania biomass and roots at the catalog's 55-day incorporation age.
+    rothc: {
+      residueCTHa: 4.6 * (1 + 0.22) * 0.47,
+      dpmRpm: 1.44,
+      status: "estimated",
+      source: `Estimated; entire green-manure crop incorporated. 4.6 t shoot DM/ha at 60 days, Beri, Meelu & Khind (1989), Tropical Agriculture 66(3), India: https://journals.sta.uwi.edu/ojs/index.php/ta/article/view/1864; transferred to this 55-day crop without an unsupported age correction. Roots=shootDM*0.22 (generic annual-crops RS, ${IPCC_RESIDUES}); C=(4.6+4.6*0.22)*0.47. ${HERBACEOUS_CARBON}. ${DPM_RPM_SOURCE}`,
+    },
     name: { en: "Sesbania (green manure)", vi: "Điền thanh (phân xanh)" },
     category: "green_manure",
     family: "Fabaceae",
@@ -273,6 +318,10 @@ export const CROPS: Crop[] = [
   },
   {
     id: "fallow",
+    rothc: {
+      residueCTHa: 0, dpmRpm: 1.44, status: "estimated",
+      source: `Estimated management definition: bare fallow, no crop residue input (0 t C/ha/crop); spontaneous weeds are not modeled. RothC Model Description §2.1 sets plant input to zero in bare cultivated fallow. ${DPM_RPM_SOURCE}; ratio unused when input is zero`,
+    },
     name: { en: "Fallow (rest)", vi: "Để đất nghỉ" },
     category: "fallow",
     family: "—",

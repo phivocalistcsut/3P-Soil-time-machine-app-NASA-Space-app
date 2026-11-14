@@ -267,8 +267,8 @@ export function FarmDemoNotice({ className }: { className?: string }) {
       <FlaskConical className="h-3.5 w-3.5 shrink-0" aria-hidden />
       <span>
         {L(
-          "Demo farm: farm details and soil values are illustrative. Climate comes from real NASA POWER data for this location.",
-          "Trang trại mẫu: thông tin ruộng và đất là minh họa. Khí hậu lấy từ dữ liệu NASA POWER thật tại vị trí này.",
+          "Demo farm: farm details are illustrative. Soil values carry their own source labels. Climate comes from real NASA POWER data for this location.",
+          "Trang trại mẫu: thông tin ruộng là minh họa. Giá trị đất có nhãn nguồn riêng. Khí hậu lấy từ dữ liệu NASA POWER thật tại vị trí này.",
         )}
       </span>
     </div>

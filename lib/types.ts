@@ -58,10 +58,14 @@ export interface FarmProfile {
   soilType: SoilTexture;
   soilPH: number | null;
   soilOrganicCarbon: number | null; // percent (g/100 g)
+  clayPercent: number | null; // depth-weighted %, 0–30 cm
+  socStockTCHa: number | null; // t C/ha, 0–30 cm
   soilSources: {
     soilType: SourceTag;
     soilPH: SourceTag;
     soilOrganicCarbon: SourceTag;
+    clayPercent: SourceTag;
+    socStockTCHa: SourceTag;
   };
   irrigationSource: IrrigationSource;
   waterAvailability: WaterAvailability;
@@ -106,6 +110,13 @@ export interface Crop {
   nitrogenNeed: number;
   /** N credit to the following crop, kg N/ha */
   nitrogenCredit: number;
+  /** Estimated seasonal residue carbon inputs, with explicit sources and management assumptions. */
+  rothc: {
+    residueCTHa: number; // t C/ha returned per crop (roots + retained above-ground residues)
+    dpmRpm: number;
+    source: string;
+    status: "estimated";
+  };
   agronomicProperties: {
     nFixing: boolean;
     rootDepthM: number;

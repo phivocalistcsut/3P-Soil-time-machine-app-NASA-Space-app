@@ -1,12 +1,15 @@
 import { getCrop, SEASONS, SEASON_ORDER } from "@/lib/data/crops";
 import type { ClimateDataset, CriterionId, EconomicInput, FarmProfile, PriorityId, RotationScenario, SeasonId, SeasonalCropSlot, SimulationSettings } from "@/lib/types";
 import { monthOffset, screenCrops } from "@/lib/engine/simulate";
+import soilSnapshot from "@/data/soilgrids-thoi-lai.json";
+import type { SoilTexture } from "@/lib/types";
 
 export const DEMO_FARM_ID = "demo-thoi-lai";
 
 /**
  * ILLUSTRATIVE demonstration farm in Thới Lai district, Cần Thơ (Mekong Delta).
- * The farm, its boundary and its soil values are illustrative — not a real farm record.
+ * The farm and its boundary are illustrative — not a real farm record.
+ * Soil inputs are modeled SoilGrids estimates from the saved same-point lookup.
  * Climate for this location comes from real NASA POWER data (live or cached snapshot).
  */
 export function createDemoFarm(): FarmProfile {
@@ -22,13 +25,17 @@ export function createDemoFarm(): FarmProfile {
       [105.56108, 10.07025],
       [105.55882, 10.07008],
     ],
-    soilType: "clay",
-    soilPH: 5.2,
-    soilOrganicCarbon: 2.1,
+    soilType: (soilSnapshot.texture as SoilTexture | null) ?? "clay",
+    soilPH: soilSnapshot.ph,
+    soilOrganicCarbon: soilSnapshot.socPercent,
+    clayPercent: soilSnapshot.clayPercent0to30,
+    socStockTCHa: soilSnapshot.socStockTCHa,
     soilSources: {
-      soilType: { status: "illustrative", source: "Typical Mekong alluvial soil (illustrative)" },
-      soilPH: { status: "illustrative", source: "Typical regional value (illustrative)" },
-      soilOrganicCarbon: { status: "illustrative", source: "Typical regional value (illustrative)" },
+      soilType: { status: soilSnapshot.texture === null ? "illustrative" : "estimated", source: soilSnapshot.texture === null ? "Typical Mekong alluvial soil (illustrative)" : soilSnapshot.source },
+      soilPH: { status: soilSnapshot.ph === null ? "unavailable" : "estimated", source: soilSnapshot.source },
+      soilOrganicCarbon: { status: soilSnapshot.socPercent === null ? "unavailable" : "estimated", source: soilSnapshot.source },
+      clayPercent: { status: soilSnapshot.clayPercent0to30 === null ? "unavailable" : "estimated", source: soilSnapshot.source },
+      socStockTCHa: { status: soilSnapshot.socStockTCHa === null ? "unavailable" : "estimated", source: soilSnapshot.source },
     },
     irrigationSource: "canal",
     waterAvailability: "abundant",

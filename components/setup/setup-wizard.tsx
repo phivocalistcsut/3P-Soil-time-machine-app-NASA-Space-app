@@ -25,6 +25,7 @@ import { useHydrated } from "@/lib/hooks";
 import { CROPS, SEASONS, SEASON_ORDER } from "@/lib/data/crops";
 import { validCoordinates } from "@/lib/data/evidence";
 import { fieldBoundary } from "@/lib/data/geometry";
+import { resolveSoilInput } from "@/lib/data/farm-soil";
 import { createDemoFarm, GAZETTEER, newId } from "@/lib/data/demo";
 import type { Drainage, FarmProfile, IrrigationSource, PriorityId, SalinityRisk, SeasonId, SoilTexture, SourceTag, WaterAvailability } from "@/lib/types";
 import { FarmMap, type Basemap } from "@/components/map/farm-map";
@@ -49,7 +50,9 @@ interface Draft {
   soilType: SoilTexture | "unknown";
   soilPH: string;
   soc: string;
-  soilEstimate: { texture: SoilTexture | null; ph: number | null; soc: number | null; source: string } | null;
+  clayPercent: string;
+  socStockTCHa: string;
+  soilEstimate: { texture: SoilTexture | null; ph: number | null; soc: number | null; clayPercent: number | null; socStockTCHa: number | null; source: string } | null;
   irrigationSource: IrrigationSource;
   waterAvailability: WaterAvailability;
   drainage: Drainage;
@@ -73,6 +76,8 @@ const INITIAL: Draft = {
   soilType: "unknown",
   soilPH: "",
   soc: "",
+  clayPercent: "",
+  socStockTCHa: "",
   soilEstimate: null,
   irrigationSource: "canal",
   waterAvailability: "moderate",
@@ -162,7 +167,8 @@ export function SetupWizard() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "error");
       setD((s) => s.lat === d.lat && s.lon === d.lon ? { ...s,
-        soilEstimate: { texture: j.texture, ph: j.ph, soc: j.socPercent, source: j.source },
+        soilEstimate: { texture: j.texture, ph: j.ph, soc: j.socPercent,
+          clayPercent: j.clayPercent0to30 ?? null, socStockTCHa: j.socStockTCHa ?? null, source: j.source },
       } : s);
       toast.success(L("Regional soil estimate loaded (SoilGrids)", "Đã tải ước tính đất theo vùng (SoilGrids)"));
     } catch (e) {
@@ -192,16 +198,20 @@ export function SetupWizard() {
     const soc = socNum !== null && Number.isFinite(socNum) ? socNum : est?.soc ?? null;
     const socTag: SourceTag =
       socNum !== null ? { status: "observed", source: "Farmer soil test" } : est?.soc != null ? { status: "estimated", source: est.source } : { status: "unavailable", source: "Not provided" };
-    return { texture, textureTag, ph, phTag, soc, socTag };
+    const clay = resolveSoilInput(d.clayPercent, est?.clayPercent, est?.source, 100);
+    const stock = resolveSoilInput(d.socStockTCHa, est?.socStockTCHa, est?.source);
+    return { texture, textureTag, ph, phTag, soc, socTag, clay, stock };
   }, [d]);
 
   const phInvalid = d.soilPH.trim() !== "" && !(Number(d.soilPH.replace(",", ".")) >= 3 && Number(d.soilPH.replace(",", ".")) <= 10);
   const areaNum = Number(d.areaHa.replace(",", "."));
   const areaInvalid = d.areaHa.trim() !== "" && !(areaNum > 0 && areaNum < 10000);
   const validSoc = !d.soc.trim() || (Number(d.soc.replace(",", ".")) >= 0 && Number(d.soc.replace(",", ".")) <= 100);
+  const clayInvalid = !!d.clayPercent.trim() && !(Number(d.clayPercent.replace(",", ".")) >= 0 && Number(d.clayPercent.replace(",", ".")) <= 100);
+  const stockInvalid = !!d.socStockTCHa.trim() && !(Number.isFinite(Number(d.socStockTCHa.replace(",", "."))) && Number(d.socStockTCHa.replace(",", ".")) >= 0);
   const coordinateTextValid = !!coordText.lat.trim() && !!coordText.lon.trim() &&
     validCoordinates(Number(coordText.lat.replace(",", ".")), Number(coordText.lon.replace(",", ".")));
-  const canNext = [d.pinned && coordinateTextValid && !drawing, d.name.trim().length > 0 && !phInvalid && validSoc && !areaInvalid && (d.areaHa.trim() !== "" || drawnArea > 0), d.priorities.some((p) => p.on), true][step];
+  const canNext = [d.pinned && coordinateTextValid && !drawing, d.name.trim().length > 0 && !phInvalid && validSoc && !clayInvalid && !stockInvalid && !areaInvalid && (d.areaHa.trim() !== "" || drawnArea > 0), d.priorities.some((p) => p.on), true][step];
 
   const createProfile = () => {
     const f: FarmProfile = {
@@ -214,7 +224,10 @@ export function SetupWizard() {
       soilType: soilResolved.texture,
       soilPH: soilResolved.ph,
       soilOrganicCarbon: soilResolved.soc,
-      soilSources: { soilType: soilResolved.textureTag, soilPH: soilResolved.phTag, soilOrganicCarbon: soilResolved.socTag },
+      clayPercent: soilResolved.clay.value,
+      socStockTCHa: soilResolved.stock.value,
+      soilSources: { soilType: soilResolved.textureTag, soilPH: soilResolved.phTag, soilOrganicCarbon: soilResolved.socTag,
+        clayPercent: soilResolved.clay.tag, socStockTCHa: soilResolved.stock.tag },
       irrigationSource: d.irrigationSource,
       waterAvailability: d.waterAvailability,
       drainage: d.drainage,
@@ -567,7 +580,31 @@ export function SetupWizard() {
                         </Label>
                         <Input id="soc" inputMode="decimal" value={d.soc} onChange={(e) => up({ soc: e.target.value })} placeholder="1.8" />
                       </div>
+                      <div>
+                        <Label htmlFor="clay">{L("Clay % (0–30 cm, optional)", "Sét % (0–30 cm, tùy chọn)")}</Label>
+                        <Input id="clay" inputMode="decimal" value={d.clayPercent} onChange={(e) => up({ clayPercent: e.target.value })} aria-invalid={clayInvalid} />
+                        {clayInvalid && <Hint className="text-risk-ink">{L("Enter 0–100% clay.", "Nhập tỷ lệ sét từ 0–100%.")}</Hint>}
+                      </div>
+                      <div>
+                        <Label htmlFor="soc-stock">{L("SOC stock (t C/ha, 0–30 cm, optional)", "Trữ lượng SOC (t C/ha, 0–30 cm, tùy chọn)")}</Label>
+                        <Input id="soc-stock" inputMode="decimal" value={d.socStockTCHa} onChange={(e) => up({ socStockTCHa: e.target.value })} aria-invalid={stockInvalid} />
+                        {stockInvalid && <Hint className="text-risk-ink">{L("Enter a non-negative stock in t C/ha.", "Nhập trữ lượng không âm, đơn vị t C/ha.")}</Hint>}
+                      </div>
                     </div>
+                    <dl className="space-y-2 text-xs">
+                      {[
+                        [L("Clay (0–30 cm)", "Sét (0–30 cm)"), soilResolved.clay, "%"],
+                        [L("SOC stock (0–30 cm)", "Trữ lượng SOC (0–30 cm)"), soilResolved.stock, "t C/ha"],
+                      ].map(([label, resolved, unit]) => {
+                        const { value, tag } = resolved as typeof soilResolved.clay;
+                        return <div key={label as string} className="flex flex-wrap items-center justify-between gap-2">
+                          <dt>{label as string}</dt><dd className="flex items-center gap-2" title={tag.source}>
+                            {value === null ? "—" : `${num(value, 2)} ${unit}`} <StatusBadge status={tag.status} withTip={false} />
+                          </dd>
+                        </div>;
+                      })}
+                    </dl>
+                    <Hint>{L("For SOC stock, enter a 0–30 cm stock measurement. Carbon % alone cannot determine stock without bulk density and depth.", "Với trữ lượng SOC, nhập kết quả đo cho lớp 0–30 cm. Chỉ có % carbon thì chưa tính được trữ lượng nếu thiếu dung trọng và độ sâu.")}</Hint>
                     <Hint>
                       {L(
                         "Without a soil test we use regional reference data and label it as an estimate — never as a field measurement.",
@@ -724,6 +761,8 @@ export function SetupWizard() {
                       [L("Soil type", "Loại đất"), t(`tex.${soilResolved.texture}`), soilResolved.textureTag],
                       ["pH", soilResolved.ph === null ? "—" : num(soilResolved.ph, 1), soilResolved.phTag],
                       [L("Organic carbon", "Carbon hữu cơ"), soilResolved.soc === null ? "—" : `${num(soilResolved.soc, 2)} %`, soilResolved.socTag],
+                      [L("Clay (0–30 cm)", "Sét (0–30 cm)"), soilResolved.clay.value === null ? "—" : `${num(soilResolved.clay.value, 2)} %`, soilResolved.clay.tag],
+                      [L("SOC stock (0–30 cm)", "Trữ lượng SOC (0–30 cm)"), soilResolved.stock.value === null ? "—" : `${num(soilResolved.stock.value, 2)} t C/ha`, soilResolved.stock.tag],
                     ].map(([k, v, tag]) => (
                       <div key={k as string} className="flex flex-wrap items-center justify-between gap-2">
                         <dt className="text-ink-2">{k as string}</dt>

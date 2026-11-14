@@ -85,9 +85,9 @@ export function Methodology() {
     {
       name: "ISRIC SoilGrids v2.0",
       provider: L("ISRIC — World Soil Information (non-NASA)", "ISRIC — Thông tin Đất Thế giới (không thuộc NASA)"),
-      vars: L("pH(H₂O), soil organic carbon, clay and sand, 0–5 cm", "pH(H₂O), carbon hữu cơ, sét và cát, 0–5 cm"),
+      vars: L("SOC, clay and bulk density at 0–5, 5–15 and 15–30 cm; pH and sand at 0–5 cm", "SOC, sét và dung trọng ở 0–5, 5–15 và 15–30 cm; pH và cát ở 0–5 cm"),
       res: "250 m",
-      use: L("Optional regional soil estimate in farm setup (labeled Estimated)", "Ước tính đất theo vùng tùy chọn khi thiết lập (nhãn Ước tính)"),
+      use: L("Optional regional soil estimate, 0–30 cm SOC stock and depth-weighted clay (Estimated); missing depths remain unavailable", "Ước tính đất theo vùng, trữ lượng SOC và sét trung bình theo độ sâu 0–30 cm (Ước tính); thiếu lớp thì chưa có dữ liệu"),
       limit: L("Machine-learning map, not a field sample; service availability varies", "Bản đồ học máy, không phải mẫu thực địa; dịch vụ có lúc gián đoạn"),
       status: "estimated",
       link: "https://docs.isric.org/globaldata/soilgrids/wcs.html",

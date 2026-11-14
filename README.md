@@ -86,7 +86,7 @@ scripts/                   engine smoke test, snapshot refresher
 
 Live point lookups use NASA POWER weather, GPM IMERG rainfall, SMAP Level 4 soil moisture and quality-screened MODIS NDVI. Overview → Data sources shows each record's time range, spatial scale, retrieval date and quality. NASA GIBS is reserved for map imagery. Farm soil and management inputs are stored in the browser.
 
-The model uses IMERG rainfall when it covers every month of the POWER climate window. SMAP supports a regional drainage warning. MODIS NDVI provides context. SoilGrids WCS supplies optional modeled topsoil properties, and farmer measurements take priority. An offline run uses a matching browser snapshot or the bundled Thới Lai dataset. New locations with unavailable weather wait for data.
+The model uses IMERG rainfall when it covers every month of the POWER climate window. SMAP supports a regional drainage warning. MODIS NDVI provides context. SoilGrids WCS supplies modeled topsoil properties and 0–30 cm SOC stock / depth-weighted clay for future RothC integration; farmer measurements take priority. The demo uses a real SoilGrids snapshot alongside its illustrative farm details. An offline run uses a matching browser snapshot or the bundled Thới Lai dataset. New locations with unavailable weather wait for data.
 
 See the [architecture, provider matrix, environment setup and live validation](docs/data-and-validation.md).
 

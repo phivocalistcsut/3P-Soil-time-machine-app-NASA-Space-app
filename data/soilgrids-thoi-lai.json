@@ -1,0 +1,39 @@
+{
+  "latitude": 10.0706,
+  "longitude": 105.5599,
+  "ph": 6,
+  "socPercent": 3.69,
+  "clayPercent": 36.5,
+  "sandPercent": 22.7,
+  "texture": "loam",
+  "socStockTCHa": 90.1155,
+  "clayPercent0to30": 37.18333333333333,
+  "layers": [
+    {
+      "depth": "0-5cm",
+      "thicknessCm": 5,
+      "socGKg": 36.9,
+      "clayPercent": 36.5,
+      "bulkDensityGCm3": 1.19
+    },
+    {
+      "depth": "5-15cm",
+      "thicknessCm": 10,
+      "socGKg": 21.7,
+      "clayPercent": 37.2,
+      "bulkDensityGCm3": 1.2
+    },
+    {
+      "depth": "15-30cm",
+      "thicknessCm": 15,
+      "socGKg": 23.4,
+      "clayPercent": 37.4,
+      "bulkDensityGCm3": 1.2
+    }
+  ],
+  "status": "estimated",
+  "source": "ISRIC SoilGrids 2.0 WCS · 250 m · SOC stock and clay 0–30 cm; pH, SOC concentration and texture 0–5 cm · modeled",
+  "sourceUrl": "https://docs.isric.org/globaldata/soilgrids/wcs.html",
+  "retrievedAt": "2026-11-14T04:08:15.822Z",
+  "cached": true
+}
