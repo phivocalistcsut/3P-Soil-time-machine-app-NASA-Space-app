@@ -6,7 +6,7 @@ A decision-support prototype (NASA Space Apps · climate-resilient crop rotation
 how different crop rotations could affect irrigation demand, soil-related outcomes and climate fit on the same
 piece of land over the next 3–5 years.
 
-**Hosted demo:** [soil-time-machine-3p.vercel.app](https://soil-time-machine-3p.vercel.app/) · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E).
+**Hosted demo:** [3-p-soil-time-machine-app-nasa-spac.vercel.app](https://3-p-soil-time-machine-app-nasa-spac.vercel.app) · demo farm: rice paddy west of Thới Lai town, Cần Thơ (10.0934 °N, 105.5185 °E).
 
 **Latest source:** [3P Soil Time Machine · main](https://github.com/phivocalistcsut/3P-Soil-time-machine-app-NASA-Space-app/tree/main). The hosted demo reflects the last successful Vercel deployment. Use the quick start below to run the current code from GitHub.
 
@@ -43,17 +43,17 @@ NASA/SoilGrids data need no provider key. Online address lookup optionally uses 
 
 ## Screens
 
-| Route | Screen |
-| --- | --- |
-| `/` | Landing page with a live mini-simulator |
-| `/setup` | 4-step farm setup (map pin, boundary drawing, manual coordinates, search, farm details, soil estimate, ranked priorities, review) |
-| `/overview` | **My Farm** — field map with NASA layers and time slider, rain & temperature, soil & moisture, extreme days, greenness from space, data sources, risk calendar |
-| `/simulator` | **5-Year Simulator** — choose plan, year and weather (presets or rain/heat sliders); results, why it changes, 12-month calendar, evidence & questions, field map, charts, crop editor |
-| `/compare` | **Compare Plans** — three alternatives against current practice, priority weights, charts, detailed table with strongest/weakest flags, evidence, "Why the top plan?" |
-| `/planner` | **Season Plan** — selected-year plan, season calendar, each season, each year, notes, save / print / PDF / text summary |
-| `/learn` | **Guide & Glossary** — how to use the app, glossary, satellite vs field, crop roles, when to ask an expert |
-| `/methodology` | All data sources, formulas, thresholds, crop catalog, limitations |
-| `/settings` | Language, data mode, horizon, priorities, optional economic inputs, reset |
+| Route            | Screen                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | Landing page with a live mini-simulator                                                                                                                                                      |
+| `/setup`       | 4-step farm setup (map pin, boundary drawing, manual coordinates, search, farm details, soil estimate, ranked priorities, review)                                                            |
+| `/overview`    | **My Farm** — field map with NASA layers and time slider, rain & temperature, soil & moisture, extreme days, greenness from space, data sources, risk calendar                        |
+| `/simulator`   | **5-Year Simulator** — choose plan, year and weather (presets or rain/heat sliders); results, why it changes, 12-month calendar, evidence & questions, field map, charts, crop editor |
+| `/compare`     | **Compare Plans** — three alternatives against current practice, priority weights, charts, detailed table with strongest/weakest flags, evidence, "Why the top plan?"                 |
+| `/planner`     | **Season Plan** — selected-year plan, season calendar, each season, each year, notes, save / print / PDF / text summary                                                               |
+| `/learn`       | **Guide & Glossary** — how to use the app, glossary, satellite vs field, crop roles, when to ask an expert                                                                            |
+| `/methodology` | All data sources, formulas, thresholds, crop catalog, limitations                                                                                                                            |
+| `/settings`    | Language, data mode, horizon, priorities, optional economic inputs, reset                                                                                                                    |
 
 ## Project structure
 
