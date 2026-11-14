@@ -72,7 +72,18 @@ Có 2 tab lớn (`HeroTabs` trong `ui/sections.tsx`). Tab Thông tin đất hi�
 | Chỉnh luân canh | `#edit` | ~1005 | [sim/rotation-builder.tsx](../components/sim/rotation-builder.tsx) (kéo-thả) |
 
 ### So sánh: `/compare`. File [components/compare/compare.tsx](../components/compare/compare.tsx)
-`#cards` ~246 · `#weights` ~424 · `#charts` ~491 · `#table` ~541 · `#evidence` ~600 · `#why` ~613
+Trang dạng câu chuyện cuộn 4 chương. Các phần nằm ở [compare/compare-chapters.tsx](../components/compare/compare-chapters.tsx).
+
+| Phần | Component |
+|---|---|
+| Thanh chọn năm, cách trồng (dính khi cuộn) | `compare.tsx` |
+| Chương 1 · Cách nào hợp nhất? (bục xếp hạng, vì sao đứng đầu) | `Podium`, `PodiumCard` |
+| Chương 2 · Bạn coi trọng điều gì? (6 ô, mỗi ô 3 nút Ít/Vừa/Nhiều) | `PriorityTiles` |
+| Chương 3 · Điểm mạnh, điểm yếu của từng cách trồng (đường đua) | `RaceLanes` |
+| Chương 4 · Muốn xem kỹ? (bảng chi tiết, bằng chứng) | `compare.tsx` |
+| Khung chương, chấm điều hướng, hiện dần khi cuộn | `Chapter`, `ChapterDots`, `Reveal` |
+
+Link cũ `#cards`, `#weights`, `#table`, `#evidence` vẫn dẫn tới đúng chương.
 
 ### Kế hoạch mùa vụ: `/planner`. File [components/planner/planner.tsx](../components/planner/planner.tsx)
 `#calendar` ~288 · `#seasons` ~297 · `#years` ~410 · `#notes` ~444
