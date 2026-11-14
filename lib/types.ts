@@ -121,8 +121,6 @@ export interface Crop {
     nFixing: boolean;
     rootDepthM: number;
     residueReturn: "low" | "medium" | "high";
-    /** soil practice points used by the qualitative soil indicator */
-    soilPoints: number;
     note: Localized;
   };
 }
@@ -281,7 +279,15 @@ export interface SimulationResult {
   waterRisk: { level: 0 | 1 | 2 | 3; worstSeason: SeasonId | null; dryYearExceeds: boolean };
   cropSuitability: { score: number; cls: "good" | "fair" | "poor" };
   rotationDiversity: { shannon: number; score: number; distinctCrops: number; families: number; legumeSeasons: number; cls: "low" | "moderate" | "high" };
-  soilImprovementPotential: { index: number; level: 1 | 2 | 3 | 4 | 5; yearPoints: number; score: number };
+  soilImprovementPotential: {
+    socTCHa: number; deltaTCHa: number; deltaPctPerYear: number;
+    level: 1 | 2 | 3 | 4 | 5; score: number;
+  } | null;
+  /** Estimated inputs and inverse-spin-up mismatch; independent of the outcome ranking. */
+  soilCarbonInputs: {
+    equilibriumPlantC: number; referencePlantC: number; inputRatio: number;
+    annualPlantC: number; vegetatedMonths: number; floodedMonths: number;
+  } | null;
   nitrogenNeed: number;
   economics: { grossMargin: number; status: DataStatus } | null;
   criteriaScores: Record<CriterionId, number | null>;

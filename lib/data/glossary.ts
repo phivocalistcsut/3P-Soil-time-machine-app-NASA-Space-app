@@ -1,4 +1,5 @@
 import type { Localized } from "@/lib/types";
+import { MESSAGES } from "@/lib/i18n/messages";
 
 /** Plain-language glossary (U3). Short = one line shown in pop-ups; long = the Guide page. */
 export type GlossaryGroup = "water" | "soil" | "satellite" | "crop" | "risk" | "model";
@@ -78,10 +79,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     group: "soil",
     term: L("Soil organic carbon / organic matter", "Carbon hữu cơ / chất hữu cơ trong đất"),
     short: L("Decomposed plant material that feeds soil life and holds water and nutrients.", "Xác thực vật đã phân hủy, nuôi sinh vật đất và giữ nước, giữ dinh dưỡng."),
-    long: L(
-      "It changes slowly over years. The app does not predict a number for it; it only shows whether practices are likely to build it up or run it down.",
-      "Chỉ thay đổi chậm qua nhiều năm. App không dự báo con số; chỉ cho biết cách canh tác có xu hướng làm tăng hay giảm.",
-    ),
+    long: MESSAGES["rothc.glossary"],
   },
   {
     id: "ph",

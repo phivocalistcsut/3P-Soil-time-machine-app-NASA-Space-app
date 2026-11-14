@@ -29,21 +29,21 @@ export function TrendCharts({
   const [metric, setMetric] = useState<"water" | "soil" | "diversity">("water");
   const shown = scenarios.slice(0, 4);
   const data = years.map((y, i) => {
-    const row: Record<string, number | [number, number] | string> = { year: y };
-    row.ref = metric === "water" ? reference.years[i].waterDemand.median : metric === "soil" ? reference.years[i].soilImprovementPotential.level : reference.years[i].rotationDiversity.shannon;
+    const row: Record<string, number | [number, number] | string | null> = { year: y };
+    row.ref = metric === "water" ? reference.years[i].waterDemand.median : metric === "soil" ? reference.years[i].soilImprovementPotential?.socTCHa ?? null : reference.years[i].rotationDiversity.shannon;
     shown.forEach((s) => {
       const r = results[s.id]?.years[i];
       if (!r) return;
-      row[s.id] = metric === "water" ? r.waterDemand.median : metric === "soil" ? r.soilImprovementPotential.level : r.rotationDiversity.shannon;
+      row[s.id] = metric === "water" ? r.waterDemand.median : metric === "soil" ? r.soilImprovementPotential?.socTCHa ?? null : r.rotationDiversity.shannon;
       if (s.id === activeId && metric === "water") row._band = [r.waterDemand.p10, r.waterDemand.p90];
     });
     return row;
   });
-  const soilTick = (v: number) => ({ 1: L("Decline risk", "Nguy cơ giảm"), 2: L("Some risk", "Có nguy cơ"), 3: L("Stable", "Ổn định"), 4: L("Improving", "Cải thiện"), 5: L("Strong", "Rõ rệt") })[v] ?? "";
-  const unit = metric === "water" ? "mm" : "";
+  const fmt = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? num(v, metric === "water" ? 0 : 2) : "—";
+  const unit = metric === "water" ? "mm" : metric === "soil" ? "t C/ha" : "";
   const tabs = [
     ["water", L("Irrigation demand", "Nhu cầu tưới")],
-    ["soil", L("Soil outlook", "Triển vọng đất")],
+    ["soil", `${t("rothc.title")} (t C/ha)`],
     ["diversity", L("Rotation diversity", "Đa dạng luân canh")],
   ] as const;
 
@@ -63,8 +63,8 @@ export function TrendCharts({
           head: [L("Year", "Năm"), L("Current practice", "Hiện tại"), ...shown.map((s) => s.name)],
           rows: data.map((d) => [
             d.year as number,
-            metric === "soil" ? soilTick(d.ref as number) : num(d.ref as number, metric === "diversity" ? 2 : 0),
-            ...shown.map((s) => (metric === "soil" ? soilTick(d[s.id] as number) : num(d[s.id] as number, metric === "diversity" ? 2 : 0))),
+            fmt(d.ref),
+            ...shown.map((s) => fmt(d[s.id])),
           ]),
         }}
       >
@@ -74,23 +74,14 @@ export function TrendCharts({
           <YAxis
             {...AXIS}
             width={metric === "soil" ? 74 : 48}
-            domain={metric === "soil" ? [1, 5] : metric === "diversity" ? [0, "auto"] : [0, "auto"]}
-            ticks={metric === "soil" ? [1, 2, 3, 4, 5] : undefined}
-            tickFormatter={(v) => (metric === "soil" ? soilTick(v) : num(v, metric === "diversity" ? 1 : 0))}
+            domain={metric === "soil" ? ["auto", "auto"] : [0, "auto"]}
+            tickFormatter={(v) => fmt(v)}
           />
-          <Tooltip
-            content={
-              metric === "soil" ? (
-                <SoilTip names={Object.fromEntries([["ref", L("Current practice", "Hiện tại")], ...shown.map((s) => [s.id, s.name])])} fmt={soilTick} />
-              ) : (
-                <ChartTooltip unit={unit} digits={metric === "diversity" ? 2 : 0} />
-              )
-            }
-          />
+          <Tooltip content={<ChartTooltip unit={unit} digits={metric === "water" ? 0 : 2} />} />
           <Legend wrapperStyle={{ fontSize: 11 }} iconSize={9} />
           <ReferenceLine x={selectedYear} stroke="#174D3A" strokeDasharray="3 3" label={{ value: String(selectedYear), position: "top", fill: "#174D3A", fontSize: 11 }} />
           {metric === "water" && <Area dataKey="_band" stroke="none" fill={scenarioColor(scenarios.find((s) => s.id === activeId))} fillOpacity={0.12} legendType="none" isAnimationActive={false} name="_band" />}
-          <Line dataKey="ref" name={L("Current practice", "Canh tác hiện tại")} stroke="#86938c" strokeWidth={2} strokeDasharray="2 4" dot={false} type={metric === "soil" ? "stepAfter" : "linear"} />
+          <Line dataKey="ref" name={L("Current practice", "Canh tác hiện tại")} stroke="#86938c" strokeWidth={2} strokeDasharray="2 4" dot={false} type="linear" />
           {shown.map((s, i) => (
             <Line
               key={s.id}
@@ -100,47 +91,18 @@ export function TrendCharts({
               strokeWidth={s.id === activeId ? 3 : 2}
               strokeDasharray={DASHES[i % DASHES.length]}
               dot={{ r: s.id === activeId ? 4 : 3 }}
-              type={metric === "soil" ? "stepAfter" : "linear"}
+              type="linear"
               animationDuration={300}
             />
           ))}
         </ComposedChart>
       </ChartFrame>
+      {metric === "soil" && <p className="mt-2 text-[11px] text-ink-3">{t("rothc.depthSource")} · {t("status.estimated")}. {t("rothc.limit")}</p>}
       {metric === "water" && (
         <p className="mt-1 text-[11px] text-ink-3">
           {L("Shaded band: 10–90% range across historical weather years for the selected scenario.", "Vùng tô: khoảng 10–90% theo các năm thời tiết lịch sử cho kịch bản đang chọn.")} {t("status.estimated")}.
         </p>
       )}
-    </div>
-  );
-}
-
-function SoilTip({
-  active,
-  payload,
-  label,
-  names,
-  fmt,
-}: {
-  active?: boolean;
-  payload?: { dataKey?: string | number; value?: number; color?: string }[];
-  label?: string | number;
-  names: Record<string, string>;
-  fmt: (v: number) => string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-[var(--shadow-float)]">
-      <p className="mb-1 font-semibold text-ink">{label}</p>
-      {payload
-        .filter((p) => !String(p.dataKey).startsWith("_"))
-        .map((p) => (
-          <p key={String(p.dataKey)} className="flex items-center gap-2 text-ink-2">
-            <span className="h-2 w-2 rounded-full" style={{ background: p.color }} aria-hidden />
-            <span className="flex-1">{names[String(p.dataKey)] ?? p.dataKey}</span>
-            <span className="font-semibold text-ink">{fmt(p.value ?? 0)}</span>
-          </p>
-        ))}
     </div>
   );
 }

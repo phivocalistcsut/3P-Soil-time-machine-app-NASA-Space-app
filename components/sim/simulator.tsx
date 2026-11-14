@@ -1,5 +1,6 @@
 "use client";
 
+import { SoilCarbon } from "./soil-carbon";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -54,7 +55,6 @@ import {
   FarmDemoNotice,
   NoFarmState,
   scenarioColor,
-  SoilMeter,
   StatusBadge,
   StressBadge,
 } from "@/components/common";
@@ -132,8 +132,8 @@ function fieldStatus(metric: MapMetric, r: SimulationResult) {
     };
   }
   return {
-    color: SOIL_COLORS[r.soilImprovementPotential.level - 1],
-    key: `soil.${r.soilImprovementPotential.level}`,
+    color: r.soilImprovementPotential ? SOIL_COLORS[r.soilImprovementPotential.level - 1] : "#A3ADA8",
+    key: r.soilImprovementPotential ? `soil.${r.soilImprovementPotential.level}` : "status.unavailable",
   };
 }
 
@@ -691,14 +691,9 @@ export function Simulator() {
           <StatTile
             tone="green"
             icon={Sprout}
-            label={L("Soil outlook", "Triển vọng đất")}
-            value={
-              <SoilMeter
-                level={result.soilImprovementPotential.level}
-                compact
-              />
-            }
-            note={t(`soil.${result.soilImprovementPotential.level}`)}
+            label={t("rothc.title")}
+            value={<SoilCarbon result={result} compact />}
+            note={t("rothc.limit")}
           />
           <StatTile
             tone="violet"

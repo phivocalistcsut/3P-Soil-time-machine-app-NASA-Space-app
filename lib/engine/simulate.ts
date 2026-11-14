@@ -19,6 +19,7 @@ import type {
   SuitabilityFactor,
 } from "@/lib/types";
 import { smapWetMonths } from "./environment";
+import { applySoilCarbon, initializeSoilCarbon } from "./soil-carbon";
 import { getMonth, prepareClimate, quantile, type PreparedClimate, climateAdjustment } from "./climate";
 import { extremesClimatology } from "@/lib/services/power-daily";
 import type { DailyExtremes } from "@/lib/types";
@@ -28,7 +29,7 @@ import type { DailyExtremes } from "@/lib/types";
  * Pure functions, JSON-serializable I/O (portable to a FastAPI service).
  * ========================================================================== */
 
-export const ENGINE_VERSION = "0.4.0";
+export const ENGINE_VERSION = "0.5.0";
 
 /** Paddy percolation + seepage (mm/day) and land-preparation water (mm) by texture. */
 export const PERCOLATION_MM_DAY: Record<SoilTexture, number> = { clay: 1.5, silty_clay: 2, loam: 4, sandy_loam: 6, sand: 10 };
@@ -36,9 +37,6 @@ export const LAND_PREP_MM: Record<SoilTexture, number> = { clay: 150, silty_clay
 /** Assumed irrigation water that can be supplied per season (mm). */
 export const SUPPLY_MM: Record<FarmProfile["waterAvailability"], number> = { abundant: 1000, moderate: 550, limited: 300 };
 export const SOURCE_FACTOR: Record<FarmProfile["irrigationSource"], number> = { canal: 1, groundwater: 1, pond: 0.8, rainfed: 0 };
-/** Soil memory: weight given to the current year when updating the soil indicator. */
-export const SOIL_MEMORY_NEW = 0.4;
-export const SOIL_LEVEL_THRESHOLDS = [-0.6, -0.2, 0.25, 0.6];
 export const REF_IRRIGATION_MM = 1500;
 export const REF_NITROGEN = 350;
 
@@ -358,25 +356,6 @@ export function slotsForYear(scenario: RotationScenario, t: number, farm: FarmPr
   );
 }
 
-function soilPointsFor(seasons: { crop: Crop; prev: Crop | null }[]) {
-  let total = 0;
-  let floodedCount = 0;
-  for (const { crop, prev } of seasons) {
-    let p = crop.agronomicProperties.soilPoints;
-    if (crop.flooded && prev?.flooded) p -= 0.6;
-    if (crop.flooded) floodedCount++;
-    total += p;
-  }
-  let mean = total / Math.max(1, seasons.length);
-  if (floodedCount >= 3) mean -= 0.3;
-  return mean;
-}
-
-function soilLevel(index: number): 1 | 2 | 3 | 4 | 5 {
-  const [a, b, c, d] = SOIL_LEVEL_THRESHOLDS;
-  return index <= a ? 1 : index <= b ? 2 : index <= c ? 3 : index <= d ? 4 : 5;
-}
-
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
 
 function shannon(ids: string[]) {
@@ -424,17 +403,21 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
   const expanded: { t: number; slots: SeasonalCropSlot[] }[] = [];
   for (let t = 0; t <= H; t++) expanded.push({ t, slots: slotsForYear(scenario, t, farm) });
 
-  // previous crop chain across the whole horizon (for N credit and consecutive-rice logic)
-  const flat = expanded.flatMap(({ t, slots }) => slots.map((s) => ({ t, s })));
+  // Previous crop chain across the whole horizon for N credit.
+  // Adjacent crop years keep cross-boundary cover and overlap checks complete (e.g. November planting).
+  const padded = [{ t: -1, slots: currentPracticeSlots(farm) }, ...expanded,
+    { t: H + 1, slots: slotsForYear(scenario, H + 1, farm) }];
+  const flat = padded.flatMap(({ t, slots }) => slots.map((s) => ({ t, s })));
   const prevHistCrop = getCrop(farm.cropHistory.previousCropId);
-  const calcs: SeasonCalc[] = flat.map(({ t, s }, i) => {
+  const paddedCalcs: SeasonCalc[] = flat.map(({ t, s }, i) => {
     const prevSlot = i > 0 ? flat[i - 1].s : null;
-    const prev = prevSlot ? getCrop(prevSlot.cropId) ?? CROP_MAP.fallow : prevHistCrop;
+    // Padding supplies calendar cover; the first displayed season still uses the farmer's actual previous crop.
+    const prev = i === 3 ? prevHistCrop : prevSlot ? getCrop(prevSlot.cropId) ?? CROP_MAP.fallow : prevHistCrop;
     return evaluateSlot(ctx, s, settings.startYear + t, prev);
   });
 
   // Check every active crop still in the ground at the next planting date.
-  const planted = calcs.filter((s) => s.cropId && s.cropId !== "fallow").map((season) => ({
+  const planted = paddedCalcs.filter((s) => s.cropId && s.cropId !== "fallow").map((season) => ({
     season, start: Date.UTC(season.year, season.startOffset - 1, 1),
   })).sort((a, b) => a.start - b.start);
   for (let i = 0; i < planted.length; i++) {
@@ -449,19 +432,11 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
   }
 
   const years: SimulationResult[] = [];
-  let soilIndex = 0;
+  const calcs = paddedCalcs.slice(3, -3);
   const allCropIdsByYear: string[][] = [];
   expanded.forEach(({ t }, ti) => {
     const seasons = calcs.slice(ti * 3, ti * 3 + 3);
     const year = settings.startYear + t;
-    const crops = seasons.map((s) => getCrop(s.cropId) ?? CROP_MAP.fallow);
-    const prevCrops = seasons.map((_, i) => {
-      const gi = ti * 3 + i;
-      return gi > 0 ? getCrop(calcs[gi - 1].cropId) ?? CROP_MAP.fallow : prevHistCrop;
-    });
-    const yearPoints = soilPointsFor(crops.map((c, i) => ({ crop: c, prev: prevCrops[i] })));
-    soilIndex = t === 0 ? yearPoints : (1 - SOIL_MEMORY_NEW) * soilIndex + SOIL_MEMORY_NEW * yearPoints;
-    const soilScore = clamp(((soilIndex + 1) / 1.8) * 100);
 
     // diversity: trailing 3-year window (current practice included for early years)
     allCropIdsByYear.push(seasons.map((s) => s.cropId).filter((c): c is string => !!c && c !== "fallow"));
@@ -472,7 +447,7 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
     const divScore = clamp((h / 1.1) * 100);
 
     // bare soil under rain (erosion / nutrient-loss proxy)
-    const cover = coverForYear(calcs, year);
+    const cover = coverForYear(paddedCalcs, year);
     const bareIndex = cover.reduce((sum, c) => {
       const clim = ctx.climate.climatology[c.month - 1];
       const heavy = ctx.extremes?.[c.month - 1]?.heavyRainDays ?? 0;
@@ -554,26 +529,14 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
       income = clamp(50 + (100 * (economics.grossMargin - refGm)) / Math.max(Math.abs(refGm), 1) - 8 * riskySeasons);
     }
     const criteriaScores: Record<CriterionId, number | null> = {
-      soil: 0.7 * soilScore + 0.3 * divScore,
+      soil: null, // Filled from RothC once the shared baseline-climate spin-up is available.
       water: clamp(100 * (1 - waterDemand.median / REF_IRRIGATION_MM)),
       drought: clamp(100 - (meanStress / 3) * 100 - (waterRisk.dryYearExceeds ? 10 : 0)),
       income,
       inputs: clamp(100 * (1 - nitrogen / REF_NITROGEN)),
       climate: suit,
     };
-    const w = settings.weights;
-    let wSum = 0;
-    (Object.keys(criteriaScores) as CriterionId[]).forEach((k) => {
-      if (criteriaScores[k] !== null) wSum += w[k] ?? 0;
-    });
-    const contributions = {} as Record<CriterionId, number>;
-    let overall = 0;
-    (Object.keys(criteriaScores) as CriterionId[]).forEach((k) => {
-      const s = criteriaScores[k];
-      const c = s === null || wSum === 0 ? 0 : ((w[k] ?? 0) * s) / wSum;
-      contributions[k] = c;
-      overall += c;
-    });
+    const weighted = weightedScore(criteriaScores, settings.weights);
 
     const soilMeasured = farm.soilSources.soilType.status === "observed";
     const climObs = ctx.climate.dataset.status !== "illustrative";
@@ -608,12 +571,12 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
         legumeSeasons,
         cls: h < 0.4 ? "low" : h < 0.9 ? "moderate" : "high",
       },
-      soilImprovementPotential: { index: soilIndex, level: soilLevel(soilIndex), yearPoints, score: soilScore },
+      soilImprovementPotential: null,
+      soilCarbonInputs: null,
       nitrogenNeed: nitrogen,
       economics,
       criteriaScores,
-      contributions,
-      overallScore: overall,
+      ...weighted,
       metricSources: {
         waterDemand: "src.waterDemand",
         waterRisk: "src.waterRisk",
@@ -623,14 +586,14 @@ function simulateScenario(ctx: EngineContext, scenario: RotationScenario, refere
         nitrogen: "src.nitrogen",
         economics: "src.economics",
       },
-      assumptions: ["asm.et0", "asm.peff", "asm.flood", "asm.supply", "asm.soilMemory", "asm.noStorage"],
+      assumptions: ["asm.et0", "asm.peff", "asm.flood", "asm.supply", "asm.noStorage"],
       uncertainty,
       dataStatus: {
         waterDemand: climateStatus,
         waterRisk: climateStatus,
         cropSuitability: climateStatus,
         rotationDiversity: "estimated",
-        soilImprovementPotential: "estimated",
+        soilImprovementPotential: "unavailable",
         nitrogen: "estimated",
         economics: economics ? economics.status : "unavailable",
       },
@@ -660,18 +623,27 @@ export function runEngine(input: EngineInput): EngineOutput {
   const extremes = input.extremes ? extremesClimatology(input.extremes) : null;
   const wettestSmapMonths = smapWetMonths(input.smap, farm);
   const ctx: EngineContext = { farm, climate: prepared, settings, extremes, wettestSmapMonths };
-  const reference = simulateScenario(ctx, referenceScenario(farm, settings));
+  let reference = simulateScenario(ctx, referenceScenario(farm, settings));
   const results: Record<string, ScenarioSimulation> = {};
   scenarios.forEach((s) => (results[s.id] = simulateScenario(ctx, s, reference)));
 
   const baselineClimate: Record<string, ScenarioSimulation> = {};
+  const base = settings.climateAssumption === "baseline" ? prepared : prepareClimate(climate, "baseline");
   if (settings.climateAssumption !== "baseline") {
-    const base = prepareClimate(climate, "baseline");
     const bctx: EngineContext = { ...ctx, climate: base, settings: { ...settings, climateAssumption: "baseline" } };
     const bref = simulateScenario(bctx, referenceScenario(farm, settings));
     scenarios.forEach((s) => (baselineClimate[s.id] = simulateScenario(bctx, s, bref)));
     baselineClimate[REFERENCE_ID] = bref;
   }
+  // Exactly one inverse spin-up per engine run, using current practice under baseline climate.
+  const setup = initializeSoilCarbon(farm, base, (baselineClimate[REFERENCE_ID] ?? reference).years[0]);
+  const finish = (simulation: ScenarioSimulation, climate: PreparedClimate) => {
+    const soil = applySoilCarbon(simulation, climate, setup);
+    return { ...soil, years: soil.years.map((year) => ({ ...year, ...weightedScore(year.criteriaScores, settings.weights) })) };
+  };
+  reference = finish(reference, prepared);
+  for (const id of Object.keys(results)) results[id] = finish(results[id], prepared);
+  for (const id of Object.keys(baselineClimate)) baselineClimate[id] = finish(baselineClimate[id], base);
   return {
     engineVersion: ENGINE_VERSION,
     reference,
@@ -680,6 +652,14 @@ export function runEngine(input: EngineInput): EngineOutput {
     years: Array.from({ length: settings.horizon + 1 }, (_, i) => settings.startYear + i),
     climateStatus: climate.status === "illustrative" ? "illustrative" : "estimated",
   };
+}
+
+function weightedScore(scores: Record<CriterionId, number | null>, weights: Record<CriterionId, number>) {
+  const keys = Object.keys(scores) as CriterionId[];
+  const total = keys.reduce((sum, key) => sum + (scores[key] === null ? 0 : weights[key] ?? 0), 0);
+  const contributions = {} as Record<CriterionId, number>;
+  for (const key of keys) contributions[key] = scores[key] === null || total === 0 ? 0 : (weights[key] ?? 0) * scores[key] / total;
+  return { contributions, overallScore: keys.reduce((sum, key) => sum + contributions[key], 0) };
 }
 
 /** Quick suitability screen of every crop for each season (used to build default strategies). */

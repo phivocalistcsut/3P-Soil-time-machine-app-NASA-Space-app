@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CalendarRange, Download, FolderOpen, ListOrdered, NotebookPen, Pencil, Printer, Save, Table2, Trash2, X } from "lucide-react";
 import { PageHeader, SectionPanel, SectionTabs, useSection } from "@/components/ui/sections";
 import { climateValues, useI18n } from "@/lib/i18n";
+import { SoilCarbon } from "@/components/sim/soil-carbon";
 import { useApp } from "@/lib/store";
 import { useEngine, useScenarios } from "@/lib/hooks";
 import { getCrop, SEASONS } from "@/lib/data/crops";
 import { newId } from "@/lib/data/demo";
 import { screenCrops } from "@/lib/engine/simulate";
 import type { SeasonResult } from "@/lib/types";
-import { ClimateNotice, ModelRainSource, CropIcon, Disclaimer, FarmDemoNotice, NoFarmState, scenarioColor, SoilMeter, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
+import { ClimateNotice, ModelRainSource, CropIcon, Disclaimer, FarmDemoNotice, NoFarmState, scenarioColor, StatusBadge, StressBadge, SuitBadge } from "@/components/common";
 import { Badge, Button, Card, CardHeader, Select, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/overlays";
 import { RotationGantt } from "@/components/sim/timeline";
@@ -93,7 +94,7 @@ export function Planner() {
       `${L("Generated", "Tạo lúc")}: ${new Date().toISOString().slice(0, 10)}`,
       "",
       ...years.flatMap((y) => [
-        `${y.year} — ${L("irrigation", "tưới")} ≈ ${Math.round(y.waterDemand.median)} mm (${Math.round(y.waterDemand.p10)}–${Math.round(y.waterDemand.p90)}), ${L("soil outlook", "triển vọng đất")}: ${t(`soil.${y.soilImprovementPotential.level}`)}`,
+        `${y.year} — ${L("irrigation", "tưới")} ≈ ${Math.round(y.waterDemand.median)} mm (${Math.round(y.waterDemand.p10)}–${Math.round(y.waterDemand.p90)}), ${L("soil outlook", "triển vọng đất")}: ${y.soilImprovementPotential ? `${num(y.soilImprovementPotential.socTCHa, 2)} t C/ha; ${t("rothc.change", { delta: num(y.soilImprovementPotential.deltaTCHa, 2), rate: num(y.soilImprovementPotential.deltaPctPerYear, 2) })}` : t("status.unavailable")}`,
         ...y.seasons.map(
           (s) =>
             `   ${season(s.season)}: ${crop(s.cropId)}${s.cropId && s.cropId !== "fallow" ? ` · ${monthAndYear(plantingDate(s))} → ${harvest(s)} · ≈${Math.round(s.irrigation.median)} mm` : ""}${s.risks.length ? " · " + s.risks.map((k) => t(k)).join("; ") : ""}`,
@@ -431,7 +432,7 @@ export function Planner() {
                       <StressBadge level={y.waterRisk.level} />
                     </td>
                     <td className="px-3 py-2">
-                      <SoilMeter level={y.soilImprovementPotential.level} compact />
+                      <SoilCarbon result={y} compact />
                     </td>
                   </tr>
                 ))}
