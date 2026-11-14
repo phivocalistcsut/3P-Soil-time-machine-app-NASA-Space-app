@@ -2,6 +2,41 @@ import { validCoordinates } from "../data/evidence";
 
 export interface PlaceResult { name: string; lat: number; lon: number; zoom: number }
 
+/** Photon/OSM features, including addresses, POIs and administrative places. */
+export function parsePhoton(json: unknown): PlaceResult[] {
+  if (!json || typeof json !== "object" || !("features" in json) || !Array.isArray(json.features)) throw new Error("invalid_geocoding");
+  const results: PlaceResult[] = [];
+  for (const feature of json.features) {
+    const point = feature?.geometry?.coordinates;
+    const p = feature?.properties;
+    if (feature?.geometry?.type !== "Point" || !Array.isArray(point) || typeof point[0] !== "number" || typeof point[1] !== "number" ||
+      !validCoordinates(point[1], point[0]) || !p || typeof p !== "object") continue;
+    const clean = (v: unknown) => typeof v === "string" ? v.trim() : "";
+    const street = [clean(p.housenumber), clean(p.street)].filter(Boolean).join(" ");
+    const name = [...new Set([clean(p.name), street, clean(p.district), clean(p.city), clean(p.state), clean(p.country)].filter(Boolean))].join(", ");
+    if (!name || results.some(r => Math.abs(r.lon - point[0]) < 0.00001 && Math.abs(r.lat - point[1]) < 0.00001)) continue;
+    const zoom = p.housenumber ? 17 : p.street ? 16 : ["state", "country", "county"].includes(p.type) ? 8 : p.type === "city" ? 12 : 14;
+    results.push({ name, lon: point[0], lat: point[1], zoom });
+  }
+  return results.slice(0, 5);
+}
+
+/** Public Photon permits reasonable project use. Submit-only, no autocomplete. */
+export async function geocodePhoton(query: string, language: "vi" | "en", fetcher: typeof fetch = fetch) {
+  const base = process.env.PHOTON_GEOCODING_URL || "https://photon.komoot.io/api/";
+  const url = new URL(base);
+  url.searchParams.set("q", query);
+  url.searchParams.set("limit", "5");
+  // The public instance supports en/de/fr, with local OSM names as fallback.
+  if (language === "en") url.searchParams.set("lang", "en");
+  const response = await fetcher(url, {
+    signal: AbortSignal.timeout(8000), cache: "no-store",
+    headers: { "User-Agent": "SoilTimeMachine/0.1 (+https://github.com/phivocalistcsut/3P-Soil-time-machine-app-NASA-Space-app)", "Accept": "application/json" },
+  });
+  if (!response.ok) throw new Error("geocoding_unavailable");
+  return parsePhoton(await response.json());
+}
+
 /** MapTiler GeoJSON contract. Discard malformed coordinates and duplicate features. */
 export function parseGeocoding(json: unknown): PlaceResult[] {
   if (!json || typeof json !== "object" || !("features" in json) || !Array.isArray(json.features)) throw new Error("invalid_geocoding");

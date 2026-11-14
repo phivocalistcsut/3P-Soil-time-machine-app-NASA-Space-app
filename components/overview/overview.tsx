@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ArrowRight,
   CalendarClock,
   CloudRain,
   Droplets,
   Flame,
-  Layers,
   Leaf,
   Map as MapIcon,
   MapPin,
@@ -31,16 +30,13 @@ import { climateSummary } from "@/lib/engine/simulate";
 import { buildCalendar } from "@/lib/engine/insights";
 import { extremesByYear } from "@/lib/services/power-daily";
 import { SEASON_ORDER } from "@/lib/data/crops";
-import type { OverlayId } from "@/lib/data/layers";
 import { EvidenceList, WaterEvidence } from "./farm-evidence";
-import { FarmMap, type Basemap } from "@/components/map/farm-map";
-import { BasemapToggle, LayerPanel, MapLegend, LayerTimeBar } from "@/components/map/layer-panel";
+import { MapExplorer } from "@/components/map/map-explorer";
 import { PrecipChart, SoilWetnessChart, TemperatureChart } from "@/components/charts";
 import { MetricCard } from "@/components/metric-card";
 import { ClimateNotice, CropIcon, DataChips, NoFarmState, StatusBadge, Term } from "@/components/common";
 import { ExtremesByYear, ExtremesChart, NdviChart, RiskCalendar, ndviDips } from "@/components/insights";
 import { Badge, Card, Skeleton, buttonClass, cn } from "@/components/ui/primitives";
-import { Sheet } from "@/components/ui/overlays";
 import { PageHeader, SectionPanel, SectionTabs, StatTile, Strip, useSection } from "@/components/ui/sections";
 
 const SECTIONS = ["map", "weather", "soil", "extremes", "green", "risk", "sources"];
@@ -52,10 +48,6 @@ export function Overview() {
   const trend = useMemo(() => temperatureHistory.data ? temperatureTrend(temperatureHistory.data.points) : null, [temperatureHistory.data]);
   const { climate, modelClimate, modelLoading, extremes, output, ndvi, imerg, smap, usesImerg } = useEngine();
   const [section, setSection] = useSection("overview", SECTIONS, "map");
-  const [basemap, setBasemap] = useState<Basemap>("satellite");
-  const [overlays, setOverlays] = useState<OverlayId[]>([]);
-  const [showBoundary, setShowBoundary] = useState(true);
-  const [layersOpen, setLayersOpen] = useState(false);
   const summary = useMemo(() => (climate.data ? climateSummary(climate.data) : null), [climate.data]);
   const calendar = useMemo(
     () =>
@@ -70,7 +62,6 @@ export function Overview() {
   const climStatus = d?.status ?? "unavailable";
   const period = d ? `${d.period[0]}–${d.period[1]}` : "";
   const srcLabel = d ? `${d.source} · ${d.resolution}${d.retrievedAt ? ` · ${L("retrieved", "lấy ngày")} ${d.retrievedAt}` : ""}` : "";
-  const toggle = (id: OverlayId) => setOverlays((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
   const yearly = extremes.data ? extremesByYear(extremes.data) : [];
   const avgHot = yearly.length ? yearly.reduce((s, y) => s + y.hotDays, 0) / yearly.length : null;
   const avgHeavy = yearly.length ? yearly.reduce((s, y) => s + y.heavyRainDays, 0) / yearly.length : null;
@@ -86,10 +77,6 @@ export function Overview() {
     { id: "sources", icon: Satellite, label: L("Data sources", "Nguồn dữ liệu"), hint: L("Coverage and quality", "Phạm vi và chất lượng"), tone: "blue" as const },
     { id: "risk", icon: CalendarClock, label: L("Risk calendar", "Lịch rủi ro"), hint: L("Bare & vulnerable months today", "Tháng đất trống, dễ tổn thương"), tone: "amber" as const },
   ];
-
-  const layerControls = (
-    <LayerPanel overlays={overlays} onToggle={toggle} showBoundary={showBoundary} onToggleBoundary={() => setShowBoundary((v) => !v)} hasBoundary={!!farm.boundary} />
-  );
 
   return (
     <div className="space-y-5">
@@ -119,34 +106,7 @@ export function Overview() {
       {/* MAP */}
       <SectionPanel id="map" active={section === "map"}>
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <Card className="overflow-hidden">
-            <div className="relative h-[380px] md:h-[500px]">
-              <FarmMap
-                center={[farm.longitude, farm.latitude]}
-                zoom={farm.boundary ? 15.5 : 13.5}
-                basemap={basemap}
-                overlays={overlays}
-                boundary={farm.boundary}
-                showBoundary={showBoundary}
-                marker={[farm.longitude, farm.latitude]}
-                fitToBoundary
-                className="absolute inset-0"
-              />
-              <div className="absolute left-3 top-3 flex flex-col items-start gap-2">
-                <BasemapToggle value={basemap} onChange={setBasemap} />
-                <button onClick={() => setLayersOpen(true)} className="flex h-9 items-center gap-1.5 rounded-xl border border-line bg-white px-3 text-xs font-semibold shadow-sm">
-                  <Layers className="h-3.5 w-3.5" aria-hidden />
-                  {L("NASA layers", "Lớp NASA")}
-                  {overlays.length > 0 && <Badge tone="blue">{overlays.length}</Badge>}
-                </button>
-              </div>
-              <MapLegend overlays={overlays} className="absolute right-14 top-3 hidden sm:block" />
-              <LayerTimeBar overlays={overlays} onEnable={() => toggle("smap")} className="absolute bottom-3 left-3 right-12 sm:right-auto sm:max-w-[460px]" />
-            </div>
-            <div className="border-t border-line px-4 py-2 text-[11px] text-ink-2">
-              {basemap === "satellite" ? L("Imagery: Sentinel-2 cloudless 2023 · 10 m", "Ảnh: Sentinel-2 cloudless 2023 · 10 m") : "© OpenStreetMap · CARTO"} · {num(farm.latitude, 4)}, {num(farm.longitude, 4)}
-            </div>
-          </Card>
+          <MapExplorer key={farm.id} farm={farm} />
           <Card className="h-fit p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold">{L("Farm profile", "Hồ sơ ruộng")}</h2>
@@ -193,10 +153,6 @@ export function Overview() {
             </ol>
           </Card>
         </div>
-        <Sheet open={layersOpen} onOpenChange={setLayersOpen} title={L("NASA map layers", "Lớp bản đồ NASA")} side="right">
-          {layerControls}
-          <MapLegend overlays={overlays} className="mt-3" />
-        </Sheet>
       </SectionPanel>
 
       {/* WEATHER */}
