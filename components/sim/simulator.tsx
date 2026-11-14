@@ -1,9 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  ChevronDown,
+  Info,
+  Leaf,
   BarChart3,
   CalendarClock,
   CalendarRange,
@@ -78,8 +82,9 @@ import {
   SectionPanel,
   SectionTabs,
   Strip,
-  useSection,
 } from "@/components/ui/sections";
+import { RiskStrip, VisualState, mainRisks } from "@/components/overview/field-info";
+import { CountUp, DoneChip, GlanceCard, PLAN_PHOTO, ScoreCompare, StepHeader, Takeaways, TrendSpark, type SimStep, type Takeaway } from "./sim-steps";
 import { TimelineSlider, RotationGantt } from "./timeline";
 import { RotationBuilder, type ScreenResult } from "./rotation-builder";
 import { OutcomePanel } from "./outcomes";
@@ -89,6 +94,7 @@ import { MonthlyWaterChart, TrendCharts } from "./sim-charts";
 
 const SOIL_COLORS = ["#D97167", "#E4A84C", "#A3ADA8", "#66AD79", "#287043"];
 const STRESS_COLORS = ["#66AD79", "#E4A84C", "#D97167", "#A63F33"];
+const readHash = () => (typeof window === "undefined" ? "" : window.location.hash.replace("#", ""));
 const SECTIONS = [
   "results",
   "why",
@@ -135,7 +141,7 @@ function fieldStatus(metric: MapMetric, r: SimulationResult) {
 }
 
 export function Simulator() {
-  const { L, t, crop, num, season, signed } = useI18n();
+  const { L, t, crop, num, season, signed, month, lang } = useI18n();
   const farm = useApp((s) => s.farm);
   const scenarios = useScenarios();
   const activeId = useApp((s) => s.activeScenarioId);
@@ -157,7 +163,50 @@ export function Simulator() {
   const setDraft = useApp((s) => s.setScenarioDraft);
   const discardDraft = useApp((s) => s.discardScenarioDraft);
   const [overlays, setOverlays] = useState<OverlayId[]>([]);
-  const [section, setSection] = useSection("simulator", SECTIONS, "results");
+  // step-by-step picker; deep links such as /simulator#calendar go straight to the results
+  const [step, setStep] = useState<SimStep>(() => (SECTIONS.includes(readHash()) ? 4 : 1));
+  const [doneOnce, setDoneOnce] = useState(() => SECTIONS.includes(readHash()));
+  const [full, setFull] = useState(() => SECTIONS.includes(readHash()));
+  const [section, setSection] = useState(() => (SECTIONS.includes(readHash()) ? readHash() : "results"));
+  const setHash = (h: string | null) => {
+    try {
+      window.history.replaceState(null, "", h ? `#${h}` : window.location.pathname);
+    } catch {
+      /* ignore */
+    }
+  };
+  const advance = (n: 1 | 2 | 3) => {
+    const next: SimStep = doneOnce || n === 3 ? 4 : ((n + 1) as SimStep);
+    if (next === 4) setDoneOnce(true);
+    setStep(next);
+    window.setTimeout(() => document.getElementById("sim-picker")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+  };
+  const toggleFull = () => {
+    setFull(!full);
+    setHash(!full ? section : null);
+  };
+  const openSection = (id: string) => {
+    setSection(id);
+    setHash(id);
+  };
+  useEffect(() => {
+    const follow = () => {
+      const h = readHash();
+      if (SECTIONS.includes(h)) {
+        setStep(4);
+        setDoneOnce(true);
+        setFull(true);
+        setSection(h);
+      }
+    };
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, []);
+  useEffect(() => {
+    if (!full || step !== 4) return;
+    const id = window.setTimeout(() => document.getElementById("sim-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    return () => window.clearTimeout(id);
+  }, [full, step]);
   const { output, climate, modelClimate, modelLoading, extremes, settings, ndvi, usesImerg } = useEngine();
 
   const scenario = scenarios.find((s) => s.id === activeId) ?? scenarios[0];
@@ -306,7 +355,11 @@ export function Simulator() {
     upsert(copy);
     setActive(copy.id);
     if (compareIds.length < 3) setCompareIds([...compareIds, copy.id]);
+    setStep(4);
+    setDoneOnce(true);
+    setFull(true);
     setSection("edit");
+    setHash("edit");
     toast.success(
       L(
         "Copy created — change the crops below",
@@ -360,57 +413,53 @@ export function Simulator() {
     }
   };
 
-  const tabs = [
-    {
-      id: "results",
-      icon: Gauge,
-      label: L("All results", "Tất cả kết quả"),
-      hint: L("8 indicators vs today", "8 chỉ số so với hiện tại"),
-      tone: "blue" as const,
-    },
-    {
-      id: "why",
-      icon: Lightbulb,
-      label: L("Why it changes", "Vì sao thay đổi?"),
-      hint: L("Plain-language reasons", "Lý do bằng lời dễ hiểu"),
-      tone: "green" as const,
-    },
-    {
-      id: "calendar",
-      icon: CalendarClock,
-      label: L("12-month calendar", "Lịch 12 tháng"),
-      hint: L("Bare & risky months", "Tháng trống, tháng rủi ro"),
-      tone: "amber" as const,
-    },
-    {
-      id: "evidence",
-      icon: FileSearch,
-      label: L("Evidence & questions", "Bằng chứng & câu hỏi"),
-      hint: L("What to check locally", "Cần hỏi gì ở địa phương"),
-      tone: "violet" as const,
-    },
-    {
-      id: "map",
-      icon: MapIcon,
-      label: L("Field map", "Bản đồ ruộng"),
-      hint: L("Field coloured by result", "Ruộng tô màu theo kết quả"),
-      tone: "teal" as const,
-    },
-    {
-      id: "charts",
-      icon: BarChart3,
-      label: L("Charts", "Biểu đồ"),
-      hint: L("Year by year, month by month", "Theo năm, theo tháng"),
-      tone: "earth" as const,
-    },
-    {
-      id: "edit",
-      icon: Pencil,
-      label: L("Change the crops", "Chỉnh cách trồng"),
-      hint: L("Swap crops & months", "Đổi cây, đổi tháng gieo"),
-      tone: "leaf" as const,
-      badge: draft ? "•" : undefined,
-    },
+  const dScore = result.overallScore - refResult.overallScore;
+  const scoreSeries = sim!.years.map((y) => y.overallScore);
+  const dTrend = scoreSeries[scoreSeries.length - 1] - scoreSeries[0];
+  const climateIcon = climates.find((c) => c.id === assumption)?.icon ?? SlidersHorizontal;
+  const chips = [
+    { n: 1, icon: Sprout, image: PLAN_PHOTO[scenario.kind], label: L("Planting plan", "Cách trồng"), value: scenario.name, onEdit: () => setStep(1) },
+    { n: 2, icon: CalendarRange, label: L("Year", "Năm"), value: `${year}${result.isBaselineYear ? ` · ${L("today", "hiện tại")}` : ""}`, onEdit: () => setStep(2) },
+    { n: 3, icon: climateIcon, label: L("Weather", "Thời tiết"), value: t(`clim.${assumption}`), onEdit: () => setStep(3) },
+  ];
+  const planPhoto = PLAN_PHOTO[scenario.kind];
+  // plain-language summary of what changes vs. today (the model's full reasons stay in "Why it changes")
+  const takeaways: Takeaway[] = [];
+  if (result.isBaselineYear) {
+    takeaways.push({ icon: Info, tone: "neutral", title: L("This is today", "Đây là năm hiện tại"), detail: L("Every plan starts the same; pick a later year to see changes.", "Mọi cách trồng giống nhau; chọn năm sau để thấy khác biệt.") });
+  } else {
+    const swaps = SEASON_ORDER.map((se) => ({
+      se,
+      from: refResult.seasons.find((x) => x.season === se)?.cropId ?? null,
+      to: result.seasons.find((x) => x.season === se)?.cropId ?? null,
+    })).filter((x) => x.from !== x.to);
+    takeaways.push(
+      swaps.length
+        ? { icon: Sprout, tone: "neutral", title: L(`Different crop in ${swaps.length} season${swaps.length > 1 ? "s" : ""}`, `Đổi cây ở ${swaps.length} vụ`), detail: swaps.map((x) => `${season(x.se)}: ${shortCrop(x.from)} → ${shortCrop(x.to)}`).join(" · ") }
+        : { icon: Sprout, tone: "neutral", title: L("Same crops as today", "Giữ nguyên cây trồng"), detail: L("Only the weather or year differs", "Chỉ khác thời tiết hoặc năm") },
+    );
+    takeaways.push(
+      Math.abs(dWater) < 5
+        ? { icon: Droplets, tone: "neutral", title: L("About the same water", "Nước tưới gần như không đổi"), detail: `${num(result.waterDemand.median)} ${L("mm/year", "mm/năm")}` }
+        : { icon: Droplets, tone: dWater < 0 ? "positive" : "negative", title: dWater < 0 ? L("Less irrigation water", "Tốn ít nước tưới hơn") : L("More irrigation water", "Tốn nhiều nước tưới hơn"), detail: L(`${num(Math.abs(dWater))} mm/year ${dWater < 0 ? "less" : "more"}`, `${dWater < 0 ? "ít" : "nhiều"} hơn ${num(Math.abs(dWater))} mm mỗi năm`) },
+    );
+    const dRisk = result.waterRisk.level - refResult.waterRisk.level;
+    if (dRisk !== 0)
+      takeaways.push({ icon: ShieldAlert, tone: dRisk < 0 ? "positive" : "negative", title: dRisk < 0 ? L("Less risk of running short", "Ít lo thiếu nước hơn") : L("More risk of running short", "Dễ thiếu nước hơn"), detail: `${t(`stress.${refResult.waterRisk.level}`)} → ${t(`stress.${result.waterRisk.level}`)}` });
+    const refSoc = refResult.soilImprovementPotential?.socTCHa;
+    if (soilNow && refSoc !== undefined && Math.abs(soilNow.socTCHa - refSoc) >= 0.05) {
+      const dSoc = soilNow.socTCHa - refSoc;
+      takeaways.push({ icon: Leaf, tone: dSoc > 0 ? "positive" : "negative", title: dSoc > 0 ? L("Soil holds more carbon", "Đất giàu carbon hơn") : L("Soil loses some carbon", "Đất mất bớt carbon"), detail: L(`${signed(dSoc, 2)} t C/ha vs today`, `${signed(dSoc, 2)} t C/ha so với hiện tại`) });
+    }
+  }
+  const fullTabs = [
+    { id: "results", icon: Gauge, label: L("All indicators", "Tất cả chỉ số"), tone: "blue" as const },
+    { id: "why", icon: Lightbulb, label: L("Why it changes", "Vì sao thay đổi"), tone: "green" as const },
+    { id: "calendar", icon: CalendarClock, label: L("12-month calendar", "Lịch 12 tháng"), tone: "amber" as const },
+    { id: "charts", icon: BarChart3, label: L("Charts", "Biểu đồ"), tone: "earth" as const },
+    { id: "map", icon: MapIcon, label: L("Field map", "Bản đồ ruộng"), tone: "teal" as const },
+    { id: "evidence", icon: FileSearch, label: L("Evidence & questions", "Bằng chứng & câu hỏi"), tone: "violet" as const },
+    { id: "edit", icon: Pencil, label: L("Change the crops", "Chỉnh cách trồng"), tone: "leaf" as const, badge: draft ? "•" : undefined },
   ];
 
   return (
@@ -424,8 +473,8 @@ export function Simulator() {
           "Nếu đổi cách trồng, ruộng có thể thay đổi ra sao?",
         )}
         desc={L(
-          "Three simple steps: choose a plan, choose a year, choose the weather. Then open any topic below.",
-          "Ba bước đơn giản: chọn cách trồng, chọn năm, chọn thời tiết. Sau đó mở chủ đề muốn xem bên dưới.",
+          "Three quick steps: plan → year → weather.",
+          "Ba bước nhanh: cách trồng → năm → thời tiết.",
         )}
         actions={
           <Link
@@ -441,271 +490,285 @@ export function Simulator() {
       />
       <ClimateNotice climate={climate} />
 
-      {/* STEP 1 — plan */}
-      <Card className="p-4 md:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
-              1
-            </span>
-            {L("Choose a planting plan", "Chọn cách trồng")}
-          </h2>
-          <div className="flex gap-1.5">
-            <Button variant="outline" size="sm" onClick={duplicate}>
-              <Copy className="h-3.5 w-3.5" aria-hidden />
-              {L("Make my own from this", "Tạo cách trồng riêng")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={del}
-              disabled={scenarios.length <= 1}
-              aria-label={L("Delete this plan", "Xóa cách trồng này")}
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden />
-            </Button>
-          </div>
-        </div>
-        <div
-          className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 md:grid md:grid-cols-[repeat(auto-fit,minmax(230px,1fr))]"
-          role="radiogroup"
-          aria-label={L("Planting plans", "Các cách trồng")}
-        >
-          {scenarios.map((s, i) => {
-            const active = s.id === scenario.id;
-            const yr = output.results[s.id]?.years[ti];
-            const c = scenarioColor(s, i);
-            return (
-              <button
-                key={s.id}
-                role="radio"
-                aria-checked={active}
-                onClick={() => setActive(s.id)}
-                className={cn(
-                  "min-w-[230px] overflow-hidden rounded-2xl border-2 bg-white text-left transition-all",
-                  active
-                    ? "shadow-[var(--shadow-float)]"
-                    : "border-line hover:-translate-y-0.5",
-                )}
-                style={active ? { borderColor: c } : undefined}
-              >
-                <div className="h-2" style={{ background: c }} aria-hidden />
-                <div className="p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-bold">{s.name}</span>
-                    {yr && (
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white tabular"
-                        style={{ background: c }}
+      {/* STEP PICKER: one big step at a time; finished steps shrink to chips */}
+      <div id="sim-picker" className="scroll-mt-24">
+      {step < 4 ? (
+        <div className={cn("grid gap-4", step > 1 && "lg:grid-cols-[260px_minmax(0,1fr)]")}>
+          {step > 1 && (
+            <div className="space-y-2.5">
+              {chips.filter((c) => c.n < step).map((c, i) => (
+                <DoneChip key={c.n} {...c} delay={i * 80} />
+              ))}
+            </div>
+          )}
+          <section key={step} className="anim-rise rounded-3xl border border-line bg-white p-4 shadow-[var(--shadow-card)] md:p-6" aria-live="polite">
+            {step === 1 && (
+              <>
+                <StepHeader
+                  n={1}
+                  title={L("Choose a planting plan", "Chọn cách trồng")}
+                  right={
+                    <span className="flex gap-1.5">
+                      <Button variant="outline" size="sm" onClick={duplicate}>
+                        <Copy className="h-3.5 w-3.5" aria-hidden />
+                        {L("Make my own", "Tạo cách trồng riêng")}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={del} disabled={scenarios.length <= 1} aria-label={L("Delete the selected plan", "Xóa cách trồng đang chọn")}>
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      </Button>
+                    </span>
+                  }
+                />
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" role="radiogroup" aria-label={L("Planting plans", "Các cách trồng")}>
+                  {scenarios.map((s, i) => {
+                    const active = s.id === scenario.id;
+                    const yr = output.results[s.id]?.years[ti];
+                    const c = scenarioColor(s, i);
+                    return (
+                      <button
+                        key={s.id}
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => {
+                          setActive(s.id);
+                          advance(1);
+                        }}
+                        style={{ ...(active ? { borderColor: c } : {}), animationDelay: `${i * 90}ms` }}
+                        className={cn(
+                          "anim-rise lift group flex flex-col overflow-hidden rounded-3xl border-2 bg-white text-left hover:-translate-y-1 hover:shadow-[var(--shadow-float)]",
+                          active ? "shadow-[var(--shadow-float)]" : "border-line",
+                        )}
                       >
-                        {num(yr.overallScore)}/100
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {Array.from({ length: s.cycleYears }, (_, yi) => (
-                      <div key={yi} className="flex items-center gap-1">
-                        {SEASON_ORDER.map((se) => {
-                          const id =
-                            s.seasonalCropSequence.find(
-                              (x) => x.yearIndex === yi && x.season === se,
-                            )?.cropId ?? null;
-                          return (
-                            <span
-                              key={se}
-                              className="flex flex-1 items-center gap-1 truncate rounded-md bg-sand px-1 py-0.5 text-[10.5px] font-medium"
-                              title={crop(id)}
-                            >
-                              <CropIcon
-                                cropId={id}
-                                size={14}
-                                className="rounded"
-                              />
-                              <span className="truncate">{shortCrop(id)}</span>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                  {active && (
-                    <p className="mt-2 text-[11.5px] leading-snug text-ink-2">
-                      {kindText[s.kind]}
-                    </p>
-                  )}
+                        <div className="relative isolate overflow-hidden bg-space-900 px-4 pb-4 pt-5 text-white">
+                          <div aria-hidden className="absolute inset-0 -z-10">
+                            <Image src={`/images/${PLAN_PHOTO[s.kind]}`} alt="" fill sizes="(min-width: 1280px) 420px, 100vw" className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-space-950/90 via-space-950/60 to-space-950/25" />
+                          </div>
+                          <div aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: c }} />
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="title-caps text-lg font-extrabold leading-tight">{s.name}</span>
+                            {yr && (
+                              <span className="shrink-0 rounded-full px-2.5 py-1 font-display text-sm font-extrabold tabular text-white" style={{ background: c }}>
+                                {num(yr.overallScore)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-10 space-y-1.5">
+                            {Array.from({ length: s.cycleYears }, (_, yi) => (
+                              <div key={yi} className="flex items-center gap-1.5">
+                                {SEASON_ORDER.map((se) => {
+                                  const id = s.seasonalCropSequence.find((x) => x.yearIndex === yi && x.season === se)?.cropId ?? null;
+                                  return (
+                                    <span key={se} className="flex flex-1 items-center gap-1.5 truncate rounded-lg bg-space-950/50 px-1.5 py-1 text-[11px] font-semibold backdrop-blur-sm" title={crop(id)}>
+                                      <CropIcon cropId={id} size={18} className="rounded" />
+                                      <span className="truncate">{shortCrop(id)}</span>
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-1 items-end justify-between gap-2 p-4">
+                          <p className="line-clamp-2 text-xs leading-snug text-ink-2">{kindText[s.kind]}</p>
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-ink-2 transition-colors group-hover:bg-lime group-hover:text-space-900">
+                            <ArrowRight className="h-4 w-4" aria-hidden />
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+              </>
+            )}
 
-      {/* STEP 2 + 3 — year & weather */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div>
-          <h2 className="mb-2 flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
-              2
-            </span>
-            {L("Choose a year", "Chọn năm")}
-          </h2>
-          <TimelineSlider
-            years={years}
-            results={sim!.years}
-            value={year}
-            onChange={setYear}
-            climate={modelClimate}
-            usesImerg={usesImerg}
-            color={color}
-          />
+            {step === 2 && (
+              <>
+                <StepHeader n={2} title={L("Choose a year", "Chọn năm")} />
+                <TimelineSlider years={years} results={sim!.years} value={year} onChange={setYear} climate={modelClimate} usesImerg={usesImerg} color={color} />
+                <div className="mt-4 flex justify-end">
+                  <Button size="lg" onClick={() => advance(2)}>
+                    {L(`Continue with ${year}`, `Tiếp tục với năm ${year}`)}
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <StepHeader
+                  n={3}
+                  title={L("Choose the weather", "Chọn thời tiết")}
+                  right={
+                    <InfoTip>
+                      {L(
+                        "Simple, transparent changes applied to 10 years of real NASA POWER weather to test how sensitive each plan is. They are not NASA forecasts.",
+                        "Các điều chỉnh đơn giản, minh bạch áp lên 10 năm thời tiết thật của NASA POWER để thử độ nhạy của mỗi cách trồng. Đây không phải dự báo của NASA.",
+                      )}
+                    </InfoTip>
+                  }
+                />
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" role="radiogroup" aria-label={L("Weather", "Thời tiết")}>
+                  {climates.map((c, ci) => {
+                    const on = assumption === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => {
+                          setClimate(c.id);
+                          advance(3);
+                        }}
+                        style={{ animationDelay: `${ci * 80}ms` }}
+                        className={cn(
+                          "anim-rise lift group relative isolate flex flex-col items-start overflow-hidden rounded-3xl border p-4 text-left hover:-translate-y-1",
+                          on ? "border-space-900 bg-space-900 text-white shadow-[var(--shadow-float)]" : "border-line bg-white hover:border-lime hover:shadow-[var(--shadow-float)]",
+                        )}
+                      >
+                        {on && <div aria-hidden className="absolute inset-0 -z-10 bg-stars opacity-40" />}
+                        <span className={cn("flex h-12 w-12 items-center justify-center rounded-full", on ? "border border-lime/50 text-lime-bright" : "bg-sand text-ink-2 group-hover:bg-lime-soft group-hover:text-lime-ink")}>
+                          <c.icon className="h-6 w-6" aria-hidden />
+                        </span>
+                        <span className="mt-3 text-base font-bold">{t(`clim.${c.id}`)}</span>
+                        <span className={cn("mt-0.5 text-xs leading-snug", on ? "text-white/75" : "text-ink-2")}>{t(`clim.${c.id}.def`)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3">
+                  <CustomClimateCard active={assumption === "custom"} value={customClimate} onSelect={() => setClimate("custom")} onChange={setCustomClimate} />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button size="lg" onClick={() => advance(3)}>
+                    {L("See the result", "Xem kết quả")}
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
+              </>
+            )}
+          </section>
         </div>
-        <div>
-          <h2 className="mb-2 flex items-center gap-2 text-base font-bold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-space-900 font-display text-sm font-extrabold text-lime-bright">
-              3
-            </span>
-            {L("Choose the weather", "Chọn thời tiết")}
-            <InfoTip>
-              {L(
-                "Simple, transparent changes applied to 10 years of real NASA POWER weather to test how sensitive each plan is. They are not NASA forecasts.",
-                "Các điều chỉnh đơn giản, minh bạch áp lên 10 năm thời tiết thật của NASA POWER để thử độ nhạy của mỗi cách trồng. Đây không phải dự báo của NASA.",
-              )}
-            </InfoTip>
-          </h2>
-          <div
-            className="grid grid-cols-2 gap-2 rounded-2xl border border-line bg-white p-3"
-            role="radiogroup"
-            aria-label={L("Weather", "Thời tiết")}
-          >
-            {climates.map((c) => (
-              <button
-                key={c.id}
-                role="radio"
-                aria-checked={assumption === c.id}
-                onClick={() => setClimate(c.id)}
-                className={cn(
-                  "rounded-xl border p-2.5 text-left transition-colors",
-                  assumption === c.id
-                    ? "border-transparent bg-space-900 text-white"
-                    : "border-line hover:border-lime",
-                )}
-              >
-                <span className="flex items-center gap-1.5 text-sm font-semibold">
-                  <c.icon className="h-4 w-4" aria-hidden />
-                  {t(`clim.${c.id}`)}
-                </span>
-                <span
-                  className={cn(
-                    "mt-0.5 block text-[11px] leading-snug",
-                    assumption === c.id ? "text-white/85" : "text-ink-2",
-                  )}
-                >
-                  {t(`clim.${c.id}.def`)}
-                </span>
-              </button>
-            ))}
-            <CustomClimateCard
-              active={assumption === "custom"}
-              value={customClimate}
-              onSelect={() => setClimate("custom")}
-              onChange={setCustomClimate}
-            />
-          </div>
+      ) : (
+        /* SUMMARY of the three choices */
+        <div className="grid gap-3 md:grid-cols-3">
+          {chips.map((c, i) => (
+            <DoneChip key={c.n} {...c} wide delay={i * 90} />
+          ))}
         </div>
+      )}
       </div>
 
-      {/* READOUT: the selected plan in the selected year, at a glance */}
+      {step === 4 && (
+        <>
+      {/* READOUT: the chosen plan's photo, key numbers on glass tiles */}
       <section
         aria-label={L("Result at a glance", "Kết quả tóm tắt")}
-        className="relative isolate overflow-hidden rounded-3xl bg-space-900 p-4 text-white shadow-[var(--shadow-float)] md:p-5"
+        style={{ animationDelay: "120ms" }}
+        className="anim-rise relative isolate overflow-hidden rounded-3xl bg-space-900 p-4 text-white shadow-[var(--shadow-float)] md:p-7"
       >
-        <div aria-hidden className="absolute inset-0 -z-10 bg-stars opacity-40" />
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
-            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} aria-hidden />
-            {scenario.name} · {year}
-            {draft && <Badge tone="amber">{L("Unsaved preview", "Bản xem trước chưa lưu")}</Badge>}
-            {result.isBaselineYear && (
-              <span className="text-xs font-medium text-white/60">
-                ({L("today — same for every plan", "hiện tại — mọi cách trồng như nhau")})
-              </span>
-            )}
-          </p>
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <Image key={planPhoto} src={`/images/${planPhoto}`} alt="" fill sizes="(min-width: 1440px) 1380px, 100vw" className="anim-ken-burns object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-space-950/95 via-space-950/70 to-space-950/35 md:bg-gradient-to-r md:from-space-950/90 md:via-space-950/60 md:to-space-950/20" />
+        </div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="eyebrow text-lime-bright">
+              {L("Result", "Kết quả")} · {year}
+            </p>
+            <h2 className="title-caps mt-2 text-2xl font-extrabold leading-tight md:text-[34px]">{scenario.name}</h2>
+            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-white/75">
+              {t(`clim.${assumption}`)}
+              {draft && <Badge tone="amber">{L("Unsaved preview", "Bản xem trước chưa lưu")}</Badge>}
+              {result.isBaselineYear && <span className="text-xs text-white/60">({L("today — same for every plan", "hiện tại — mọi cách trồng như nhau")})</span>}
+            </p>
+          </div>
           <StatusBadge status={output.climateStatus} />
         </div>
-        <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 lg:grid-cols-5">
-          <div className="bg-space-900 p-3.5">
-            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              <Gauge className="h-3.5 w-3.5 text-lime-bright" aria-hidden />
-              {L("Overall score", "Điểm tổng hợp")}
-            </dt>
-            <dd className="mt-1.5 font-display text-3xl font-extrabold text-lime-bright tabular value-transition">
-              {num(result.overallScore)}
-              <span className="ml-1 text-xs font-semibold text-white/60">/100</span>
-            </dd>
-            <dd className="text-[11px] text-white/60">{L(`today: ${num(refResult.overallScore)}`, `hiện tại: ${num(refResult.overallScore)}`)}</dd>
-          </div>
-          <div className="bg-space-900 p-3.5">
-            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              <Droplets className="h-3.5 w-3.5 text-water" aria-hidden />
-              {L("Irrigation water", "Nước tưới")}
-            </dt>
-            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
-              {num(result.waterDemand.median)}
-              <span className="ml-1 text-xs font-semibold text-white/60">{L("mm/year", "mm/năm")}</span>
-            </dd>
-            <dd className="text-[11px] text-white/60">
-              {Math.abs(dWater) < 5
-                ? L("same as today", "như hiện tại")
-                : L(
-                    `${dWater < 0 ? "−" : "+"}${num(Math.abs(dWater))} mm vs today`,
-                    `${dWater < 0 ? "ít hơn" : "nhiều hơn"} ${num(Math.abs(dWater))} mm so với hiện tại`,
-                  )}
-            </dd>
-          </div>
-          <div className="bg-space-900 p-3.5">
-            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              <Droplets className="h-3.5 w-3.5 text-water" aria-hidden />
-              {L(`Water for ${num(farm.areaHa, 2)} ha`, `Nước cho ${num(farm.areaHa, 2)} ha`)}
-            </dt>
-            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
-              {num(result.waterDemand.m3PerHa * farm.areaHa)}
-              <span className="ml-1 text-xs font-semibold text-white/60">m³</span>
-            </dd>
-            <dd className="text-[11px] text-white/60">{t(`status.${result.dataStatus.waterDemand}`)}</dd>
-          </div>
-          <div className="bg-space-900 p-3.5">
-            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              <ShieldAlert className="h-3.5 w-3.5 text-amber" aria-hidden />
-              {L("Water shortage risk", "Nguy cơ thiếu nước")}
-            </dt>
-            <dd className="mt-2">
-              <StressBadge level={result.waterRisk.level} />
-            </dd>
-            <dd className="mt-1 text-[11px] text-white/60">
-              {L(`today: ${t(`stress.${refResult.waterRisk.level}`)}`, `hiện tại: ${t(`stress.${refResult.waterRisk.level}`)}`)}
-            </dd>
-          </div>
-          <div className="col-span-2 bg-space-900 p-3.5 lg:col-span-1">
-            <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              <Sprout className="h-3.5 w-3.5 text-lime-bright" aria-hidden />
-              {L("Soil carbon", "Carbon đất")}
-            </dt>
-            <dd className="mt-1.5 font-display text-2xl font-extrabold tabular value-transition">
-              {soilNow ? num(soilNow.socTCHa, 2) : "—"}
-              <span className="ml-1 text-xs font-semibold text-white/60">t C/ha</span>
-            </dd>
-            <dd className="text-[11px] text-white/60">
-              {soilNow
+        <dl className="mt-7 grid grid-cols-2 gap-2.5 lg:grid-cols-5">
+          {[
+            {
+              icon: Gauge,
+              iconCls: "text-lime-bright",
+              label: L("Overall score", "Điểm tổng hợp"),
+              value: (
+                <span className="text-4xl text-lime-bright">
+                  <CountUp value={result.overallScore} format={(v) => num(v)} />
+                  <span className="ml-1 text-xs font-semibold text-white/60">/100</span>
+                </span>
+              ),
+              note: L(`today: ${num(refResult.overallScore)}`, `hiện tại: ${num(refResult.overallScore)}`),
+            },
+            {
+              icon: Droplets,
+              iconCls: "text-[#7dbbe6]",
+              label: L("Irrigation water", "Nước tưới"),
+              value: (
+                <>
+                  <CountUp value={result.waterDemand.median} format={(v) => num(v)} />
+                  <span className="ml-1 text-xs font-semibold text-white/60">{L("mm/year", "mm/năm")}</span>
+                </>
+              ),
+              note:
+                Math.abs(dWater) < 5
+                  ? L("same as today", "như hiện tại")
+                  : L(`${dWater < 0 ? "−" : "+"}${num(Math.abs(dWater))} mm vs today`, `${dWater < 0 ? "ít hơn" : "nhiều hơn"} ${num(Math.abs(dWater))} mm so với hiện tại`),
+            },
+            {
+              icon: Droplets,
+              iconCls: "text-[#7dbbe6]",
+              label: L(`Water for ${num(farm.areaHa, 2)} ha`, `Nước cho ${num(farm.areaHa, 2)} ha`),
+              value: (
+                <>
+                  <CountUp value={result.waterDemand.m3PerHa * farm.areaHa} format={(v) => num(v)} />
+                  <span className="ml-1 text-xs font-semibold text-white/60">m³</span>
+                </>
+              ),
+              note: t(`status.${result.dataStatus.waterDemand}`),
+            },
+            {
+              icon: ShieldAlert,
+              iconCls: "text-amber",
+              label: L("Water shortage risk", "Nguy cơ thiếu nước"),
+              value: <StressBadge level={result.waterRisk.level} />,
+              note: L(`today: ${t(`stress.${refResult.waterRisk.level}`)}`, `hiện tại: ${t(`stress.${refResult.waterRisk.level}`)}`),
+            },
+            {
+              icon: Sprout,
+              iconCls: "text-lime-bright",
+              label: L("Soil carbon", "Carbon đất"),
+              value: soilNow ? (
+                <>
+                  <CountUp value={soilNow.socTCHa} format={(v) => num(v, 2)} />
+                  <span className="ml-1 text-xs font-semibold text-white/60">t C/ha</span>
+                </>
+              ) : (
+                "—"
+              ),
+              note: soilNow
                 ? refResult.soilImprovementPotential
                   ? `${t("rothc.vsCurrent", { delta: signed(soilNow.socTCHa - refResult.soilImprovementPotential.socTCHa, 2) })} · RothC`
                   : `${t("status.estimated")} (RothC)`
-                : t("status.unavailable")}
-            </dd>
-          </div>
+                : t("status.unavailable"),
+            },
+          ].map((m, i) => (
+            <div
+              key={m.label}
+              style={{ animationDelay: `${300 + i * 90}ms` }}
+              className={cn("anim-rise rounded-2xl border border-white/15 bg-space-950/45 p-3.5 backdrop-blur-md", i === 4 && "col-span-2 lg:col-span-1")}
+            >
+              <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/65">
+                <m.icon className={cn("h-3.5 w-3.5", m.iconCls)} aria-hidden />
+                {m.label}
+              </dt>
+              <dd className="mt-2 font-display text-2xl font-extrabold tabular">{m.value}</dd>
+              <dd className="mt-0.5 text-[11px] text-white/65">{m.note}</dd>
+            </div>
+          ))}
         </dl>
         {seasonToCheck && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber/40 bg-amber/10 px-4 py-3">
+          <div style={{ animationDelay: "800ms" }} className="anim-rise mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber/40 bg-space-950/50 px-4 py-3 backdrop-blur-md">
             <p className="flex items-center gap-2 text-sm">
               <ShieldAlert className="h-4 w-4 shrink-0 text-amber" aria-hidden />
               {L(`Check water supply for ${season(seasonToCheck)}`, `Kiểm tra nguồn nước cho vụ ${season(seasonToCheck)}`)}
@@ -718,13 +781,85 @@ export function Simulator() {
         )}
       </section>
 
-      <SectionTabs
-        tabs={tabs}
-        value={section}
-        onChange={setSection}
-        label={L("Result topics", "Chủ đề kết quả")}
-      />
+      {/* EVERYTHING AT A GLANCE: no tabs, nothing to click */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <GlanceCard
+          icon={Gauge}
+          title={L("Compared with today", "So với hiện tại")}
+          value={<CountUp value={dScore} format={(v) => `${v >= 0 ? "+" : "−"}${num(Math.abs(v))}`} />}
+          unit={L("points", "điểm")}
+          note={L("Overall score from 8 indicators", "Điểm tổng hợp từ 8 chỉ số")}
+          visual={<ScoreCompare score={result.overallScore} today={refResult.overallScore} color={color} />}
+          image="plan-water.webp"
+          delay={350}
+        />
+        <GlanceCard
+          icon={TrendingUp}
+          title={L("Year by year", "Qua từng năm")}
+          value={<CountUp value={dTrend} format={(v) => `${v >= 0 ? "+" : "−"}${num(Math.abs(v))}`} />}
+          unit={L(`points ${years[0]}→${years[years.length - 1]}`, `điểm ${years[0]}→${years[years.length - 1]}`)}
+          note={L(`Score in each year; ${year} highlighted`, `Điểm từng năm; năm ${year} được đánh dấu`)}
+          visual={<TrendSpark values={scoreSeries} years={years} selected={ti} color={color} today={refResult.overallScore} />}
+          delay={460}
+        />
+        <GlanceCard
+          icon={CalendarClock}
+          title={L("Riskiest months", "Tháng nhiều rủi ro nhất")}
+          value={calendar && calendar.worstMonths.length ? <span className="text-[24px]">{calendar.worstMonths.slice(0, 3).map((m) => month(m)).join(" · ")}</span> : "—"}
+          note={
+            calendar
+              ? `${mainRisks(calendar).slice(0, 2).map((r) => r.name[lang]).join(", ") || L("No high risk", "Không có rủi ro cao")}${calendar.bareMonths.length ? ` · ${L(`${calendar.bareMonths.length} bare months`, `${calendar.bareMonths.length} tháng ruộng trống`)}` : ""}`
+              : undefined
+          }
+          visual={calendar ? <RiskStrip calendar={calendar} /> : <VisualState loading />}
+          image="card-harvest.webp"
+          delay={570}
+          className="md:col-span-2 xl:col-span-1"
+        />
+      </div>
 
+      <section style={{ animationDelay: "680ms" }} className="anim-rise rounded-3xl border border-line bg-white p-4 shadow-[var(--shadow-card)] md:p-6">
+        <h3 className="mb-4 flex items-center gap-2 font-display text-[11px] font-extrabold uppercase tracking-[0.18em] text-lime-ink">
+          <Lightbulb className="h-3.5 w-3.5" aria-hidden />
+          {L("What changes vs. today", "Thay đổi so với hiện tại")}
+        </h3>
+        <Takeaways
+          items={takeaways}
+          onMore={() => {
+            setFull(true);
+            openSection("why");
+          }}
+        />
+      </section>
+
+      {/* ONE way into the full information */}
+      <button
+        type="button"
+        onClick={toggleFull}
+        aria-expanded={full}
+        aria-controls="sim-detail"
+        style={{ animationDelay: "820ms" }}
+        className="anim-rise lift group relative isolate flex w-full items-center gap-4 overflow-hidden rounded-3xl px-5 py-6 text-left text-white shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)] md:px-8 md:py-7"
+      >
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <Image src="/images/plan-soil.webp" alt="" fill sizes="(min-width: 1440px) 1380px, 100vw" className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-r from-space-950/95 via-space-950/75 to-space-950/30" />
+        </div>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-lime/50 bg-space-950/40 text-lime-bright md:h-14 md:w-14">
+          <Layers className="h-6 w-6" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="title-caps block text-lg font-extrabold md:text-2xl">{full ? L("Hide full information", "Ẩn thông tin đầy đủ") : L("See the full information", "Xem đầy đủ thông tin")}</span>
+          <span className="mt-1 block text-xs text-white/75 md:text-sm">
+            {L("All indicators · 12-month calendar · charts · field map · evidence · change the crops", "Tất cả chỉ số · lịch 12 tháng · biểu đồ · bản đồ · bằng chứng · chỉnh cách trồng")}
+          </span>
+        </span>
+        <ChevronDown className={cn("h-6 w-6 shrink-0 transition-transform duration-500", full && "rotate-180")} aria-hidden />
+      </button>
+
+      {full && (
+      <section id="sim-detail" className="anim-rise scroll-mt-24 space-y-4 rounded-3xl border border-line bg-sand-2/40 p-3 md:p-5">
+        <SectionTabs tabs={fullTabs} value={section} onChange={openSection} label={L("Full information", "Thông tin đầy đủ")} />
       <SectionPanel id="results" active={section === "results"}>
         <Strip
           tone="blue"
@@ -1072,7 +1207,10 @@ export function Simulator() {
         </Card>
       </SectionPanel>
 
-      <Card className="relative isolate flex flex-col gap-3 overflow-hidden border-transparent bg-space-900 p-5 text-white md:flex-row md:items-center md:justify-between">
+      </section>
+      )}
+
+      <Card style={{ animationDelay: "900ms" }} className="anim-rise relative isolate flex flex-col gap-3 overflow-hidden border-transparent bg-space-900 p-5 text-white md:flex-row md:items-center md:justify-between">
         <div aria-hidden className="absolute inset-0 -z-10 bg-stars opacity-40" />
         <div>
           <p className="eyebrow text-lime-bright">
@@ -1109,6 +1247,8 @@ export function Simulator() {
           </Link>
         </div>
       </Card>
+        </>
+      )}
     </div>
   );
 }
