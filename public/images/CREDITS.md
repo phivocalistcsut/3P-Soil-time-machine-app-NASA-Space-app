@@ -1,5 +1,13 @@
 # Image credits
 
+## Guide images
+
+The Guide reuses `mekong-delta.webp` (NASA / ISS), the supplied grower photo `how-it-works/04-farm-decision.png` and the supplied rotation diagram `how-it-works/03-crop-rotation.png`. Their original credits are listed below. The field photograph and rotation diagram are illustrative and are not NASA observations.
+
+`guide/setup-{en,vi}.jpg`, `guide/overview-{en,vi}.jpg`, `guide/planner-{en,vi}.jpg`, `guide/simulator-vi.jpg` and `guide/compare-vi.jpg` are unaltered screenshots captured from the project's local app on 15 November 2026, using only the public Thới Lai demo profile. `guide/simulator-en.png` and `guide/compare-en.png` reuse the project's presentation screenshots added in commit `045fb5c`. Underlying map, image and data credits remain with their respective providers. These are static UI examples; dates, estimates and interface details may change. They are not field validation or live satellite images.
+
+## NASA background photographs
+
 Background photographs are NASA imagery from the NASA Image and Video Library (images.nasa.gov).
 NASA material is generally not subject to copyright in the United States; no NASA endorsement is implied.
 Images were resized and converted to WebP.
