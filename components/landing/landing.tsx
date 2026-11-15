@@ -24,6 +24,7 @@ import { LanguageSwitcher, Logo } from "@/components/common";
 import { buttonClass } from "@/components/ui/primitives";
 import { HeroEarth } from "./hero-earth";
 import { StepPhoto } from "./step-photo";
+import { LandingFooter } from "./landing-footer";
 
 export function Landing() {
   const { L } = useI18n();
@@ -184,7 +185,7 @@ export function Landing() {
   ];
 
   return (
-    <div className="bg-sand">
+    <div id="top" className="bg-sand">
       {/* HERO: Earth's horizon from the ISS */}
       <section className="relative isolate overflow-hidden bg-space-950 text-white">
         <div aria-hidden className="absolute inset-0 -z-10">
@@ -346,54 +347,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* FINAL CTA: sunrise over Earth's limb */}
-      <section className="relative isolate overflow-hidden bg-space-950 text-center text-white">
-        <div aria-hidden className="absolute inset-0 -z-10">
-          <Image src="/images/orbital-sunrise.webp" alt="" fill sizes="100vw" className="object-cover object-[50%_60%]" />
-          <div className="absolute inset-0 bg-space-950/45" />
-          <div className="absolute inset-0 bg-stars opacity-50" />
-        </div>
-        <div className="mx-auto max-w-3xl px-4 py-24 md:py-32">
-          <h2 className="landing-title-gradient title-caps text-3xl font-extrabold [text-wrap:balance] md:text-5xl">
-            {L("Your next harvest starts with today's decisions.", "Vụ mùa tới bắt đầu từ quyết định hôm nay.")}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-white/75">
-            {L(
-              "Your farm profile stays in this browser. Data providers receive the location or place name needed for your lookup.",
-              "Hồ sơ ruộng được lưu trên trình duyệt này. Dịch vụ dữ liệu nhận vị trí hoặc tên địa điểm khi cần tra cứu.",
-            )}
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Link href="/setup" className={buttonClass("primary", "lg")}>
-              {L("Start Exploring", "Bắt đầu với ruộng của tôi")}
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-            <button onClick={startDemo} className={buttonClass("glass", "lg")}>
-              {L("Open demo farm", "Mở trang trại mẫu")}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-space-950 text-white/60">
-        <div className="landing-shell flex flex-col gap-6 py-10 text-xs md:flex-row md:items-start md:justify-between">
-          <div className="max-w-xs">
-            <Logo light />
-            <p className="mt-3">
-              Soil Time Machine · NASA Space Apps Challenge {L("prototype", "nguyên mẫu")}
-            </p>
-          </div>
-          <div className="max-w-xl space-y-2 md:text-right">
-            <p>
-              {L(
-                "Not affiliated with or endorsed by NASA. Data: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
-                "Sản phẩm độc lập, không do NASA bảo trợ. Dữ liệu: NASA POWER, NASA GIBS, EOX Sentinel-2 cloudless, ISRIC SoilGrids, © OpenStreetMap.",
-              )}
-            </p>
-            <p>{L("Background photos: NASA / ISS crew. ", "Ảnh nền: NASA / phi hành đoàn ISS. ")}<a href="/images/CREDITS.md" target="_blank" rel="noreferrer" className="underline underline-offset-2">{L("All image credits", "Thông tin bản quyền ảnh")}</a></p>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter onDemo={startDemo} />
     </div>
   );
 }
